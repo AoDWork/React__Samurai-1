@@ -228,7 +228,7 @@
 */}
 
 
-{/*    ====    06. index.js, app, JSX    ====
+{/*    ====    06. Index.js, app, JSX    ====
 
     Продолжаем с конца 4го урока, после запуска реакт-апп набором этих комманд в терминале по пути рабочей папки(где создалась папка
         с проектом my-app):
@@ -346,12 +346,12 @@
 */}
 
 
-{/*    ====    07. Компонента    ====
+{/*    ====    07. Компонент    ====
 
-    Если в кратце Компонента - это ф-я возвращающая разметку JSX( может работать и выполнять разный код, но по итогу return(ретурном)
+    Если в кратце Компонент - это ф-я возвращающая разметку JSX( может работать и выполнять разный код, но по итогу return(ретурном)
         все равно должна вернуть разметку JSX).
 
-    В нашем апп.дс const App и есть эта компонента, потому что ей присвоена ф-я которая возвращает разметку JSX.
+    В нашем апп.дс const App и есть эта компонент, потому что ей присвоена ф-я которая возвращает разметку JSX.
 
 
     Примеры ф-й 
@@ -388,13 +388,13 @@
          <Welome />
         
 
-    То есть теперь компонента получается - тег.
+    То есть теперь компонент получается - тег.
     
     *! На теперешний момент 08.2022 
     
         <Welome />  - так вставляется класс - class Welome extends React.Component {
 
-        {Welome()}  - так ф-я(компонента)
+        {Welome()}  - так ф-я(компонент)
 
         {Welome()}  - так переменная с колбеком??? const moves = history.map((step, move) => {
 
@@ -431,7 +431,7 @@
 
             <div><Header /></div>
 
-            теперь когда рисуется App компонента в ее хтмл коде встречается компонента Header и идет обращение к этой компоненте
+            теперь когда рисуется App компонент в ее хтмл коде встречается компонент Header и идет обращение к этой компоненте
             (вызывается ф-я Header она возвращает свою разметку которую отрисовывает в разметке App вместо тега <Header />)
 
             <div>
@@ -484,13 +484,13 @@
                 );
             }
 
-            Теперь наша компонента App которая отрисовывается состоит из двух компонент которые мы подключили тегами в нее. Код стал
+            Теперь наш компонент App которая отрисовывается состоит из двух компонент которые мы подключили тегами в нее. Код стал
             более читабельным, осмысленным(логическим) и семантически правильным.
 
 */}
 
 
-{/*    ====    08. import, export - теория    ====
+{/*    ====    08. Import, export - теория    ====
 
     Так как компонент будет очень много, и они могут в себе содержать еще компоненты, то мы их разобьем на разные файлы для лучшей
         читабельности. Но для того чтобы оно потом работало вместе нужно
@@ -499,8 +499,8 @@
     Есть 4 файла
         main.js     - одна ф-я которая вызывается - openAllMaps();
         maps.js     - let openAllMaps = ()=>{openGoogle(); openYandex();}
-        google.js   - подключается к гугл карте и показывает ее. В ней одна ф-я(компонента) - openGoogle
-        yandex.js   - подключается к яндекс карте и показывает ее. В ней одна ф-я(компонента) - openYandex
+        google.js   - подключается к гугл карте и показывает ее. В ней одна ф-я(компонент) - openGoogle
+        yandex.js   - подключается к яндекс карте и показывает ее. В ней одна ф-я(компонент) - openYandex
 
 
         Автор утверждает что создав таким образом глобальные переменные в JS коде, они будут видны в других файлах(если так как
@@ -548,7 +548,7 @@
 */}
 
 
-{/*    ====    09. import, export наших компонент    ====
+{/*    ====    09. Import, export наших компонент    ====
 
     Создаем файлы для Header Technologies и переносим туда код по принадлежности, в этих файлах прописываем:
 
@@ -569,7 +569,7 @@
 */}
 
 
-{/*    ====    10. default опасность, плагин auto import    ====
+{/*    ====    10. Default опасность, плагин auto import    ====
 
     В Апп.дс закомментируем строку ипорта Header и сам тег Header в хтмл разметке. Смотрим на сайт - хедер пропал, показывается
         только Technologies.
@@ -662,12 +662,10 @@
             background: rgb(19, 72, 218);
         }
 
-        почему то цвет фона у .nav наследовался от body, пришлось записать просто как nav
-
 
     Добавим меню в сайдбар.
 
-        <nav classname="nav">
+        <nav className="nav">
           <ul>
             <li><a href="#">Profile</a></li>
             <li><a href="#">Messages</a></li>
@@ -708,7 +706,7 @@
 */}
 
 
-{/*    ====    13. git-репозиторий     ====
+{/*    ====    13. Git-репозиторий     ====
 
     Автор создал репозиторий на гитхабе, можно его клонировать себе. Для этого в папку куда будем клонировать, открываем для нее 
         терминал умтановленного гита(git Bash here - выбираем из списка после клика правой кнопкой в папке куда будем клонировать
@@ -741,7 +739,7 @@
 */}
 
 
-{/*    ====    14. css modules     ====
+{/*    ====    14. Css modules     ====
 
     Мы должны знать БЭМ методологию, хотя бы основные понятия, потому что будем придерживаться похожей концепции, но реализовывать
         будем не самостоятельно, а это будет автоматически делать Create React app.
@@ -764,7 +762,7 @@
             <li className="item"><a href="#">Settings</a></li>
         </ul>
 
-        В каждый файл компонента jsx теперь пропишем импорт соответственного файла ксс, например в Header.jsx пропишем 
+        В каждый файл компонент jsx теперь пропишем импорт соответственного файла ксс, например в Header.jsx пропишем 
             import './Header.css' .
 
 
@@ -880,5 +878,248 @@
 
     Но текст у постов одинаковый, а должен быть разный текст который изменялся бы от принятых данных. Это мы рассмотрим в следующих
         уроках.
+
+*/}
+
+
+{/*    ====    16. Props     ====
+
+    Нужно настроить наш компонент Post так чтобы он отображал свой текст для каждого поста для этого нужно использовать props.
+
+    Каждый компонент(ф-я) может принимать параметры чтобы потом с ними работать внутри себя, и главный параметр у нас будет 
+        ОБЪЕКТ - props, название можно придумать другое, но по соглашению в реакте используют именно props. Реакт когда вызывает
+        компонент всегда передает в параметр этот объект.
+
+        const Header = (props) => {
+            return(
+                <...>
+                <...>
+                <...>
+                );
+        }
+
+        Например если у нас есть объект obj = { name: "Dima" } и при вызове ф-и в нее передадим этот объект Header(obj), то когда
+        ф-я будет выполняться внутри себя она назовет этот объект props и будет обращаться к нему уже по этому имени props.name .
+        
+
+    *! Тут мы сами вызвали компонент Header, но в реакте мы никогда не вызываем компонент напрямую, а  пишем тег <Header /> - 
+        вызывает ф-ю реакт и именно он определяет какой объект передать в Header, props в компонент приходит всегда и по умолчанию
+        это пустой объект, и каже нам передать в него нужный нам объект. По аналогии с тегами хтмл у которых есть аттрибуты и они
+        настраивают эти теги, наш тег который мы пишем тоже можно настраивать аттрибутом.
+
+            <Header name='Dima' /> - реакт создает объект у которого будет свойство name со значением 'Dima'
+
+            <Header name='Dima' age='30'/> - { name:'Dima', age:'30' }
+
+
+        и теперь можно эти значения использовать внутри ф-и
+
+            const Header = (props) => {
+                        return(
+                            <span> {props.name}, {props.age} </span>
+                            <...>
+                            <...>
+                            );
+                    }
+
+
+    Теперь сделаем 2 поста с разными сообщениями:
+
+        <Post message='Yo' />
+
+        <Post message="It's my fist post." />
+
+        а в компоненте поста пропишем props - в параметры и в разметке обратимся к {props.message} - экранируя его {} - фигурными
+        скобками потому что выполняем код JS в середине JSX, если не заэкранировать то увидели бы просто надпись props.message на
+        сайте.
+
+        const Post = (props)=> {
+            return(
+                <div className="post">
+                    <img src="https://th.bing.com/th/id/R.bf5e1eba30b53dffbc6a0353361855d4?rik=7duhy3rpO8d7MQ&riu=http%3a%2f%2feskipaper.com%2fimages%2favatar-3.jpg&ehk=YnIJUh9Lgb92QMa1swP9zHGNKXU66it9IG4vR41p6I4%3d&risl=&pid=ImgRaw&r=0" />
+                    <div className="post__message">{props.message}</div> 
+                </div>
+            );
+        }
+
+    
+
+    Так было по старому. Сейчас если используем class Board extends React.Component - тогда пишем как тег и передаем аттрибуты там
+        где вызывается автоматически компонент, в данном случаем в классе Game
+
+        <Board 
+            squares={current.squares}
+            onClick={(i) => this.handleClick(i)}
+          />
+
+
+          Эти данные приходят в класс Board в его ф-и renderSquare мы их обрабатываем - создавая верстку из этих параметров и 
+          отдельной ф-и компонента Square. Тут указывается Square как тег потому что вызовем мы ее в ф-ции класса Board - render.
+          Сам рендер тоже вызывается(скорее всего по умолчанию) и возвращает разметку а в ней вызываем ф-ю renderSquare(i) и в нее
+          передаем число, которое используется для показа определенного значения props.value которое лежит в свойстве массива под
+          опереденным индексом squares[i]. А этот массива мы получаем из класса Game, он там прописан в объекте:
+
+            function Square(props) {
+                return (
+                    <button className='square' onClick={props.onClick}>
+                    {props.value}
+                    </button>
+                );
+            }
+
+            class Board extends React.Component {
+                renderSquare(i) {
+                    return (
+                    <Square
+                        value={this.props.squares[i]}
+                        onClick={() => this.props.onClick(i)}
+                    />
+                    );
+                }
+
+                render() {
+                    return (
+                        <div>
+                            <div className="board-row">
+                            {this.renderSquare(0)}{this.renderSquare(1)}{this.renderSquare(2)}
+                            </div>
+                            <div className="board-row">
+                            {this.renderSquare(3)}{this.renderSquare(4)}{this.renderSquare(5)}
+                            </div>
+                            <div className="board-row">
+                            {this.renderSquare(6)}{this.renderSquare(7)}{this.renderSquare(8)}
+                            </div>
+                        </div>
+                    );
+                }
+            }
+
+            class Game extends React.Component {
+                constructor(props) {
+                    super(props);
+                    this.state = {
+                    history: [{
+                        squares: Array(9).fill(null),
+                    }],
+                    stepNumber: 0,
+                    xIsNext: true,
+                    };
+                }
+
+                handleClick(i) {
+                    const history = this.state.history.slice(0, this.state.stepNumber + 1);
+                    const current = history[history.length - 1];
+                    const squares = current.squares.slice();
+                    if (calculateWinner(squares) || squares[i]) {
+                    return;
+                    }
+                    squares[i] = this.state.xIsNext ? "X" : "O";
+                    
+                    this.setState({
+                    history: history.concat([{
+                        squares: squares,
+                    }]),
+                    stepNumber: history.length,
+                    xIsNext: !this.state.xIsNext,
+                    });
+                }
+
+                jumpTo(step) {
+                    this.setState({
+                    stepNumber: step,
+                    xIsNext: (step % 2) === 0,
+                    });
+                }
+
+                render() {
+                    const history = this.state.history;
+                    const current = history[this.state.stepNumber];
+                    const winner = calculateWinner(current.squares);
+
+                    const moves = history.map((step, move) => {
+                    const desc = move ?
+                        'To next move #' + move :
+                        'To game start';
+                    return(
+                        <li key={move}>
+                        <button onClick={()=> this.jumpTo(move)}>{desc}</button>
+                        </li>
+                    );
+                    });
+
+                    let status;
+                    if (winner) {
+                    status = "Winn " + winner;
+                    } else {
+                    status = "Next move: " + (this.state.xIsNext ? "X" : "O")
+                    }
+
+
+                    return (
+                    <div className="game">
+                        <div className="game-board">
+                        <Board 
+                            squares={current.squares}
+                            onClick={(i) => this.handleClick(i)}
+                        />
+                        </div>
+                        <div className="game-info">
+                        <div id="title">{status}</div>
+                        <ol>{moves}</ol>
+                        </div>
+                    </div>
+                    );
+                }
+            }
+
+            И потом получаем из хтмл файла элемента под айди root и у него уже тоже dspsdftv метод render и вставляем тег <Game />
+            потому что это класс.
+
+            const root = ReactDOM.createRoot(document.getElementById("root"));
+            root.render(<Game />);
+    
+*/}
+
+
+{/*    ====    17. Остановочка, react за час №1     ====
+
+    Вспомним что мы уже прошли. На следующих уроках сделаем будем делать остальные вкладки.
+
+*/}
+
+
+{/*    ====    18. Страница Dialogues(Messages)     ====
+
+    Автор перешел на WebStorm потому что ему он больше нравится и там больше настроеных возможностей из коробки.
+
+
+    На этой странице в разметке будет тот же хедер, тот же сайдбар, но контент другой. Он будет состоять из двух колонок, в левой
+        будут люди с которыми ведем переписку, а в правой будут сообщения от этого человека.
+
+
+    Закоментируем в App.js тег с <Profile /> и вместо него создадим тег <Dialogs />. Создадим компонент для этого тега, в папке
+        components создадим папку Dialogs, а в ней Dialogs.jsx и Dialogs.module.css.
+
+        В Dialogs.jsx  импортируем реакт, импортируем ксс модуль, создаем ф-ю Dialogs и делаем экспорт.
+
+            import React from "react";
+            import style from "./Dialogs.module.css"
+
+            const Dialogs = (props) => {
+                return(
+                    <main className={style.content}>
+                        <div className="dialogs__users">ПОЛЬЗОВАТЕЛИ</div>
+                        <div className="dialogs__users-msgs">СООБЩЕНИЯ</div>
+                    </main>
+                );
+            }
+
+        В Апп.дс добавим импорт - import Dialogs from "./components/Dialogs/Dialogs";
+
+        Видим что стили для content не применились, это потому что в ./Dialogs.module.css нету стилей для этого блока, а в нем
+            храниться название для разметки грида grid-area: content, и получается нам нужно этот код скопировать из ксс модуля
+            для портфолио. Происходит дублирование кода, зачит можно этот тег вынести из всех этих страниц в верстку в Апп.дс
+            чтобы в него вставлялись меняющиеся страницы.  Пропишем имя класса без модуля <main className="app-wrapper-content">
+            и теперь модно перенисти этот код ксс в Апп.ксс чтобы верстка при смене страниц сохраняла свою структуру.
 
 */}
