@@ -1230,21 +1230,25 @@
         This means it will render an <Outlet /> with a null value by default resulting in an "empty" page.
 
 
+    Заработало при такой конфигурации
 
+        import {BrowserRouter as Router, Routes, Route, Link, useRouteMatch, useParams} from "react-router-dom";
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        function App() {
+          return (
+              <Router>
+                  <div className='app-wrapper'>
+                      <Header/>
+                      <Navbar/>
+                      <div className='app-wrapper-content'>
+                          <Routes>
+                              <Route path="/dialogs" element={<Dialogs />} />
+                              <Route path="/profile" element={<Profile />} />
+                          </Routes>
+                      </div>
+                  </div>
+              </Router>
+          );
+        }
 
 */}
