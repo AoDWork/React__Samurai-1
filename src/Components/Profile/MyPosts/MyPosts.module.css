@@ -1,0 +1,23 @@
+.form__newPost {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    margin-bottom: 10px;
+}
+
+.newPost__title{
+    padding-left: 25px;
+    font-size: 20px;
+}
+
+.form__newPost textarea{
+    width: 95%;
+    margin-bottom: 5px;
+    align-self: center;
+}
+
+.form__newPost button{
+    width: 200px;
+    padding-left: 15px;
+    margin-bottom: 10px;
+}

@@ -1,0 +1,8 @@
+.header{
+    grid-area: header;
+    background: rgb(0, 0, 0);
+}
+
+.header img{
+    max-width: 60px;
+}

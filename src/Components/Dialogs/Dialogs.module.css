@@ -1,0 +1,9 @@
+.dialogs{
+    display: flex;
+    justify-content: space-around;
+    align-content: center;
+}
+
+.dialogs__users, .dialogs__usersMsgs{
+    padding-top: 10px;
+}

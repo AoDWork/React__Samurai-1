@@ -1,0 +1,27 @@
+body{
+  box-sizing: border-box;
+  background: rgb(155, 170, 173);
+  color:white;
+  padding: 0px;
+  margin: 0px;
+  height: 100vh;
+  width: 100vw;
+}
+
+
+.app-wrapper{
+  display: grid;
+
+  grid-template-areas:
+    "header header"
+    "nav content";
+
+  grid-template-columns: 2fr 10fr;
+  grid-template-rows: 60px 1fr;
+  /* grid-gap: 10px; */
+}
+
+.app-wrapper-content{
+  grid-area: content;
+  background: rgb(115, 150, 236);
+}
