@@ -389,17 +389,8 @@
         
 
     То есть теперь компонент получается - тег.
+
     
-    *! На теперешний момент 08.2022 
-    
-        <Welcome />  - так вставляется класс - class Welcome extends React.Component {
-
-        {Welcome()}  - так ф-я(компонент)
-
-        {Welcome()}  - так переменная с колбеком??? const moves = history.map((step, move) => {
-
-
-
     Посмотрим наш пример, тут у нас есть const App найдем куда вставляется созданный тег этой ф-ии. В вскоде нажимаем ctrl+shift+F
         это поиск во всех файлах проекта и вбиваем в поиск <App нашло 2 результата App.test.js(этот файл не смотрим) и index.js.
         
@@ -492,7 +483,7 @@
 
 {/*    ====    08. Import, export - теория    ====
 
-    Так как компонент будет очень много, и они могут в себе содержать еще компоненты, то мы их разобьем на разные файлы для лучшей
+    Так как компонентов будет очень много, и они могут в себе содержать еще компоненты, то мы их разобьем на разные файлы для лучшей
         читабельности. Но для того чтобы оно потом работало вместе нужно
 
     ПРИМЕР.
@@ -504,8 +495,8 @@
 
 
         Автор утверждает что создав таким образом глобальные переменные в JS коде, они будут видны в других файлах(если так как
-            сейчас написано - нет не будут) и поэтому при работе с ними могут возникнуть проблемы, например если две переменные с
-            одинаковым именем то одна может затереть другую и будет использована только одна.
+            сейчас написано - нет не будут, разве что будут експортированы) и поэтому при работе с ними могут возникнуть проблемы,
+            например если две переменные с одинаковым именем то одна может затереть другую и будет использована только одна.
 
 
             Реакт же использует модульность(модульный подход) - все const, let которые объявлены в одном фале, остаются видимы 
@@ -529,7 +520,7 @@
             Есть несколько видов импорта/экспорта мы пока будем работать с таким. Когда мы делаем экспорт по дефолту(default) мы
             из файла можем экспортировать что то одно.
             
-        *! Рекомендует прочитать про модуль амд - modules AMD require.js после просмотра этого видео или перед собеседованием.
+        // *! Рекомендует прочитать про модуль амд - modules AMD require.js после просмотра этого видео или перед собеседованием.
 
 
 
@@ -683,8 +674,9 @@
         без причёсывания в ксс.
 
 
-    Рекомендует изучить grid потому что мы хотим не просто владеть инструментом реакт, а быть трендовыми фронтенд разрабочиками.
-    
+    // todo изучить grid потому что мы хотим не просто владеть инструментом реакт, а быть трендовыми фронтенд разрабочиками.
+    //*! Красивые дизайны для верстки на themeforest.net social template
+
 */}
 
 
@@ -733,8 +725,7 @@
         данного проекта и установит их автоматически в папку node_modules.
 
     Если мы будем устанавливать дополнительные модули, то чтобы они у нас потом тоже автоматически подгружались нужно после их
-        установки делать save(npm save - наверное, автор не сказал как правильно пишеться), при этом в package.json добавиться 
-        зависимость для этого модуля.
+        установки делать save(npm i module.name -save ), при этом в package.json добавиться зависимость для этого модуля.
 
 */}
 
@@ -813,21 +804,25 @@
         <div className={classes["item-nav"]}
 
     
-    Если хотим дать тегу два стиля например <div className="item active" мы бы в ксс написали если у тега два класса тогда цвет будет
-        золотой и цвет активной ссылки был бы золотым  -  .item .active{color:gold;}.  А теперь часть этой строки с классами у нас
-        сидит в значении свойства объекта, то теперь нам нужно использовать бектики для вставки в строку двух значений свойств 
-        объекта, а свойство active - появиться в объекте потому что в реакт прочитает модульный ксс и увидит что в записи 
-        .item .acive{ - два класса и оба их добавит.
+    //*!Если хотим дать тегу два класса например <div className="item active" мы бы в ксс написали если у тега два класса тогда 
+        цвет будет золотой и цвет активной ссылки был бы золотым  -  .item .active{color:gold;}.  А теперь часть этой строки с 
+        классами у нас сидит в значении свойства объекта, то теперь нам нужно использовать бектики для вставки в строку двух 
+        значений свойств объекта, а свойство active - появиться в объекте потому что в реакт прочитает модульный ксс и увидит что
+        в записи .item .acive{ - два класса и оба их добавит.
 
         <div className="item active"
 
         <div className={`${classes.item} ${classes.active}`}
+        // ** или можно еще так {s.dialog + ' ' + s.active}
 
 
     Чтобы увидеть что лежит в объекте можно его вывести в консоль в том же файле jsx куда он импортируется.
 
 
     Если нам нужны будут стили для общих элементов мы рассмотрим это в следующих видео.
+
+    //! При работе в окружении реакта имена классов автоматически переделывались в ВебШторме при импорте например:
+        content-header - в jsx файле нужно изменять на contentHeader в файле модуля, потому что тире нельзя использовать.
 
 */}
 
@@ -902,9 +897,9 @@
         ф-я будет выполняться внутри себя она назовет этот объект props и будет обращаться к нему уже по этому имени props.name .
         
 
-    *! Тут мы сами вызвали компонент Header, но в реакте мы никогда не вызываем компонент напрямую, а  пишем тег <Header /> - 
+    // *! Тут мы сами вызвали компонент Header, но в реакте мы никогда не вызываем компонент напрямую, а  пишем тег <Header /> - 
         вызывает ф-ю реакт и именно он определяет какой объект передать в Header, props в компонент приходит всегда и по умолчанию
-        это пустой объект, и каже нам передать в него нужный нам объект. По аналогии с тегами хтмл у которых есть аттрибуты и они
+        это пустой объект, и какже нам передать в него нужный нам объект. По аналогии с тегами хтмл у которых есть аттрибуты и они
         настраивают эти теги, наш тег который мы пишем тоже можно настраивать аттрибутом.
 
             <Header name='Dima' /> - реакт создает объект у которого будет свойство name со значением 'Dima'
@@ -941,143 +936,7 @@
                 </div>
             );
         }
-
-    
-
-    Так было по старому. Сейчас если используем class Board extends React.Component - тогда пишем как тег и передаем аттрибуты там
-        где вызывается автоматически компонент, в данном случаем в классе Game
-
-        <Board 
-            squares={current.squares}
-            onClick={(i) => this.handleClick(i)}
-          />
-
-
-          Эти данные приходят в класс Board в его ф-и renderSquare мы их обрабатываем - создавая верстку из этих параметров и 
-          отдельной ф-и компонента Square. Тут указывается Square как тег потому что вызовем мы ее в ф-ции класса Board - render.
-          Сам рендер тоже вызывается(скорее всего по умолчанию) и возвращает разметку а в ней вызываем ф-ю renderSquare(i) и в нее
-          передаем число, которое используется для показа определенного значения props.value которое лежит в свойстве массива под
-          опереденным индексом squares[i]. А этот массива мы получаем из класса Game, он там прописан в объекте:
-
-            function Square(props) {
-                return (
-                    <button className='square' onClick={props.onClick}>
-                    {props.value}
-                    </button>
-                );
-            }
-
-            class Board extends React.Component {
-                renderSquare(i) {
-                    return (
-                    <Square
-                        value={this.props.squares[i]}
-                        onClick={() => this.props.onClick(i)}
-                    />
-                    );
-                }
-
-                render() {
-                    return (
-                        <div>
-                            <div className="board-row">
-                            {this.renderSquare(0)}{this.renderSquare(1)}{this.renderSquare(2)}
-                            </div>
-                            <div className="board-row">
-                            {this.renderSquare(3)}{this.renderSquare(4)}{this.renderSquare(5)}
-                            </div>
-                            <div className="board-row">
-                            {this.renderSquare(6)}{this.renderSquare(7)}{this.renderSquare(8)}
-                            </div>
-                        </div>
-                    );
-                }
-            }
-
-            class Game extends React.Component {
-                constructor(props) {
-                    super(props);
-                    this.state = {
-                    history: [{
-                        squares: Array(9).fill(null),
-                    }],
-                    stepNumber: 0,
-                    xIsNext: true,
-                    };
-                }
-
-                handleClick(i) {
-                    const history = this.state.history.slice(0, this.state.stepNumber + 1);
-                    const current = history[history.length - 1];
-                    const squares = current.squares.slice();
-                    if (calculateWinner(squares) || squares[i]) {
-                    return;
-                    }
-                    squares[i] = this.state.xIsNext ? "X" : "O";
-                    
-                    this.setState({
-                    history: history.concat([{
-                        squares: squares,
-                    }]),
-                    stepNumber: history.length,
-                    xIsNext: !this.state.xIsNext,
-                    });
-                }
-
-                jumpTo(step) {
-                    this.setState({
-                    stepNumber: step,
-                    xIsNext: (step % 2) === 0,
-                    });
-                }
-
-                render() {
-                    const history = this.state.history;
-                    const current = history[this.state.stepNumber];
-                    const winner = calculateWinner(current.squares);
-
-                    const moves = history.map((step, move) => {
-                    const desc = move ?
-                        'To next move #' + move :
-                        'To game start';
-                    return(
-                        <li key={move}>
-                        <button onClick={()=> this.jumpTo(move)}>{desc}</button>
-                        </li>
-                    );
-                    });
-
-                    let status;
-                    if (winner) {
-                    status = "Winn " + winner;
-                    } else {
-                    status = "Next move: " + (this.state.xIsNext ? "X" : "O")
-                    }
-
-
-                    return (
-                    <div className="game">
-                        <div className="game-board">
-                        <Board 
-                            squares={current.squares}
-                            onClick={(i) => this.handleClick(i)}
-                        />
-                        </div>
-                        <div className="game-info">
-                        <div id="title">{status}</div>
-                        <ol>{moves}</ol>
-                        </div>
-                    </div>
-                    );
-                }
-            }
-
-            И потом получаем из хтмл файла элемента под айди root и у него уже тоже вызываем метод render и вставляем тег <Game />
-            потому что это класс.
-
-            const root = ReactDOM.createRoot(document.getElementById("root"));
-            root.render(<Game />);
-    
+                
 */}
 
 
@@ -1127,7 +986,7 @@
 
 {/*    ====    19. Route, browser-router, маршрутизация     ====
 
-    Сделаем ссылки в Navbar кликабельными. Изменяем название в href. *! никогда НЕ ставить точку в этих путях(они будут
+    Сделаем ссылки в Navbar кликабельными. Изменяем название в href. //*! никогда НЕ ставить точку в этих путях(они будут
         подставляться в путь аддресса сайта, поэтому точек там быть не не должно):
 
             <li className={style.item}><a href="/profile">Profile</a></li>
@@ -1198,8 +1057,8 @@
         </BrowserRouter>
 
 
-    У автора загрузился сайт и отрисовалась и страница диалого и страница профиля, у меня не загрузился, пришлось дополнительно
-        обернуть Роут в Роуты и испортировать его тоже и сайт отрисовался, но без контента, только хедер и боковуха, а при
+    У автора загрузился сайт и отрисовалась и страница диалогов и страница профиля, у меня не загрузился, пришлось дополнительно
+        обернуть Роут в Роуты и импортировать его тоже и сайт отрисовался, но без контента, только хедер и боковуха, а при
         клике по ссылкам пишет в консоли - No routes matched location "/profile"
 
         import {BrowserRouter, Route, Routes} from "react-router-dom";
@@ -1230,7 +1089,8 @@
         This means it will render an <Outlet /> with a null value by default resulting in an "empty" page.
 
 
-    Заработало при такой конфигурации
+    Заработало при такой конфигурации, //? почему element? У Сани работало и с Switch хотя у меня была ошибка при его импорте,
+        поэтому его заменили Routes.
 
         import {BrowserRouter as Router, Routes, Route, Link, useRouteMatch, useParams} from "react-router-dom";
 
@@ -1250,5 +1110,298 @@
               </Router>
           );
         }
+
+*/}
+
+
+{/*    ====    20. NavLink     ====
+
+    Сделали что при клике на ссылку происходит переключение контента, но страница перезагружается, из-за этого тратится траффик и
+        получается моргание страницы и это получается веб сайт, а не SPA. Это стандартное поведение ссылки <a></a>, значит вместо
+        нее будем использовать теги NavLink для этого его нужно импортировать из react-router-dom, а вместо href используется to. 
+
+        import {NavLink} from "react-router-dom"
+
+        <NavLink to='/profile'>Profile</NavLink>
+
+        теперь по клике на ссылку страница не перезагружается, но меняется путь в адрессной строке и происходит обновление 
+        контента.
+
+
+    Если посмотрим в верстку сайта то видим что по прежнему эти ссылки являются тегами <a></a>, перезагрузки страницы не происходит
+        потому что тег NavLink возвращает тег <a> и вешает на него евент лисенер в котором подменяет адресс обращаясь(c помощью)
+        к history API, и помещает в этот eventListener - preventDefault - отмена стандартного поведения ссылки.
+
+        //todo почитать про  history API
+
+
+    Ссылки после нажатия становяться фиолетовыми и по умолчанию имеют подчеркивание, сделаем чтобы они были как обычный текст, для
+        этого в Navbar.module.css пропишем стиль:
+
+        .item a{
+            color: white;
+            text-decoration: none;
+        }
+
+        
+    Еще сделаем выбраную(активную) ссылку золотым цветом(если у ссылки а в класе .item будет присутсвовать класс .active):
+
+        .item a.active{
+            color:gold;
+        }
+
+        NavLink автоматически присваивает возвращаемой ссылке класс - active, но так как у нас из модуля приходит не просто
+        active, а с добавленными словами, нам нужно изменить стандартное поведение NavLink, чтобы он присваивал такой же класс
+        как в модулях, для этого передадим ему этот класс из модуля как к другим тегам.
+
+        <NavLink to='/profile' activeClassName={s.active} >Profile</NavLink>
+
+*/}
+
+
+{/*    ====    21. Верстаем страницу диалогов     ====
+
+    Нужно сделать 2 колонки. В Dialogs.jsx создаем две дивки, в одной будут Диалоги(почему не пользователи, потому что может
+        появиться кнопочка - удалить беседу, и мы же не пользователя удаляем, а диалог), а вторая колонка - сообщения.
+
+        Видим что все в куче, нужно прописать стили в Dialogs.module.css перенести их как объект из модуля в верстку:
+
+        const Dialogs = (props) => {
+            return (
+                <main className={s.dialogs}>
+                <div className={s.dialogsItems}>
+                    <div className={s.dialog + ' ' + s.active}>Dmitriy</div>
+                    <div className={s.dialog}>Andrey</div>
+                    <div className={s.dialog}>Valera</div>
+                    <div className={s.dialog}>Sveta</div>
+                    <div className={s.dialog}>Viktor</div>
+                </div>
+                <div className={s.messages}>
+                    <div className={s.message}>Hi</div>
+                    <div className={s.message}>Yo</div>
+                    <div className={s.message}>What's up?</div>
+                </div>
+                </main>
+            );
+        }
+
+
+        css file:
+
+        .dialogs {
+            display: grid;
+            grid-template-columns: 2fr 8fr;
+
+        }
+
+        .dialogsItems {
+            padding: 20px;
+        }
+
+        .dialogsItems .active {
+            color: gold;
+        }
+
+        .dialog {
+        margin-bottom: 10px;    
+        }
+
+        .messages {
+            padding: 20px;
+        }
+
+        .messages .message {
+            margin-bottom: 10px;
+        }
+
+
+    На следующем уроке сделаем чтобы при нажатии на dialog происходила подгрузка содержимого беседы, логика будет как с кликами по
+        ссылкам для смены контента.
+
+*/}
+
+
+{/*    ====    22. Route exact     ====
+
+    Обернем имя пользователя с которым диалог в NavLink чтобы они генерили путь в адрессной строке и им можно было делится с
+        кем-то чтобы у него сайт подстроился также, также по этому пути будет показываться сообщения с этим человеком. Импортируем
+        НавЛинк из модуля.
+
+        import {NavLink} from "react-router-dom"
+
+        const Dialogs = (props) => {
+            return (
+                <main className={s.dialogs}>
+                <div className={s.dialogsItems}>
+                    <div className={s.dialog + ' ' + s.active}>
+                        <NavLink to='/dialogs/1'>Dmitriy</NavLink>
+                    </div>
+                    <div className={s.dialog}>
+                        <NavLink to='/dialogs/2'>Andrey</NavLink>
+                    </div>
+                    <div className={s.dialog}>
+                        <NavLink to='/dialogs/3'>Valera</NavLink>
+                    </div>
+                    <div className={s.dialog}>
+                        <NavLink to='/dialogs/4'>Sveta</NavLink>
+                    </div>
+                    <div className={s.dialog}>
+                        <NavLink to='/dialogs/5'>Viktor</NavLink>
+                    </div>
+                </div>
+                <div className={s.messages}>
+                    <div className={s.message}>Hi</div>
+                    <div className={s.message}>Yo</div>
+                    <div className={s.message}>What's up?</div>
+                </div>
+                </main>
+            );
+        }
+
+
+    //*!Так как в нашем пути /dialogs/5 - присутствует часть пути /dialogs - для Route Dialogs из App.js, то контент не 
+        перезагружается а остается прежним, тоесть Route проверяет путь на нужный кусок пути. Можно задать чтобы Route
+        проверял весь путь не частичное совпадение, а полное совпадение, тоесть Dialogs отобразится только когда путь будет
+        полностью совпадать:
+
+        <Route exact path="/dialogs" component={Dialogs}/>
+
+        Пока оставим без exact.
+
+
+    Не обязательно при смене url создавать новый Route, не обязательно нам должен показываться компонент новый. В нашем случае
+        при клике на пользователя мы хотим показывать другие сообщения, а не компоненты(я так понял он хочет сделать несколько
+        сообщений-дивов, а уже их содержимое менять в зависимости от props).
+
+*/}
+
+
+{/*    ====    23. Props для диалогов     ====
+
+    Создадим подкомпоненты Dialog и Message в Dialogs.jsx и пока оставим в это файле потому что они больше нигде не используются,
+        но если нужно будет их использовать в других компонентах или неужобно будет работать с этим фалом потому что много кода
+        тогда вынесем в отдельные файлы. Напишем их гибкими с props.
+
+        const DialogItem = (props) => {
+            return(
+                <div className={s.dialog}>
+                    <NavLink to={"/dialogs/" + props.id}>{props.name}</NavLink>
+                </div>
+            );
+        }
+
+        const Message = (props) => {
+            return(
+                 <div className={s.message}>{props.msg}</div>
+            );
+        }
+
+
+         const Dialogs = (props) => {
+            return (
+                <main className={s.dialogs}>
+                    <div className={s.dialogsItems}>
+                        <DialogItem name="Dmitriy" id="1" />
+                        <DialogItem name="Andrey" id="2" />
+                        <DialogItem name="Valera" id="3" />
+                        <DialogItem name="Sveta" id="4" />
+                        <DialogItem name="Viktor" id="5" />
+                    </div>
+                    <div className={s.messages}>
+                        <Message msg="Hi" />
+                        <Message msg="Yo" />
+                        <Message msg="What's up?" />
+                    </div>
+                </main>
+            );
+        }
+
+
+
+    Теперь зарефакторм страницу Profile. Вынесем в отдельный компонент остальной код вместе с большой картинкой, и оставим только
+        тег компонента. Создадим импорт. В файле компонента сделаем экспорт и импорт из ксс модуля.
+
+        const Profile = () => {
+            return (
+                <main className="content">
+                <ProfileInfo />
+                <MyPosts />
+                </main>
+            );
+            }
+
+        const ProfileInfo = () => {
+            return (
+                <div>
+                <div>
+                    <img className="content__header" src="https://img-prod-cms-rt-microsoft-com.akamaized.net/cms/api/am/imageFileData/RE4wwuO?ver=1fc3" />
+                </div>
+                <div className="form__user">
+                    <img className="user-avatar" src="https://images.archive-digger.com/taboola/image/fetch/f_jpg%2Cq_auto%2Ch_225%2Cw_300%2Cc_fill%2Cg_faces:auto%2Ce_sharpen/https%3A%2F%2Fi.imgur.com%2FhDNiJvY.png" />
+                    <div className="user-description">Description</div>
+                </div>
+                </div>
+            );
+        }
+
+*/}
+
+
+{/*    ====    24. UI - BLL, выносим данные в сторону     ====
+
+    В компоненте Dialogs идет много дублирования и props мы передаем прямо в тегах, в реальном проекте эти данные приходяд с 
+        сервера по запросу. Смотрим на DialogItem и видим что его props сгруппированы, тоесть две пары ключ-значение. Значит
+        можносказать что нам нужен объект под каждого пользователя, их будет много поэтому сделаем для них массив. 
+
+         <DialogItem name="Dmitriy" id="1" />
+
+
+         создадим его прямо тут в середине компонента Dialogs перед return.
+
+         const Dialogs = (props) => {
+            let dialogsData = [
+                {id: 1, name: "Dmitriy"},
+                {id: 2, name: "Andrey"},
+                {id: 3, name: "Valera"},
+                {id: 4, name: "Sveta"},
+                {id: 5, name: "Viktor"}
+                ];
+
+            return (
+                <main className="dialogs">
+                    <div className="dialogsItems">
+                        <DialogItem name={dialogsData[0].name} id={dialogsData[0].id}/>
+                        <DialogItem name={dialogsData[1].name} id={dialogsData[1].id}/>
+                        <DialogItem name={dialogsData[2].name} id={dialogsData[2].id}/>
+                    </div>
+                    <div className="messages">
+                        <Message msg="Hi" />
+                        <Message msg="Yo" />
+                        <Message msg="What's up?" />
+                    </div>
+                </main>
+            );
+        }
+
+        //! классы для тегов изменены чтобы работало в файле на работе без реакт-апп
+
+        Таким образом мы разграничим данные BLL(Business Logic Layer) и пользовательский интерфейс UI.
+
+
+    Чтобы не добавлять теги вручную, мы можем с помощью метода map для массивов сгенерировать столько тегов сколько будет
+        объектов в массиве, этот метод рассмотрим в следующем уроке. 
+        
+    //*! Эти диалоги как и сообщения , как и пользователи или какая-то информация - это сущности(какие-то записи в базе данных).
+
+    А пока подготовимся к следующему уроку и сделаем тоже самое для  message. Мы могли бы для них сделать массив строк, но мы 
+        понимаем что сообщение это не только строка, это еще и дата когда оно отправлено, Отправитель, ссылка на вататарку, айди по
+        которому его можно удалить - тоесть все равно это ОБЪЕКТ. Пока это у нас строка, но нужно всегда закладывать на перед
+        возможные свойства и предусмотреть.
+
+
+        10-40
+
+
+
 
 */}
