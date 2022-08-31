@@ -1359,6 +1359,7 @@
          создадим его прямо тут в середине компонента Dialogs перед return.
 
          const Dialogs = (props) => {
+
             let dialogsData = [
                 {id: 1, name: "Dmitriy"},
                 {id: 2, name: "Andrey"},
@@ -1394,13 +1395,262 @@
     //*! Эти диалоги как и сообщения , как и пользователи или какая-то информация - это сущности(какие-то записи в базе данных).
 
     А пока подготовимся к следующему уроку и сделаем тоже самое для  message. Мы могли бы для них сделать массив строк, но мы 
-        понимаем что сообщение это не только строка, это еще и дата когда оно отправлено, Отправитель, ссылка на вататарку, айди по
+        понимаем что сообщение это не только строка, это еще и дата когда оно отправлено, отправитель, ссылка на авататарку, айди по
         которому его можно удалить - тоесть все равно это ОБЪЕКТ. Пока это у нас строка, но нужно всегда закладывать на перед
         возможные свойства и предусмотреть.
 
+        Тут же в Dialogs копируем массив dialogsData и переделываем его в messagesData, id в этих массивах будут одинаковые, но
+        это не повлияет на работоспособность потому что это разные массивы, и под одним айди в них храняться разные данные.
+        Пока мы айди задаем сами, но потом они будут приходить с сервера, заменим в верстке код чтобы читать из этого массива.
 
-        10-40
+        let messagesData = [
+            { id: 1, msg: "Hi" },
+            { id: 2, msg: "Yo" },
+            { id: 3, msg: "What's up?" },
+            { id: 4, msg: "Hi" },
+            { id: 5, msg: "Yo" }
+        ];
 
+        return (
+            <main className="dialogs">
+            <div className="dialogsItems">
+                <DialogItem name={dialogsData[0].name} id={dialogsData[0].id} />
+                <DialogItem name={dialogsData[1].name} id={dialogsData[1].id} />
+                <DialogItem name={dialogsData[2].name} id={dialogsData[2].id} />
+            </div>
+            <div className="messages">
+                <Message msg={messagesData[0].msg} />
+                <Message msg={messagesData[1].msg} />
+                <Message msg={messagesData[2].msg} />
+            </div>
+            </main>
+        );
+    }
+
+       
+    Сделаем также с постами в MyPost.jsx
+
+        const MyPosts = () => {
+
+            let postsData = [
+                { id: 1, post: "yo", likesCount:12 },
+                { id: 2, post: "It's my fist post.", likesCount:11 },
+                { id: 3, post: "0", likesCount:13 },
+            ];
+
+            return (
+                <div className="form__new-post">
+                <div className="new-post__title">New Post
+                    <textarea></textarea>
+                    <button>Add Post</button>
+                </div>
+                <Post msg={postsData[0].post}  likesCount={postsData[0].likesCount}/>
+                <Post msg={postsData[1].post} likesCount={postsData[1].likesCount}/>
+                <Post msg={postsData[2].post} likesCount={postsData[2].likesCount}/>
+                </div>
+            );
+            }
+
+            const Post = (props) => {
+            console.log(props);
+            return (
+                <div className="post">
+                <img src="https://th.bing.com/th/id/R.bf5e1eba30b53dffbc6a0353361855d4?rik=7duhy3rpO8d7MQ&riu=http%3a%2f%2feskipaper.com%2fimages%2favatar-3.jpg&ehk=YnIJUh9Lgb92QMa1swP9zHGNKXU66it9IG4vR41p6I4%3d&risl=&pid=ImgRaw&r=0" />
+                <div className="post__message">{props.msg}</div>
+                <div className="likes">Likes: {props.likesCount}</div>
+                </div>
+            );
+        }
+
+*/}
+
+
+{/*    ====    25. Метод массива map     ====
+
+    Если мы закомментируем код и вместо него напишем просто массив строк в фигурных скобках, то компилятор их просто 
+        распкрое, потому что массив нельзя отобразить в виде хтмл элемента, и отобразит строки.
+        
+        return (
+        <main className="dialogs">
+            <div className="dialogsItems">
+
+                {
+                ['sdsdsd', 'sdsdsda', 'sdsdasaaaa']
+                }
+
+                // <DialogItem name={dialogsData[0].name} id={dialogsData[0].id} />
+                //<DialogItem name={dialogsData[1].name} id={dialogsData[1].id} />
+                //<DialogItem name={dialogsData[2].name} id={dialogsData[2].id} />
+            </div>
+
+    Если вместо строк будут объекты - выдаст ошибку, потому что объект он никак не сможет отобразить. Но если вместо строк
+        в массив вставить реакт компонент, то реакт раскроет массив и отобразит этот компонент.
+
+         <main className="dialogs">
+            <div className="dialogsItems">
+
+                {
+                    [<DialogItem name={dialogsData[0].name} id={dialogsData[0].id} />,
+                    <DialogItem name={dialogsData[1].name} id={dialogsData[1].id} />,
+                    <DialogItem name={dialogsData[2].name} id={dialogsData[2].id} />]
+                }
+
+
+    Таким образом можем вынести этот массив вне  return ф-и в dialogsElements , а вместо него оставим ссылку, будет
+        работать также.
+
+        let dialogsElements = [
+        <DialogItem name={dialogsData[0].name} id={dialogsData[0].id} />,
+        <DialogItem name={dialogsData[1].name} id={dialogsData[1].id} />,
+        <DialogItem name={dialogsData[2].name} id={dialogsData[2].id} />
+        ]
+
+
+        return (
+            <main className="dialogs">
+            <div className="dialogsItems">
+
+                {dialogsElements}
+
+        Отсюда вывод - что можно отбразить массив который мы сами сформируем на основе массива с объектами с данными,
+        и тогда количество тегов будет не статическое, а такое же сколько объектов в пришедшем массиве с объектами
+        dialogsData. Такое преобразование будем делать с помощью метода массива map.
+
+
+    map - преобразовывает массив одних эл. в массив других. Новый массив по длинне будет такмим же как и изначальный.
+        map возвращает НОВЫЙ массив, принимает стрелочную ф-ю(//? колбек) аргументы: el, ind, arr.
+        Она вызывается столько раз сколько элементов в массиве, в середине нее и происходят нужные нам преобразования.
+        //! Если стрелочная ф-я только возвращает что-то(перед return нету кода) то можно убрать фигурные скобки и
+        слово return, если аргумент только 1 например обязательный аргумент - el(эл. который мы перебираем) - можно
+        убрать скобки вокруг него, также его можно назвать как нам вздумается(по специфике массива).
+
+        Тут из массива имен определяются мужские и женские и для мужских в новый массив заносятся 1, женских - 0.
+            
+            ['Evgen', 'Aleksandr', 'Olya', 'Yana']                      [1, 1, 0, 0]
+
+            let newArray = oldArray.map((el)=>{         let newArray = oldArray.map(name => isMale(name) ? 1 : 0)
+                return isMale(el) ? 1 : 0;
+            })
+
+
+        Тут из массива имен получаем массив эл. li с этими именами в середине.
+
+            ['Evgen', 'Aleksandr', 'Olya', 'Yana'] превратится в  
+            ['<li>Evgen</li>', '<li>Aleksandr</li>', '<li>Olya</li>', '<li>Yana</li>']
+
+            let newArray = oldArray.map(name => {       let newArray = oldArray.map(name => `<li>${name}</li>`
+                return "<li>"" + name + "</li>';
+            })
+
+
+        Тут из массива слов получаем массив с объектами. Тут если хотим убрать ретурн и написать все в одну строку
+            так как раньше сделать не получиться потому что браузер будет думать что оставшиеся фигурны скобки
+            это не тело объекта, а тело ф-ии, поэтому объект нужно взять в скобки.
+
+            ['blabla', 'hello', 'hi']       
+            [{eng:'blabla', ru:'блабла'}, {eng:'hello', ru:'привет'}, {eng:'hi', ru:'здарова'}]
+
+            let newArray = oldArray.map( word => {       let newArray = oldArray.map(word => (
+                return {                                        {
+                    eng: word,                                    eng: word,
+                    ru: translateIntoRu(word)                     ru: translateIntoRu(word)
+                };                                              }
+            });                                              ) );
+
+
+        Чаще всего для реакта будем использовать преобразование массива с объктами в массив с JSX елементами
+
+            [{eng:'blabla', ru:'блабла'}, {eng:'hello', ru:'привет'}, {eng:'hi', ru:'здарова'}]
+
+        [<Message eng='blabla' ru='блабла' />, <Message eng='hello' ru='привет' />, <Message eng='hi' ru='здарова' />]
+
+            let newArray = oldArray.map(
+                el => (<Message eng={el.eng} ru={el.ru} /> ) )
+
+                Таким образом мы маппим(соотносим, преобразовываем) массив одних объектов на массив других объектов.
+
+
+
+    Зарефакторим наш код.
+
+        const Dialogs = (props) => {
+
+            let dialogsData = [
+                { id: 1, name: "Dmitriy" },
+                { id: 2, name: "Andrey" },
+                { id: 3, name: "Valera" },
+                { id: 4, name: "Sveta" },
+                { id: 5, name: "Viktor" }
+            ];
+
+            let dialogsElements = dialogsData.map(el => (
+                <DialogItem name={el.name} id={el.id} />
+            ));
+
+            let messagesData = [
+                { id: 1, msg: "Hi" },
+                { id: 2, msg: "Yo" },
+                { id: 3, msg: "What's up?" },
+                { id: 4, msg: "Hi" },
+                { id: 5, msg: "Yo" }
+            ];
+
+            let messagesElements = messagesData.map(el => (
+                <Message msg={el.msg} />
+            ));
+
+
+            return (
+                <main className="dialogs">
+                <div className="dialogsItems">
+                    {dialogsElements}
+                </div>
+                <div className="messages">
+                {messagesElements}
+                </div>
+                </main>
+            );
+        }
+
+        
+        И Посты
+
+        const MyPosts = () => {
+
+            let postsData = [
+                { id: 1, post: "yo", likesCount: 12 },
+                { id: 2, post: "It's my fist post.", likesCount: 11 },
+                { id: 3, post: "0", likesCount: 50 },
+            ];
+
+            let postsElements = postsData.map(el => <Post msg={el.post} likesCount={el.likesCount} />)
+
+            return (
+                <div className="form__new-post">
+                <div className="new-post__title">New Post
+                    <textarea></textarea>
+                    <button>Add Post</button>
+                </div>
+                {postsElements}
+                </div>
+            );
+            }
+
+            const Post = (props) => {
+            console.log(props);
+            return (
+                <div className="post">
+                <img src="https://th.bing.com/th/id/R.bf5e1eba30b53dffbc6a0353361855d4?rik=7duhy3rpO8d7MQ&riu=http%3a%2f%2feskipaper.com%2fimages%2favatar-3.jpg&ehk=YnIJUh9Lgb92QMa1swP9zHGNKXU66it9IG4vR41p6I4%3d&risl=&pid=ImgRaw&r=0" />
+                <div className="post__message">{props.msg}</div>
+                <div className="likes">Likes: {props.likesCount}</div>
+                </div>
+            );
+        }
+
+*/}
+
+
+{/*    ====    26. ___     ====
 
 
 
