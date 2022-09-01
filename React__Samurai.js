@@ -1650,7 +1650,302 @@
 */}
 
 
-{/*    ====    26. ___     ====
+{/*    ====    26. Структура проекта, еще раз про UI - BLL     ====
+
+    В index.js отрисовываем компонент App, все его содержимое  оборачиваем в BrowserRouter для контроля за кликами по ссылкам и
+        их загрузки без перезагрузки страницы. В BrowserRouter - компоненты Header, Navbar и в тегах Route Dialogs и Profile.
+        В Profile отрисовываются компоненты ProfileInfo и MyPosts, они находятся в сових папках в папке компонента в котором
+        используются. Внутри MyPosts в папке находится компонент Post. В Dialogs присутствуют  DialogItem и Message, но мы их
+        пока не выносили в отдельные файлы и папки - этим и займемся. 
+        
+    //*! При работе с проектом(своим или когда разбираемся с чужим) автор рекоммендует делать схему проекта чтобі потом быстро
+        разобраться в нем через время при необходимости.
+
+    Создаи папки и в них файлы jsx стили оставим в главном файле Dialogs.module.css, потому что там не много стилей и разбивать не
+        целесообразно и для работоспособности кода испортируем этот ксс модуль в новые созданные jsx файлы DialogItem и Message,
+        экспортируем их содержимое и делаем импорт компонент в Dialogs.jsx.
+
+
+    //*! Реакт отрисовывает компоненты для UI на основании компонентов которые принимают в себя props - данные приходящие из BLL. 
+        БЛЛ конвертирует данные с сервера в данные которые хранит в себе и отправляет их в компоненты, в роли BLL выступает Redux.
+        Как только в Redux изменяются данные, Реакт перерисовывает компоненты для которых эти данные изменились, в тоже время из
+        UI в БЛЛ постоянно отправляются комманды(например - пользователь нажал кнопку чтобы удалить такой-то пост, сделай это).
+
+        В нашей структуре пока получается что данные лежат в самом компоненте MyPosts и Dialogs, это нужно будет исправить путем
+        вынесения данных за компоненты, ближайший файл который не является компонентом - index.js, в нем начинает отрисовываться
+        компонент App, но сам файл по сути компонентом не является, для начала поступим так. 
+        
+        //todo Из-за Route мы самостоятельно не сможем поднять данные в index.js(потому что используем не тег компонента, а просто
+        его название и никаки не можем добавить аттрибут в этот тег), поэтому наша задача поднять их на 1 уроевень компонента выше.
+
+*/}
+
+
+{/*    ====    27. Component vs render, прокидываем props через Route     ====
+
+    Для того чтобы вынести данные и потом прокинуть их через пропсы компонентов в Route нужно чтобы в роуте отрисовывался тег
+        компонента. Сейчас там такой код
+
+            <Route path="/dialogs" component={Dialogs}/>
+            <Route path="/profile" component={Profile}/>
+
+
+    Но есть еще один способ записать роут, написать render вместо component и передать анонимную ф-ю которую вызовет render, и
+        уже эта ф-я вернет тег компонента :
+
+        <Route path="/dialogs" render={ () => <Dialogs /> }/>
+        <Route path="/profile" render={ () => <Profile /> }/>
+
+        //*! эти способы взаимоисключающие.
+
+
+    Можно также вынести эту ф-ю в отдельную переменную и потом подставить по первому способу
+
+        let FunctionDialog = () => <Dialogs />
+
+        <Route path="/dialogs" component={ FunctionDialog }/>
+        <Route path="/profile" render={ () => <Profile /> }/>
+
+
+    //*! Второй способ заработал и с component, но автор рекомендует использовать только с render
+
+        <Route path="/dialogs" component={ () => <Dialogs /> }/>
+        <Route path="/profile" component={ () => <Profile /> }/>
+
+    
+
+    Чтобы прокинуть props который пришел в App дальше нужно его разбить на части и закинуть в Dialogs что-то одно, а в Profile
+        что-то другое(нужные массивы).
+
+*/}
+
+
+{/*    ====    28. Выносим данные в index.js     ====
+
+    Будем переносить данные по одному уровню вверх чтобы было наляднее(понятнее логика) и не запутаться.
+
+
+    Для начала посмотрим как вынести данные на уровень выше из MyPosts в Profile. Выносим массив с данными в компонент Profile
+        а в методе c map добавляем слово props. А в Profile в саму ф-ю вставляем массив postsData и передаем его в тег компонента
+        MyPosts.
+        
+        const Profile = () => {
+        
+            let postsData = [
+                { id: 1, post: "yo", likesCount: 12 },
+                { id: 2, post: "It's my fist post.", likesCount: 11 },
+                { id: 3, post: "0", likesCount: 50 },
+            ];
+
+            return (
+                <main className="content">
+                <ProfileInfo />
+                <MyPosts postsData={postsData}/>
+                </main>
+            );
+        }
+
+
+        const MyPosts = (props) => {
+
+            let postsElements = props.postsData.map(el => <Post msg={el.post} likesCount={el.likesCount} />);
+
+            return (
+                <div className="form__new-post">
+                <div className="new-post__title">New Post
+                    <textarea></textarea>
+                    <button>Add Post</button>
+                </div>
+                {postsElements}
+                </div>
+            );
+        }
+
+
+    Вынесем данные в App.js. Добавляем в Profile прием props и объект props для передачи в компонент. В Апп вставляем массив с
+        данными и для тега Profile передаем массив по названию.
+
+        const Profile = (props) => {
+        
+            let postsData = [
+                { id: 1, post: "yo", likesCount: 12 },
+                { id: 2, post: "It's my fist post.", likesCount: 11 },
+                { id: 3, post: "0", likesCount: 50 },
+            ];
+
+            return (
+                <main className="content">
+                <ProfileInfo />
+                <MyPosts postsData={props.postsData}/>
+                </main>
+            );
+        }
+
+        const App = () => {
+
+            let postsData = [
+                { id: 1, post: "yo", likesCount: 12 },
+                { id: 2, post: "It's my fist post.", likesCount: 11 },
+                { id: 3, post: "0", likesCount: 50 },
+            ];
+            
+            return (
+            <div className="app-wrapper">
+                {Header()}
+                {Navbar()}
+                <main className="app-wrapper-content">
+                <Dialogs /> 
+                <Profile postsData={postsData}/>  = //*! <Route path="/profile" render={ () => <Profile postsData={postsData}/> }/>
+                </main>                                                      для приложения
+            </div>
+            );
+        }
+
+    
+    Для App выносим также, вставляем данные ДО рендера, а потом в теге Апп передаем массив <App postsData={postsData}/>
+
+
+
+    По аналогии вынесем данные из Dialogs.
+
+        const Dialogs = (props) => {
+
+            let dialogsElements = props.dialogsData.map(el => (
+                <DialogItem name={el.name} id={el.id} />
+            ));
+
+            let messagesElements = props.messagesData.map(el => (
+                <Message msg={el.msg} />
+            ));
+
+
+            return (
+                <main className="dialogs">
+                <div className="dialogsItems">
+                    {dialogsElements}
+                </div>
+                <div className="messages">
+                    {messagesElements}
+                </div>
+                </main>
+            );
+        }
+
+
+        const App = () => {
+
+            let postsData = [
+                { id: 1, post: "yo", likesCount: 12 },
+                { id: 2, post: "It's my fist post.", likesCount: 11 },
+                { id: 3, post: "0", likesCount: 50 },
+            ];
+
+            let messagesData = [
+                { id: 1, msg: "Hi" },
+                { id: 2, msg: "Yo" },
+                { id: 3, msg: "What's up?" },
+                { id: 4, msg: "Hi" },
+                { id: 5, msg: "Yo" }
+            ];
+
+            let dialogsData = [
+                { id: 1, name: "Dmitriy" },
+                { id: 2, name: "Andrey" },
+                { id: 3, name: "Valera" },
+                { id: 4, name: "Sveta" },
+                { id: 5, name: "Viktor" }
+            ];
+
+            
+            return (
+            <div className="app-wrapper">
+                {Header()}
+                {Navbar()}
+                <main className="app-wrapper-content">
+                <Dialogs messagesData={messagesData} dialogsData={dialogsData} />   //*! <Route path=".....
+                <Profile postsData={postsData}/>
+                </main>
+                </div>
+                );
+        }
+
+
+    Дальше перенесем в Апп  <App postsData={postsData} messagesData={messagesData} dialogsData={dialogsData} />
+
+
+    Теперь данный у нас отделены от компонентов.
+
+*/}
+
+
+{/*    ====    29. Упаковываем данные в state     ====
+
+    Для сохранения принципе single responcibility(один файл - одна задача, одна ф-я - одна задача) из файла App.js вынесем все наши
+        массивы с данными в отдельный файл State.js . Из него данные будут импортироваться(так ак Апп не компонент и через props
+        не получиться) через import в App.js. Чтобы не делать кучу импортов упакуем все массивы в один объект state с названиями
+        свойств как переменные, и значениями свойств - массивами. А дальше прокинем state по  цепочке но в Route отдадим нужные
+        свойства определенным коспонентам, а не целый state(чтобы не передавать лишнее, будет излишнее знание о системе - нарушается
+        инкапсуляция).
+
+        Почему не импортируем state напрямую в компонент, а прокидываем через props - потому что мы хотим сохранить чистые ф-и,
+        то есть чтобы ф-я работала только с тем что в нее приходит из вне(ну и так будет снова же много лишней информации),
+        чтобы система была контролируема, предсказуема, тестируемая - нужно избавиться от глобальных вещей(как этот импорт всей 
+        базы данных, данные не должны быть глобальными).
+
+
+        Создаем в components папку - redux и в ней state.js в него переместим все наши данные
+
+            let state = {
+                postsData:[
+                    { id: 1, post: "yo", likesCount: 12 },
+                    { id: 2, post: "It's my fist post.", likesCount: 11 },
+                    { id: 3, post: "0", likesCount: 50 }],
+                messagesData: [
+                    { id: 1, msg: "Hi" },
+                    { id: 2, msg: "Yo" },
+                    { id: 3, msg: "What's up?" },
+                    { id: 4, msg: "Hi" },
+                    { id: 5, msg: "Yo" }],
+                dialogsData: [
+                    { id: 1, name: "Dmitriy" },
+                    { id: 2, name: "Andrey" },
+                    { id: 3, name: "Valera" },
+                    { id: 4, name: "Sveta" },
+                    { id: 5, name: "Viktor" }]
+            };
+
+            export default state;
+
+
+        Теперь этот объект импортируем в index.js и передаем его в тег App не по отдельности, а полностью :
+
+            import state from './redux/state'
+
+            <App appState={state}/>
+
+
+        Теперь в props App приходит объект appState и путь к массиву удлинняется на это название:
+
+        const App = (props) => {
+            return (
+            <div className="app-wrapper">
+                {Header()}
+                {Navbar()}
+                <main className="app-wrapper-content">
+                <Dialogs messagesData={props.appState.messagesData} dialogsData={props.appState.dialogsData} />
+                <Profile postsData={props.appState.postsData}/>
+                </main>
+                </div>
+                );
+        }
+        
+        //*! в моем примере не проходит импорт, так что не срабатывает.
+        
+
+
+
+                13-00
+
 
 
 
