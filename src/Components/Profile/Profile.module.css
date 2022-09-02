@@ -1,10 +1,10 @@
-.content__header {
+.contentHeader {
     width: 100%;
     height: 250px;
     margin-bottom: 20px;
 }
 
-.form__user{
+.formUser{
     display: flex;
     margin-bottom: 20px;
 }
