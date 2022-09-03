@@ -1089,8 +1089,9 @@
         This means it will render an <Outlet /> with a null value by default resulting in an "empty" page.
 
 
-    Заработало при такой конфигурации, //? почему element? У Сани работало и с Switch хотя у меня была ошибка при его импорте,
-        поэтому его заменили Routes.
+    //*! Заработало при такой конфигурации, так происходит потому что модуль обновился и теперь Route пишеться с element,
+        и вставляется сам тег компонента, поэтому дальше по программе render в Route не понадобиться, также в новой версии
+        удален switch поэтому он не импортируется из модуля а вместо него используется Route.
 
         import {BrowserRouter as Router, Routes, Route, Link, useRouteMatch, useParams} from "react-router-dom";
 
@@ -1939,13 +1940,94 @@
                 );
         }
         
-        //*! в моем примере не проходит импорт, так что не срабатывает.
-        
+
+    Все данные для всех страниц будут храниться в этом одном объекте state. Для того чтобы как-то сгруппировать эти массивы в 
+        объекте state будем делать подобъекты, например dialogsData и messagesData относятся к одному компоненту Dialogs. Создадим
+        в state свойства profilePage и dialogsPage, которые в свою очередь являются объектами и в них перенесем наши массивы.
+        Теперь один подобъект будет обслуживать одну страницу. Для доступа к этим подобъектам нужно добавить в путь для props
+        в теги Profile и Dialogs имена подобъектов.
+
+        let state = {
+            profilePage: {
+                postsData: [
+                    { id: 1, post: "yo", likesCount: 12 },
+                    { id: 2, post: "It's my fist post.", likesCount: 11 },
+                    { id: 3, post: "0", likesCount: 50 }]
+            },
+            dialogsPage: {
+                dialogsData: [
+                    { id: 1, name: "Dmitriy" },
+                    { id: 2, name: "Andrey" },
+                    { id: 3, name: "Valera" },
+                    { id: 4, name: "Sveta" },
+                    { id: 5, name: "Viktor" }],
+                messagesData: [
+                    { id: 1, msg: "Hi" },
+                    { id: 2, msg: "Yo" },
+                    { id: 3, msg: "What's up?" },
+                    { id: 4, msg: "Hi" },
+                    { id: 5, msg: "Yo" }]
+            }
+        };
 
 
+        function App(props) {
+            return (
+                <BrowserRouter>
+                    <div className='app-wrapper'>
+                        <Header />
+                        <Navbar />
+                        <div className='app-wrapper-content'>
+                            <Routes>
+                                <Route path="/profile" element={<Profile postsData={props.appState.profilePage.postsData} />} />
+                                <Route path="/dialogs" element={<Dialogs messagesData={props.appState.dialogsPage.messagesData}
+                                                                     dialogsData={props.appState.dialogsPage.dialogsData} />} />
+                            </Routes>
+                        </div>
+                    </div>
+                </BrowserRouter>
+            );
+        }
 
-                13-00
 
+    Можно еще улучшить, сократим передачу для dialogsPage передав целый подобъект в компонент Dialogs, а там уже раскрыв его, также сделаем для Profile.
+
+        <Route path="/profile" element={<Profile state={props.appState.profilePage} />} />
+        <Route path="/dialogs" element={<Dialogs state={props.appState.dialogsPage} />} />
+
+
+        const Profile = (props) => {
+            return(
+                <main>
+                    <ProfileInfo />
+                    <MyPosts postsData={props.state.postsData}/>
+                </main>
+            );
+        }
+
+
+        const Dialogs = (props) => {
+
+            let dialogsElements = props.state.dialogsData.map(el => (
+                <DialogItem name={el.name} id={el.id} />
+            ));
+
+            let messagesElements = props.state.messagesData.map(el => (
+                <Message msg={el.msg} />
+            ));
+
+
+    У автора в консоли выводятся ошибки связанные с ключами, поговорим о них в следующих видео.
+
+    //todo сделать в сайдбаре секцию друзей(3 штуки аватарка+имя) и эти данные хранить в state,
+        в Dialogs сделать аватарки для друзей и еще одну секцию сообщений напротив этих сообщ.
+        перед сообщениями также добавить аватарки, и эти сообщения привязвть к разным частям
+        страницы.
+
+*/}
+
+
+{/*    ====    30. Остановочка, react за час №2     ====
 
 
 

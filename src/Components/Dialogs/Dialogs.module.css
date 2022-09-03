@@ -1,9 +1,31 @@
-.dialogs{
-    display: flex;
-    justify-content: space-around;
-    align-content: center;
+.dialogs {
+    display: grid;
+    grid-template-columns: 2fr 8fr;
+
 }
 
-.dialogs__users, .dialogs__usersMsgs{
-    padding-top: 10px;
+.dialogsItems {
+    padding: 20px;
+}
+
+.dialogsItems .active {
+    color: gold;
+}
+
+.dialog {
+margin-bottom: 10px;
+}
+
+.dialog a{
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.messages {
+    padding: 20px;
+}
+
+.messages .message {
+    margin-bottom: 10px;
 }
