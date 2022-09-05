@@ -2029,6 +2029,253 @@
 
 {/*    ====    30. Остановочка, react за час №2     ====
 
+    Закрепляем то что изучили.
 
+*/}
+
+
+{/*    ====    31. onClick, ref, VirtualDOM     ====
+
+    Добавляем логику на сайт(изменения при нажатии кнопок). 
+    
+    Разделим ее на 2 части потому что UI отлавливаем действия пользователя, но компоненты не имеют право вносить изменения в state: 
+        1) научимся взаимодействовать с пользователем с кнопками, элементами и данными введенными в эти элем;
+        2) склеим наш state - изменения которые произошли от действий пользователя с изменениями в state.
+
+
+    Для того чтобы можно было кликнуть на элемент нужно в него добавить событие onClick. Добавим его к кнопке в MyPosts и при 
+        нажатии будет запускаться анонимная стрелочная ф-я которая выполнит код внутри:
+
+        <button onClick={ ()=> {alert('Hello')}  } >Add Post</button>
+
+        эта ф-я выполняется только после нажатия - коллбек ф-я(ф-я которую мы сами не вызываем, а передаем для вызова другому эл.)
+
+
+    Вынесем эту ф-ю(логику) вне JSX разметки и передадим в нее только название ф-и:
+
+        let addPost = ()=> {alert('Hello')};
+
+        return (
+            <div className="form__new-post">
+            <div className="new-post__title">New Post
+                <textarea></textarea>
+                <button onClick={ addPost } >Add Post</button>
+            </div>
+            {postsElements}
+            </div>
+        );
+        
+
+
+    Теперь нам нужно чтобы UI собрал данные из формы и по клику кнопки отправил эти данные чтобы они как-то попали в state.
+        //*! Так как мы работаем с VirtualDOM в реакте, то не должны обращаться к DOM на прямую, это будет не правильно и может
+        повлечь замедление работы системы, то есть мы не можем просто назначить для <textarea></textarea> айди и обратившись к
+        нему взять его value и передать, это будет не правильно еще и потому что мы не знаем в какой момент времени элемент с
+        <textarea></textarea> будет существовать в DOM.
+
+
+
+    В реакте для обращения к элементу <textarea></textarea> мы создадим для него ссылку, и укажем ее название в теге <textarea>
+        чтобы между ними создалась связь:
+        
+        let newPostElement = React.createRef();
+
+        <textarea ref={newPostElement}></textarea>
+
+
+        Теперь можем обратиться по ссылке(newPostElement) к этому нативному ХТМЛ элементу(current) и взять его содержимое(value):
+
+        let newPostElement = React.createRef();
+
+        let addPost = () => {
+            let text = newPostElement.current.value;
+            alert(text);
+        };
+
+        return (
+            <div className="form__new-post">
+            <div className="new-post__title">New Post
+                <textarea ref={newPostElement}></textarea>
+                <button onClick={ addPost } >Add Post</button>
+            </div>
+            {postsElements}
+            </div>
+        );
+
+        //*! реакт рекомендует не использовать часто ref(потому что мы по сути тоже минуя реакт обращаемся напрямую к DOM), но так
+        как это первый подход с которым мы познакомимся, то пока будем использовать его. Если считывать как у нас в примере 
+        значением, мы не меняем ничего в DOM то еще ладно, но если нужно изменить то ref не стоит использовать для этой цели.
+
+
+    Теперь нужно это значение передать в state profilePage создать там новый пост с новым айди следующем по нумерации и с числом
+        лайков likesCount - 0, поэтому столько работы мы не можем возложить на компонент в котором считали значение, а то нарушится
+        принцип single responcibility. Также отрисовка компонентов и прокидывание props у нас происходит 1 раз при загрузке 
+        страницы и нам нужно заново запустить прокидывание props с новыми значениями чтобы заново произошла перерисовка.
+
+*/}
+
+
+{/*    ====    32. прокидываем callback через props     ====
+
+    Чтобы изменять данные в state файле в объекте с данными, ф-я по изменению этих данных тоже должна находиться в этом файле.
+        Простой пример добавления строки в массив users объекта state ф-й addUser:
+
+        let state = {
+            users:['Dima', 'Alex']
+        }
+
+        let addUser = (userName) => {
+            state.users.push(userName);
+        }
+
+
+    Чтобы вызвать такую ф-ю при нажатии кнопки нужно ее прокинуть как и state через props. Так как ф-я это тоже объект, мы это
+        можем сделать, экспортировав ее без не по дефолту(//? а по имени, именная?).
+
+
+
+    В state.js добавим ф-ю addPost, она нарушает концепцию "чистой ф-и" потому что параметры которые она принимает не будут к
+        ней приходить откуда то, а будут искаться в этом же файле. Но так как это происходит в одном файле то это допустимо
+        (куда ни шло). Эта ф-я будет пушить в нужный массив новый объект, тут же создаем структуру объекта(id пока пишем 5 пока
+        не важно).
+
+        let addPost = (postMsg) => {
+            let newPost ={
+                id:5,
+                msg: postMsg,
+                likesCount: 0
+            };
+
+            state.profilePage.postsData.push(newPost);
+        }
+
+
+        Для экспорта без дефолта можно сразу перед объявлением переменно писать export, импортировать такую ф-ю нужно иначе, через
+        фигурные скобки, в index.js :
+
+        import {addPost} from './state'
+
+
+    Из index.js будем прокидывать ф-ю через props:
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+            root.render(
+            <React.StrictMode>
+                <App appState={ state } addPost={ addPost } />
+            </React.StrictMode>
+        );
+
+
+    Также дальше прокидываем через Profile:
+
+         <MyPosts postsData={props.state.postsData} addPost={props.addPost} />
+
+
+    B уже в MyPosts используем ее - props.addPost(text):
+
+        let addPost = () => {
+            let text = newPostElement.current.value;
+    //todo  props.addPost(text);
+        };
+
+        return (
+            <div className="form__new-post">
+            <div className="new-post__title">New Post
+                <textarea ref={newPostElement}></textarea>
+                <button onClick={ addPost } >Add Post</button>
+            </div>
+            {postsElements}
+            </div>
+        );
+
+
+    Теперь после нажатия на кнопку новый пост не видим на странице, хотя добавился в state, потому что нужно запустить render заново.
+
+*/}
+
+
+{/*    ====    33. Отрисовка поста (зачатки FLUX)      ====
+
+    Теперь после нажатия на кнопку новый пост не видим на странице, хотя добавился в state, потому что нужно запустить render 
+        заново. И так может быть много раз, а если нам нужно это использовать минимум несколько раз обернем эти действия в 
+        ф-ю в index.js rerenderEntireTree(пререрисовать всё дерево) - пока будем перерисовывать все дерево когда изменится state, 
+        поэтому в ф-ю rerenderEntireTree вставим ф-ю ренедера всего App, и после объявления этой ф-и её нужно первый раз запустить
+        чтобы произошел первый render:
+
+        let rerenderEntireTree = () => {
+            const root = ReactDOM.createRoot(document.getElementById('root'));
+            root.render(
+            <React.StrictMode>
+                <App appState={state}/>
+            </React.StrictMode>
+            );
+        }
+
+        rerenderEntireTree();
+
+
+
+    Теперь можем запускать ф-ю перерисовки в файле state так как он хранит state и знает когда state изменится. Хотелось бы 
+        //*! импортировать rerenderEntireTree из index.js в state, но так делать нельзя потому что мы уже из state импортируем в 
+        index.js.(//todo почему так нельзя делать???). 
+        Чтобы это обойти создаем новый файл render.js в него помещаем ф-ю rerenderEntireTree и импортируем её в index.js
+        и в state.js. Теперь в файлах такой код:
+
+
+        state.js - импортируем {rerenderEntireTree} и в параметрах передаем ей state
+
+            let addPost = (postMsg) => {
+                let newPost ={
+                    id:5,
+                    msg: postMsg,
+                    likesCount: 0
+                };
+
+                state.profilePage.postsData.push(newPost);
+                rerenderEntireTree(state);
+            }
+
+
+        index.js - убираем лишний импорт(остается импорт {rerenderEntireTree} from render + state from redux)
+
+            rerenderEntireTree(state);
+
+
+        render.js(импорт реакт, реактДОМ,  индекс.ксс, Апп, {addPost} from state, Роуты)
+
+            export let rerenderEntireTree = (state) => {
+                const root = ReactDOM.createRoot(document.getElementById('root'));
+                root.render(
+                <React.StrictMode>
+                    <App appState={state}/>
+                </React.StrictMode>
+                );
+            }
+
+
+    Теперь получается так что рендер происходит в render.js и эта ф-я импортируется в state и script, когда в стейт происходит
+        добавление нового элемента вызывается ф-я rerenderEntireTree и ей передается новый стейт, также этот стейт импортируется
+        в script и там ф-я рендера вызывается еще раз с новым стейтом, который по props передается в рендер благодаря чему и 
+        формируется новая структура. В script происходит первый запуск рендера.
+
+
+
+    Также добавим очистку поля ввода после нажатия кнопки:
+
+        let addPost = () => {
+            let text = newPostElement.current.value;
+            props.addPost(text);
+            newPostElement.current.value = '';
+        };
+
+
+
+    Flux - архитектура(подход к организации потока данных когда UI пересылает данные в BLL, а оттуда приходят новые данные на 
+        сосновании которых нжно перерисоваыть структуру). Одна из ее реализаций - Redux.
+        //*!  Прочитать как на самом деле это звучит.
+
+    Сейчас у нас нарушена эта архитектура, потому что UI не должен меняться пока не изменяться данные BLL и не придут обратно, а у
+        нас сейчас можно что-то напечатать в <textarea> получается UI изменился, а BLL не изменился, это исправим в следующем 
+        уроке.
 
 */}
