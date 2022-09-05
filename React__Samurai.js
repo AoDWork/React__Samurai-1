@@ -2142,7 +2142,7 @@
         let addPost = (postMsg) => {
             let newPost ={
                 id:5,
-                msg: postMsg,
+                post: postMsg,
                 likesCount: 0
             };
 
@@ -2166,7 +2166,7 @@
         );
 
 
-    Также дальше прокидываем через Profile:
+    Также дальше прокидываем в Апп и далее в MyPosts через Profile:
 
          <MyPosts postsData={props.state.postsData} addPost={props.addPost} />
 
@@ -2227,7 +2227,7 @@
             let addPost = (postMsg) => {
                 let newPost ={
                     id:5,
-                    msg: postMsg,
+                    post: postMsg,
                     likesCount: 0
                 };
 
@@ -2241,13 +2241,15 @@
             rerenderEntireTree(state);
 
 
-        render.js(импорт реакт, реактДОМ,  индекс.ксс, Апп, {addPost} from state, Роуты)
+        render.js(импорт реакт, реактДОМ,  индекс.ксс, Апп, {addPost} from state - импортируем тоже из стейта?,
+            тогда смысл всего этого, получился тот же импорт только не самого стейта, хммм). addPost={addPost} 
+            - мне пришлось тоже передать, со стейтом не передавался, даже при дефолтном экспорте
 
             export let rerenderEntireTree = (state) => {
                 const root = ReactDOM.createRoot(document.getElementById('root'));
                 root.render(
                 <React.StrictMode>
-                    <App appState={state}/>
+                    <App appState={state} addPost={addPost} /> 
                 </React.StrictMode>
                 );
             }
