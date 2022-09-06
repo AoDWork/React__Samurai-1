@@ -2242,8 +2242,7 @@
 
 
         render.js(импорт реакт, реактДОМ,  индекс.ксс, Апп, {addPost} from state - импортируем тоже из стейта?,
-            тогда смысл всего этого, получился тот же импорт только не самого стейта, хммм). addPost={addPost} 
-            - мне пришлось тоже передать, со стейтом не передавался, даже при дефолтном экспорте
+            тогда смысл всего этого, получился тот же импорт только не самого стейта, хммм). 
 
             export let rerenderEntireTree = (state) => {
                 const root = ReactDOM.createRoot(document.getElementById('root'));
@@ -2279,5 +2278,486 @@
     Сейчас у нас нарушена эта архитектура, потому что UI не должен меняться пока не изменяться данные BLL и не придут обратно, а у
         нас сейчас можно что-то напечатать в <textarea> получается UI изменился, а BLL не изменился, это исправим в следующем 
         уроке.
+
+*/}
+
+
+{/*    ====    34. FLUX круговорот на каждый символ      ====
+
+    //*! Мы используем свой state пока что как менеджмент данных, это не тот стандартный setState реакта.
+
+    Для небольших проектов можно использовать Локальный state например в App.js как часть классового компонента. Плючы при таком 
+        методе - можно использовать setState, нам бы не нужно было заморачиваться с перерендером структуры, созданием render.js
+        и прокидыванием стейта из другого файла - такой подход используется в обучающих или небольших проектах. Но при таком
+        подходе если данных будет много, нужно будет дробить их и оборачивать кучей ф-й чтобы было понятно что мы обновляем,
+        соответственно в Апп будет очень много кода для изменения state который к ней не относится.
+        
+
+    Второй подход - можно сделать локальные стейты почти для каждого компонента. Плюсы - быстрое построение приложения. Минусы -
+        трудность с поддержкой - трудно и долго выискивать ошибку в случае краша приложения.
+
+
+    Так как мы делаем - выносим все данные и ф-ии для их обработки в отдельный файл - это принцип Redux(принцип функционального
+        программирования).
+
+
+    Таких системи подходов state managment очень много(локальный стейт, Redux, MobX, ...) у всех есть свои плюсы и минусы и
+        нужно зная эти ньюансы выбрать подход для конкретного приложения(некоторые могут выбирать ориентируясь на то что им больше
+        нравится или на то с чем больше работали).
+
+
+
+    Мы сконцентрируемся на Redux он реализовывает Flux архитектуру(круговорот данных от UI в BLL и наоборот).
+
+    Сделаем так чтобы нельзя было написать даже символ в поле <textarea> без изменения в state и перерендывания. В MyPosts
+        изменим <textarea ref={newPostElement}></textarea> так чтобы он был самозакрывающимся и допищем ему фиксированное 
+        значение аттрибута value. 
+
+            extarea ref={newPostElement} value='React samurai' />
+
+        Теперь видим это значение на странице в текстовом поле и не можем ничего написать другого. А в консоле выскочила ошибка
+        что мы использовали value без onChange обработчика - так отренедерится поле "только для чтения", и если поле должно
+        изменяться нужно использовать defaultValue. Или установить onChange или readOnly.
+
+
+        Добавим обработчик onChange в текстэрэа, пока пустой, видим что ошибка пропала, но в поле текст не изменяется.:
+
+            let onPostChange = () => {
+
+            };
+
+            return (
+            <div className={style.form__newPost}>
+                <div className={style.newPost__title}>New Post
+                <textarea ref={newPostElement} onChange={ onPostChange }></textarea>
+
+
+        Чтобы оно изменялось от state пропишем:
+
+            < ref={newPostElement} onChange={ onPostChange } value={props.newPostText} />
+
+
+        В state в profilePage добавим свойство newPostText, оно будет передаваться вместе со state внутри profilePage
+
+            profilePage: {
+                postsData: [
+                    { id: 1, post: "yo", likesCount: 12 },
+                    { id: 2, post: "It's my fist post.", likesCount: 11 },
+                    { id: 3, post: "0", likesCount: 50 }],
+                newPostText: 'React samurai'
+            },
+
+
+        В Апп переименуем state который отправляем для Profile на profilePage - чтобы знать что мы отправляем только часть state,
+            далее нам нужно переименовать в Profile путь из props
+
+            <Route path="/profile"  element={<Profile profilePage={props.appState.profilePage} 
+                                                addPost={props.addPost} />} />
+
+
+        В Profile переименовываем путь props - props.profilePage.postsData и добавляем newPostText как props для MyPosts
+
+            const Profile = (props) => {
+                return(
+                    <main>
+                        <ProfileInfo />
+                        <MyPosts postsData={props.profilePage.postsData}
+                                newPostText={props.profilePage.newPostText}
+                                addPost={props.addPost}/>
+                    </main>
+                );
+            }
+
+
+    Теперь текст в поле на сайте будет - React samurai - те данные которые пришли в форму по props, изменить их пока нельзя
+        на сайте потому что у нас нету механизма отправки value в state, а так как данные там не изменятся то props нам не
+        дает напечатать то что мы хотим. Воспользуемся тем же методом принятия value и отправки его в state как и при клике
+        на кнопку, только изменим ф-ю которая будет обрабатывать принятие данных, а ссылка на значение поля у нас уже есть
+        и тогда в state произойдет изменение, сработает ререндер и вы увидим символ который напечатали.
+        
+
+        В state создаем и сразу экспортируем ф-ю которая будет присваивать приходящее к нам значение - свойству объекта newPostText
+
+            export let updateNewPostText = (newText) => {
+                state.profilePage.newPostText = newText;
+                rerenderEntireTree(state);
+            }
+
+            теперь ее нужно по пропсам прокинуть в MyPosts
+
+        
+        В render импортируем ф-ю и добавляем в props для Апп. //*! Всётаки цикл импорт-экспорт между файлами в данном случае 
+           //*! render и state остался, в следующих уроках мы это пофиксим.
+
+            import React from 'react';
+            import ReactDOM from 'react-dom/client';
+            import './index.css';
+            import App from './App';
+            import { addPost } from './Components/redux/state';
+            import { updateNewPostText } from './Components/redux/state';
+
+
+            export let rerenderEntireTree = (state) => {
+                const root = ReactDOM.createRoot(document.getElementById('root'));
+                root.render(
+                    <React.StrictMode>
+                    <App appState={state} addPost={addPost} updateNewPostText={updateNewPostText}/>
+                    </React.StrictMode>
+                );
+            }
+
+
+        В Апп прокинем ф-ю дальше в Profile
+
+            <Route path="/profile"  element={<Profile profilePage={props.appState.profilePage}
+                                                updateNewPostText={props.updateNewPostText} 
+                                                addPost={props.addPost} />} />
+
+
+        В Profile прокидываем дальше в MyPosts
+
+            const Profile = (props) => {
+                return(
+                    <main>
+                        <ProfileInfo />
+                        <MyPosts postsData={props.profilePage.postsData}
+                                newPostText={props.profilePage.newPostText}
+                                updateNewPostText={props.updateNewPostText} 
+                                addPost={props.addPost}/>
+                    </main>
+                );
+            }
+
+
+        В MyPosts теперь можно вызывать эту ф-ю и передавать ей значение поля для занесения его в state
+
+            let onPostChange = () => {
+                let text = newPostElement.current.value;
+                props.updateNewPostText(text);
+            };
+
+
+        Теперь в поле впечатываются символы и при клике на кнопку, добавляется пост с этим текстом но теперь при этом не 
+        обнуляется текст в окне, потому что он теперь хранится в state. Нужно добавить в ф-ю клика кнопки вместо старого 
+        зануления вызов ф-ии updateNewPostText с пустой строкой.
+
+            let addPost = () => {
+                let text = newPostElement.current.value;
+                props.addPost(text);
+                props.updateNewPostText('');
+            };
+
+
+    Доработаем. В ф-и addPost мы пересылаем значение поля из UI но оно же у нас уже хранится в state в newPostText, поэтому
+        его можно не отправлять из UI, а брать напрямую из state. Удаляем из addPost отправку данных.
+
+        let addPost = () => {
+            props.addPost();
+            props.updateNewPostText('');
+        };
+
+        
+    в state теперь нам тоже не нужно его получать как параметр ф-и
+
+        export let addPost = () => {
+            let newPost = {
+                id:5,
+                post: state.profilePage.newPostText,
+                likesCount: 0
+            }
+
+            state.profilePage.postsData.push(newPost);
+            rerenderEntireTree(state);
+        }
+
+    
+    Доработаем. Сейчас у нас очистка поля после добавления поста происходит в UI, но если пользователь ввел слишком длинный пост,
+        и его не пропустил BLL, то пост не добавится, а поле обнулится и пользователь будет недоволен. Можно передать очистку
+        поля в BLL state.
+
+        В MyPosts удаляем ф-ю зануления
+
+           let addPost = () => {
+                props.addPost();
+            };
+
+
+        В state теперь в ф-ю addPost добавим обнуление свойства newPostText
+
+            export let addPost = () => {
+                let newPost = {
+                    id:5,
+                    post: state.profilePage.newPostText,
+                    likesCount: 0
+                }
+
+                state.profilePage.postsData.push(newPost);
+                state.profilePage.newPostText = '';
+                rerenderEntireTree(state);
+            }
+
+*/}
+
+
+{/*    ====    35. callback, subscribe, observer      ====
+
+    Так как автор немного запутался с круговоротом информации при переносе ф-и rerenderEntireTree в render, и у нас осталась 
+        циклическая зависимость между файлами, избавимся от render, перенесем всё назад в index.js (удалим импорт из рендера,
+        и експорт). 
+
+        import React from 'react';
+        import ReactDOM from 'react-dom/client';
+        import './index.css';
+        import App from './App';
+        import state from './Components/redux/state'
+        import { addPost } from './Components/redux/state';
+        import { updateNewPostText } from './Components/redux/state';
+
+
+        let rerenderEntireTree = (state) => {
+            const root = ReactDOM.createRoot(document.getElementById('root'));
+            root.render(
+                <React.StrictMode>
+                <App appState={state} addPost={addPost} updateNewPostText={updateNewPostText}/>
+                </React.StrictMode>
+            );
+        }
+
+        rerenderEntireTree(state);
+
+        
+    В state мы снова не можем импотировать эту ф-ю, но она нужна для того чтоб происходил ререндер, автор пока сделал локальную
+        ф-ю с таким же названием в state, проект загрузился первый раз, но при клике на кнопку или вводе текста в поле ререндера
+        не происходит, хотя в state данные отправляются.
+
+        let rerenderEntireTree = () => {
+
+        }
+
+
+    Используем принцип колбека. В index мы импортируем компонент Апп и при его вызове в аттрибутах ему назад передаем нужную 
+        информацию через props. Сделаем также и для state, создадим ф-ю subscribe которая будет принимать параметр observer 
+        (ф-и которые н будем переопределять объявим с const вместо let)
+
+            export const addPost = () => {
+                let newPost = {
+                    id:5,
+                    post: state.profilePage.newPostText,
+                    likesCount: 0
+                }
+
+                state.profilePage.postsData.push(newPost);
+                state.profilePage.newPostText = '';
+                rerenderEntireTree(state);
+            }
+
+            export const updateNewPostText = (newText) => {
+                state.profilePage.newPostText = newText;
+                rerenderEntireTree(state);
+            }
+
+            export const subscribe = (observer) => {
+                
+            }
+
+        
+        index. импортируем subscribe в индекс и запустив передадим ф-ю rerenderEntireTree как параметр, отдав ее как колбек в state
+
+            import {subscribe} from './Components/redux/state';
+
+            let rerenderEntireTree = (state) => {
+            const root = ReactDOM.createRoot(document.getElementById('root'));
+            root.render(
+                <React.StrictMode>
+                <App appState={state} addPost={addPost} updateNewPostText={updateNewPostText}/>
+                </React.StrictMode>
+            );
+            }
+
+            rerenderEntireTree(state);
+
+            subscribe(rerenderEntireTree);
+
+
+        Теперь в state можем применить эту ф-ю. Она приходит в ф-ю subscribe и становится параметром observer, значит можем 
+        присвоить этот параметр переменной rerenderEntireTree которой мы ранее прописали ф-ю заглушку, и заглушка заменяется
+        обычной ф-й rerenderEntireTree из index.
+
+
+            export const subscribe = (observer) => {
+                rerenderEntireTree = observer;
+            }
+
+
+
+    //todo observer - это паттерн, почитать про него.
+
+*/}
+
+
+{/*    ====    36. Зачем нам объекты (ООП поверхностно) N1     ====
+
+    Рассмотрим базовый ООП принципы потому что реакт использует компоненты ООП. Наш объект state просто хранилище данных, а ооп
+        объект имеет еще и методы(ф-и), к которым мы можем обратится и вызвать их:
+
+        let man = {
+            name: 'Dima',
+            age: 31,
+            sayName() {
+                alert(this.name);
+            }
+        }
+
+        console.log(man.name);
+        man.sayName();
+
+        при вызове man.sayName(); - метод обращается к свойству своего объекта по слову this, подразумевая "этот" объект.
+
+
+    С объектом можно взаимодействовать через его интерфейс(это все его свойства и методы) и просто вызывая нужный метод не
+        задумываться как он внутри реализован(он инкапсулирован - скрыты детали, скрыт от нас)
+
+        let page = {
+            title: 'Title',
+            content: ``,
+            render() {
+                document.title = this.title;
+                document.write(this.content);
+            }
+        }
+
+        page.content = `<div>Some content</div>`;
+        page.render();
+
+
+    Часто мы хотим чтобы некоторые или все свойства были защищенные(к которым нельзя обратиться напрямую), была договоренность что
+        такие свойста обозначали с нижним подчеркивание в начале имени и их не нужно использовать напрямую(хотя техническая
+        возможность есть). Такие свойства и методы в отличие от приватных передаются по наследованию хотя не поддерживаются
+        синтаксисом языка JS.
+
+        Чтобы работать с таким свойством нужно использовать сеттеры и геттеры. Сеттер - метод который устанавливает принятое 
+        значение какому-то свойству. Геттер - ф-я коотрая возвращает значение свойства. В примере нижу это не set и get методы
+        языка JS, а названные так втором ф-ии которые эмулируют их поведение. Ф-ии использовать приоритетнее для последующего
+        расширения объекта, в следующем посте можно про это все прочитать. При таком подходе с защищаенными свойствами у нас 
+        больше возможности контролировать работу с этими свойствами(полный перечень плюсов ниже в посте).
+
+        let page2 = {
+            title: 'Title',
+            _content: ``,
+            setContent(value) {
+                //логгирование
+                // опасные значения
+                this._content = value;
+            },
+            getContent() {
+                return this._content;
+            },
+            render: function () {
+                document.write(this._content);
+            }
+        }
+
+        page2.setContent(`<div>Some content</div>`);
+        console.log(page2.getContent() );
+        page2.render();
+
+
+    Рассмотрим объект store, у него есть защищенные ф-ии и набор данных к которым обращаться можно через обычный ф-ии(методы). В
+        не объеденены данные и логика(ф-ии) которые с ними работают, как у нас в state, только у нас ф-ии наъодятся вне объекта.
+
+        let store = {
+            _subscriber() {
+                console.log('no subscribers')
+            },
+            _state: {
+                firstName: 'Jo',
+                lastName: 'Smith'
+            },
+            getState() {
+                return this._state;
+            },
+            subscribe(observer) {
+                this._subscriber = observer;
+            },
+            setFirstName(value) {
+                this._state.firstName = value;
+                this._subscriber();
+            }
+        }
+
+        Для пользователя взаимодействие выглядит так и он ничего не знает о внутреннем устройстве объекта store
+
+        let state = store.getState();
+        store.setFirstName('John');
+        state = store.getState();
+
+        store.subscribe( () => {
+            let state = store.getState();
+            renderPage(state);
+        } );
+
+        store.setFirstName('York');
+
+*/}
+
+
+{/* ЗАЩИЩЕННЫЕ vs ПРИВАТНЫЕ
+
+В терминах ООП отделение внутреннего интерфейса от внешнего называется инкапсуляция.
+
+
+Это даёт следующие выгоды:
+
+Защита для пользователей, чтобы они не выстрелили себе в ногу
+Представьте себе, что есть команда разработчиков, использующая кофеварку. Она была изготовлена компанией «Лучшие Кофеварки» и
+работает нормально, но защитный кожух был снят. Внутренний интерфейс стал доступен извне.
+
+Все разработчики культурны – они используют кофеварку по назначению. Но один из них, Джон, решил, что он самый умный, и сделал
+ некоторые изменения во внутренностях кофеварки. После чего кофеварка вышла из строя через два дня.
+
+Это, конечно, не вина Джона, а скорее человека, который снял защитный кожух и позволил Джону делать свои манипуляции.
+
+То же самое в программировании. Если пользователь класса изменит вещи, не предназначенные для изменения извне – последствия
+ непредсказуемы.
+
+
+Поддерживаемость
+Ситуация в программировании сложнее, чем с реальной кофеваркой, потому что мы не просто покупаем её один раз. Код постоянно
+ подвергается разработке и улучшению.
+
+Если мы чётко отделим внутренний интерфейс, то разработчик класса сможет свободно менять его внутренние свойства и методы, даже не
+ информируя пользователей…
+
+Если вы разработчик такого класса, то приятно знать, что приватные методы можно безопасно переименовывать, их параметры можно
+ изменять и даже удалять, потому что от них не зависит никакой внешний код.
+
+В новой версии вы можете полностью всё переписать, но пользователю будет легко обновиться, если внешний интерфейс остался такой же.
+
+
+Сокрытие сложности
+Люди обожают использовать простые вещи. По крайней мере, снаружи. Что внутри – это другое дело.
+
+Программисты не являются исключением.
+
+Всегда удобно, когда детали реализации скрыты, и доступен простой, хорошо документированный внешний интерфейс.
+
+Для сокрытия внутреннего интерфейса мы используем защищённые или приватные свойства:
+
+Защищённые поля имеют префикс _. Это хорошо известное соглашение, не поддерживаемое на уровне языка. Программисты должны обращаться
+ к полю, начинающемуся с _, только из его класса и классов, унаследованных от него.
+
+Приватные поля имеют префикс #. JavaScript гарантирует, что мы можем получить доступ к таким полям только внутри класса.
+
+В настоящее время приватные поля не очень хорошо поддерживаются в браузерах, но можно использовать полифил.
+
+
+Полная статья - https://learn.javascript.ru/private-protected-properties-methods
+
+*/}
+
+
+{/*    ====    37. Зачем нам объекты (ООП поверхностно) N1     ====
+
+
 
 */}
