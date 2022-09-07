@@ -11,7 +11,7 @@
     Изучаем react + Redux потому что это самая популярная связка для трудоустройства(на 2020 год).
 
 
-    На верстку забиваем, вестаем - "абы було", в уроках изобретамем свой redux(24-41) потом изучаем обычный(42), также изобретам свой
+    На верстку забиваем, вестаем - "абы було", в уроках изобретаем свой redux(24-41) потом изучаем обычный(42), также изобретам свой
         connect(43-44) в redux, потом смотрим редаксовский(45). Делается это для того что бы знать как все происходит внутри, не 
         абстрагируясь от сложных вещей JS.
 
@@ -2596,7 +2596,7 @@
 */}
 
 
-{/*    ====    36. Зачем нам объекты (ООП поверхностно) N1     ====
+{/*    ====    36. Зачем нам объекты (ООП поверхностно)     ====
 
     Рассмотрим базовый ООП принципы потому что реакт использует компоненты ООП. Наш объект state просто хранилище данных, а ооп
         объект имеет еще и методы(ф-и), к которым мы можем обратится и вызвать их:
@@ -2757,7 +2757,513 @@
 */}
 
 
-{/*    ====    37. Зачем нам объекты (ООП поверхностно) N1     ====
+{/*    ====    37. Store, state, ООП, рефакторинг     ====
+
+    Рефакторим state в Store так как в предыдущем уроке - собираем в один объект объект с данными + ф-ии и даьше будем прокидывать
+        уже одним объектом до момента когда компонентам нужно будет передавать только те props которые им нужны. Таким образом
+        //*! делаем подготовку к созданию своего Redux. Не используем реактовский setState(локальный стейт в классе) потому что в
+        //*! больших приложениях он не используется, частично будем применять для сохранения локальных данных компонента.
+
+
+    В state.js переносим всё в объект store. 
+        Объект с данными state теперь будет свойством и мы его сделаем защищенным, не хотим чтобы из вне к нему был доступ. Для
+        доступа к нему сделаем ф-ю гетер getState которая будет возвращать наш защищенный _state. rerenderEntireTree тоже сделаем
+        защищенной и изменим название на _callSubscriber - уведомить подписчика(у нас один подписчик - ф-я rerenderEntireTree,
+        которая приходит из index.js, так мы спроектировали систему):
+        
+        let store = {
+            _state: {
+                profilePage: {
+                    postsData: [
+                        { id: 1, post: "yo", likesCount: 12 },
+                        { id: 2, post: "It's my fist post.", likesCount: 11 },
+                        { id: 3, post: "0", likesCount: 50 }],
+                    newPostText: 'React samurai'
+                },
+                dialogsPage: {
+                    dialogsData: [
+                        { id: 1, name: "Dmitriy" },
+                        { id: 2, name: "Andrey" },
+                        { id: 3, name: "Valera" },
+                        { id: 4, name: "Sveta" },
+                        { id: 5, name: "Viktor" }],
+                    messagesData: [
+                        { id: 1, msg: "Hi" },
+                        { id: 2, msg: "Yo" },
+                        { id: 3, msg: "What's up?" },
+                        { id: 4, msg: "Hi" },
+                        { id: 5, msg: "Yo" }]
+                }
+            },
+            getState () {
+                return this._state;
+            },
+            _callSubscriber () {
+
+            },
+            addPost ()  {
+                let newPost = {
+                    id: 5,
+                    post: this._state.profilePage.newPostText,
+                    likesCount: 0
+                }
+            
+                this._state.profilePage.postsData.push(newPost);
+                this._state.profilePage.newPostText = '';
+                this._callSubscriber(this._state);
+            },
+            updateNewPostText (newText) {
+                this._state.profilePage.newPostText = newText;
+                this._callSubscriber(this._state);
+            },
+            subscribe (observer) {
+                this._callSubscriber = observer;
+            }
+        }
+
+        export default store;
+        window.store = store; - чтобы можно было обратиться к объекту из браузера.
+
+
+    В index.js теперь импортируем store и дальше из него извлекаем нужные свойства и методы, для получения state нужно ВЫЗВАТЬ метод
+        getState:
+
+        import React from 'react';
+        import ReactDOM from 'react-dom/client';
+        import './index.css';
+        import App from './App';
+        import store from './Components/redux/state'
+
+        let rerenderEntireTree = (store) => {
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(
+            <React.StrictMode>
+            <App appState={store.getState()} addPost={store.addPost} updateNewPostText={store.updateNewPostText}/>
+            </React.StrictMode>
+        );
+        }
+
+        rerenderEntireTree(store.getState());
+
+        store.subscribe(rerenderEntireTree);
+
+    
+    После рефакторинга сайт отрендерился, но при добавлении поста выкидывает ошибку - не может прочесть свойство profilePage of
+        undefined в state.js addPost - post: this._state.profilePage.newPostText. При дебаггинге видим что в getState - 
+        this._state - тот объект который нам нужен, а в addPost в this._state - лежит другой объект в котором есть: addPost,
+        newPostText, posts, updateNewPostText - понимаем что это не наше объект. 
+
+        Так происходит потому что в индекс мы вызываем метод store.getState() - от имени store и его контекст сохраняется, а 
+        остальные методы мы передаем для дальнейшего вызова, пройдя до ф-ии вызова видим что ф-я addPost вызывается в MyPosts
+        от пропсов - props.addPost(); поэтому берет контекст просов и там не находит state. Чтобы такого не было нужно при
+        первой передаче ф-ии addPost забайндить(привязать) ее(как и все подобные ф-ии) к объекту store - таким образом не
+        важно кто будет вызывать ф-ю она будет работать с контекстом this - объекта store
+
+            let rerenderEntireTree = (store) => {
+                const root = ReactDOM.createRoot(document.getElementById('root'));
+                root.render(
+                    <React.StrictMode>
+                    <App appState={store.getState()} addPost={store.addPost.bind(store)} 
+                                                     updateNewPostText={store.updateNewPostText.bind(store)}/>
+                    </React.StrictMode>
+                );
+            }
+
+            //todo почитать про bind!!!
+
+
+        //*! автор прописал state в принимаемых параметрах и вместо вызова ф-ии getState, как же мы получим _sate без такого 
+        //*!вызова непонятно, и как будем передавать ф-ии из store, но у него все работает. 
+            let rerenderEntireTree = (state) => {
+                const root = ReactDOM.createRoot(document.getElementById('root'));
+                root.render(
+                    <React.StrictMode>
+                    <App appState={state}
+
+*/}
+
+
+{/*    ====    38. dispatch и action     ====
+
+    Сейчас у нас несколько ф-й которые мы прокидываем через пропсы в нужные компоненты, по мере увеличения приложения их будет
+        очень много, чтобы не прокидывать их все, воспользуемся ф-й dispatch() - она решает и другие задачи, но в нашем случае
+        используем ее чтобы минимизировать количество записей аттрибутов для пропсов компонентов.
+        
+        в state защищенные  свойства и методы сгруппируем, далее отделим пустыми строками addPost и updateNewPostText от других
+        методов, потому что они изменяют  _state, добавим метод dispatch(переводится как отсылка, отправление) он будет принимать
+        в параметр объект - action(действие), у этого объекта будет обязательное свойство type с текстом в котором будет написано 
+        какое действие совершить, например "ADD-POST" благодаря которому dispatch будет знать какой метод запустить. Внутри 
+        dispatch проводится сравнение значения action и при совпадении будем выполнять заданный код, то есть все методы (которые
+        изменяют _state ???) перенесем в него и соответственно во внешний мир будем отдавать только этот метод(а getState?). Также
+        если для работы запускаемого метода нужны дополнительные данные, передаем их как еще одно свойство объекта action. Так как
+        в addPost ничего не передавалось его не меняем, а для updateNewPostText(newText) - передавался newText, значит в коде
+        допишем ссылку на него как на свойство из объекта action.newText
+            
+            dispatch(action) {
+                if (action.type === "ADD-POST") {
+                    let newPost = {
+                        id: 5,
+                        post: this._state.profilePage.newPostText,
+                        likesCount: 0
+                    }
+
+                    this._state.profilePage.postsData.push(newPost);
+                    this._state.profilePage.newPostText = '';
+                    this._callSubscriber(this._state);
+
+                } else if (action.type === "UPDATE-NEW-POST-TEXT") {
+                    this._state.profilePage.newPostText = action.newText;
+                    this._callSubscriber(this._state);
+                }
+            }
+
+            Можно было сделать эти методы приватные и из диспатча обращаться к ним через this и это правильнее, но пока мы учимся
+            остави так(в будущем возможно изменим).
+
+
+        в index отправляем по пропсам через аттрибут компонента App один единственный метод dispatch
+
+            <App appState={store.getState()} dispatch={store.dispatch.bind(store)} />
+
+
+        в App берем dispatch из пропсов и прокидываем дальше
+
+            <Route path="/profile"  element={<Profile profilePage={props.appState.profilePage}
+                                                dispatch={props.dispatch} />} />
+
+
+        В Profile прокидываем в MyPosts
+
+            <MyPosts postsData={props.profilePage.postsData}
+                    newPostText={props.profilePage.newPostText}
+                    dispatch={props.dispatch} />
+
+
+        В MyPosts изменяем вызываемые ф-и(вызываем dispatch и передаем объекты с нужными свойствами)
+            
+            let addPost = () => {
+                props.dispatch({ type: 'ADD-POST'});
+            };
+
+            let onPostChange = () => {
+                let text = newPostElement.current.value;
+                props.dispatch({ type: 'UPDATE-NEW-POST-TEXT', newText: text });
+            };
+
+*/}
+
+
+{/*    ====    39. action creator, action type     ====
+
+    Так как компоненты должны придерживаться сингл респонсибилити принципа нужно вынести создание action объекта из компонента и
+        поместить эту логику в store, создадим ф-ю actionCreator(), которая будет генерировать нужный action объект и его будем
+        просто передавать в dispatch в нужной ф-и.
+
+
+    В MyPost мы прописывали action прямо в вызове ф-и dispatch - props.dispatch({ type: 'ADD-POST'}), пропишем ф-ю создания
+        action для addPost. Она будет возвращать объект с нужным значением типа для этой ф-ии, и теперь в праметрах addPost
+        сделаем вызов этой ф-и. Также сделаем и для onPostChange только еще передадим для updateNewPostTextActionCreator в
+        параметры аргумент text.
+
+        let addPostActionCreator = () => {
+            return {
+                type: 'ADD-POST'
+            }
+        }
+
+        let updateNewPostTextActionCreator = (text) => {
+            return { type: 'UPDATE-NEW-POST-TEXT', newText: text }
+        }
+
+        const MyPosts = (props) => {
+
+            let postsElements = props.postsData.map((el, ind) => <Post key={ind} msg={el.post} likesCount={el.likesCount} />);
+        
+            let newPostElement = React.createRef();
+
+            let addPost = () => {
+            props.dispatch( addPostActionCreator() );
+            };
+
+            let onPostChange = () => {
+            let text = newPostElement.current.value;
+            props.dispatch( updateNewPostTextActionCreator(text) );
+            };
+
+
+    Перенесем эти экшнкриэйторы просто в state.js и експортируем их прямо в компонент которому они нужны, потому как это логика
+        и она не должна находится в компоненте.
+
+                } else if (action.type === "UPDATE-NEW-POST-TEXT") {
+                    this._state.profilePage.newPostText = action.newText;
+                    this._callSubscriber(this._state);
+                }
+            }
+        }
+
+        export const addPostActionCreator = () => {
+            return {
+                type: 'ADD-POST'
+            }
+        }
+
+        export const updateNewPostTextActionCreator = (text) => {
+            return { type: 'UPDATE-NEW-POST-TEXT', newText: text }
+        }
+
+        export default store;
+
+
+    В MyPosts делаем их импорт:
+    
+        import { addPostActionCreator, updateNewPostTextActionCreator } from "../../redux/state";
+
+
+
+    Так как у нас свойство type объекта action - строка и она не изменяется, для уменьшения возникновения ошибки при ее написании
+        вынесем эти строки в отдельные переменные и будем использовать их, теперь нам будет доступен автокомплитер при написании
+        этих переменных и даже если мы сделаем ошибка в названии такой переменной то код не скомпилируется и сразу укажет нам
+        где ошибка. Поместим их в начале файла потому что уже в store они у нас используются.
+
+        const ADD_POST = 'ADD-POST';
+        const UPDATE_NEW_POST_TEXT = 'UPDATE-NEW-POST-TEXT';
+
+        ...
+        ...
+        ...
+
+                        } else if (action.type === UPDATE_NEW_POST_TEXT) {
+                    this._state.profilePage.newPostText = action.newText;
+                    this._callSubscriber(this._state);
+                }
+            }
+        }
+
+
+        export const addPostActionCreator = () => {
+            return {
+                type: ADD_POST
+            }
+        }
+
+        export const updateNewPostTextActionCreator = (text) => {
+            return { type: UPDATE_NEW_POST_TEXT, newText: text }
+        }
+
+
+
+    Зарефакторим эти ф-ии чтобы они стали меньше:
+
+        export const addPostActionCreator = () => ({ type: ADD_POST })
+
+*/}
+
+
+{/*    ====    40. Практика - добавление сообщения     ====
+
+    Добавим в Dialogs текстовое поле и кнопку для того чтобы добавлять сообщение. Сделаем по аналогии с Profile.
+
+
+    В state в объект dialogsPage добавим свойство newMsgText:
+
+            messagesData: [
+                { id: 1, msg: "Hi" },
+                { id: 2, msg: "Yo" },
+                { id: 3, msg: "What's up?" },
+                { id: 4, msg: "Hi" },
+                { id: 5, msg: "Yo" }],
+            newMsgBody: 'Type here'
+        }
+
+
+        создадим ф-ии для изменения состояния _state в dispatch, константы для имен type и ф-и Creator(слово action опустим):
+
+        const ADD_POST = 'ADD-POST';
+        const SEND_MSG = 'SEND-MSG';
+        const UPDATE_NEW_POST_TEXT = 'UPDATE-NEW-POST-TEXT';
+        const UPDATE_NEW_MSG_BODY = 'UPDATE-NEW-MSG-BODY';
+
+        let store = {
+            _state: {
+                profilePage: {
+                    postsData: [
+                        { id: 1, post: "yo", likesCount: 12 },
+                        { id: 2, post: "It's my fist post.", likesCount: 11 },
+                        { id: 3, post: "0", likesCount: 50 }],
+                    newPostText: 'React samurai'
+                },
+                dialogsPage: {
+                    dialogsData: [
+                        { id: 1, name: "Dmitriy" },
+                        { id: 2, name: "Andrey" },
+                        { id: 3, name: "Valera" },
+                        { id: 4, name: "Sveta" },
+                        { id: 5, name: "Viktor" }],
+                    messagesData: [
+                        { id: 1, msg: "Hi" },
+                        { id: 2, msg: "Yo" },
+                        { id: 3, msg: "What's up?" },
+                        { id: 4, msg: "Hi" },
+                        { id: 5, msg: "Yo" }],
+                    newMsgBody: 'Type here'
+                }
+            },
+            _callSubscriber() {
+
+            },
+
+            getState() {
+                return this._state;
+            },
+            subscribe(observer) {
+                this._callSubscriber = observer;
+            },
+
+            addPost() {
+                let newPost = {
+                    id: 5,
+                    post: this._state.profilePage.newPostText,
+                    likesCount: 0
+                }
+
+                this._state.profilePage.postsData.push(newPost);
+                this._state.profilePage.newPostText = '';
+                this._callSubscriber(this._state);
+            },
+            updateNewPostText(newText) {
+                this._state.profilePage.newPostText = newText;
+                this._callSubscriber(this._state);
+            },
+
+            dispatch(action) {
+                if (action.type === ADD_POST) {
+                    let newPost = {
+                        id: 5,
+                        post: this._state.profilePage.newPostText,
+                        likesCount: 0
+                    }
+
+                    this._state.profilePage.postsData.push(newPost);
+                    this._state.profilePage.newPostText = '';
+                    this._callSubscriber(this._state);
+
+                } else if (action.type === UPDATE_NEW_POST_TEXT) {
+                    this._state.profilePage.newPostText = action.newText;
+                    this._callSubscriber(this._state);
+
+                } else if (action.type === UPDATE_NEW_MSG_BODY) {
+                    this._state.dialogsPage.newMsgBody = action.msgBody;
+                    this._callSubscriber(this._state);
+
+                } else if (action.type === SEND_MSG) {
+                    let newMsg = {
+                        id: 6,
+                        msg: this._state.dialogsPage.newMsgBody
+                    };
+
+                    this._state.dialogsPage.messagesData.push(newMsg);
+                    this._state.dialogsPage.newMsgBody = '';
+                    this._callSubscriber(this._state);
+                }
+            }
+        }
+
+
+        export const addPostActionCreator = () => ({ type: ADD_POST })
+
+        export const updateNewPostTextActionCreator = (text) => {
+            return { type: UPDATE_NEW_POST_TEXT, newText: text }
+        }
+
+        export const sendMsgCreator = () => ({ type: SEND_MSG })
+
+        export const updateNewMsgBodyCreator = (msgBody) => {
+            return { type: UPDATE_NEW_MSG_BODY, msgBody: msgBody }
+        }
+
+        export default store;
+
+
+
+    В Апп передадим dispatch для Dialogs //? возможно нужно добавить store в пути:
+
+        <Route path="/dialogs" element={<Dialogs state={props.appState.dialogsPage} 
+                        dispatch={props.dispatch} />} />
+
+
+    Проведем изменения в компоненте Dialogs импортируем ф-ии Creator и используем их. Не будем использовать ref, а получим value
+        textarea через событие которое приходит в ф-ю которую вызывает textarea из самой же textarea(событие назовем "e" и у его
+        target(текстэрэа) возьмем значение(value)):
+
+        Автор решил передать в indexe весь store, дальше прокинул его в Апп также store={props.store} прямо в Dialog, там в
+        переменную state присвоил store через геттер, и убрал везде обращение к props? так как мы теперь будем обращаться к 
+        локальной переменной state: let state = props.store.getState().dialogsPage;  Я пока оставлю как есть. Тем более так
+        он говорит хуже потому что не нужно давать компоненту лишнюю информацию, и он забыл забиндить dispatch в Dialogs.
+        //! У автора где то делись const DialogItem и const Message - вынес в отдельные компоненты???
+        
+
+        import React from "react";
+        import { NavLink } from "react-router-dom";
+        import { sendMsgCreator, updateNewMsgBodyCreator } from "../redux/state";
+        import style from './Dialogs.module.css'
+
+
+        const DialogItem = (props) => {
+        return (
+            <div className={style.dialog}>
+            <NavLink to={"/dialogs/" + props.id}>{props.name}</NavLink>
+            </div>
+        );
+        }
+
+        const Message = (props) => {
+        return (
+            <div className={style.message}>{props.msg}</div>
+        );
+        }
+
+
+        const Dialogs = (props) => {
+
+        let dialogsElements = props.state.dialogsData.map(el => (
+            <DialogItem name={el.name} id={el.id} />
+        ));
+
+        let messagesElements = props.state.messagesData.map(el => (
+            <Message msg={el.msg} />
+        ));
+
+        let onSendMsgClick = () => {
+            props.dispatch( sendMsgCreator() );
+        }
+        
+        let onNewMsgChange = (e) => {
+            let msgBody = e.target.value;
+            props.dispatch( updateNewMsgBodyCreator(msgBody) );
+        }
+
+
+        return (
+            <main className={style.dialogs}>
+            <div className={style.dialogsItems}>
+                {dialogsElements}
+            </div>
+            <div className={style.messages}>
+                <div>{messagesElements}</div>
+                <div><textarea placeholder='' value={props.newMsgBody} onChange={ onNewMsgChange } ></textarea></div>
+                <div><button onClick={ onSendMsgClick } >Send</button></div>
+            </div>
+            </main>
+        );
+        }
+
+        export default Dialogs;
+
+
+
+            51-00
+
+
 
 
 
