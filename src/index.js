@@ -8,11 +8,11 @@ import store from './Components/redux/state'
 // import {subscribe} from './Components/redux/state';
 
 
-let rerenderEntireTree = (store) => {
+let rerenderEntireTree = (props) => {
   const root = ReactDOM.createRoot(document.getElementById('root'));
   root.render(
     <React.StrictMode>
-      <App appState={store.getState()} dispatch={store.dispatch.bind(store)} />
+      <App appState={props} dispatch={store.dispatch.bind(store)} />
     </React.StrictMode>
   );
 }
