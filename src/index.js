@@ -3,9 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import store from './Components/redux/state'
-// import { addPost } from './Components/redux/state';
-// import { updateNewPostText } from './Components/redux/state';
-// import {subscribe} from './Components/redux/state';
+
 
 
 let rerenderEntireTree = (props) => {

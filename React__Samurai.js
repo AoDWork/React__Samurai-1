@@ -3303,15 +3303,313 @@
         подчастей state(dialogsPage и dialogsPage). Автор сделал еще sideber-reducer.js на будущее.
 
     
-    В profile-reducer.js и dialog-reducer.js создаем ф-ии и в них копируем содержимое dispatch и удаляем ненужные для этой страници
-        данные, также переносим константы для имен:
+    В profile-reducer.js и dialog-reducer.js создаем ф-ии и в них копируем содержимое dispatch и удаляем ненужные для конкретного
+        файла данные, также переносим константы для имен. Так как наш редюсер это ф-я и она принимает параметр state, то можно
+        избавиться от обращени this. А так как каждому редюсеру будет передаваться только нужная ему часть state то можно упростить
+        путь обращения, например:
+
+        this._state.profilePage.postsData.push(newPost); => state.postsData.push(newPost);
+
+        this - удаляется, а в параметр state приходит state.profilePage, поэтому этот путь сокращается до state.
+
+        this._callSubscriber(this._state); - удаляем потому что редюсер делает только преобразования state
+
+
+    Profile reducer:
+
+        const ADD_POST = 'ADD-POST';
+        const UPDATE_NEW_POST_TEXT = 'UPDATE-NEW-POST-TEXT';
+
+        const profileReducer = (state, action) => {
+            
+            if (action.type === ADD_POST) {
+                let newPost = {
+                    id: 5,
+                    post: state.newPostText,
+                    likesCount: 0
+                };
+
+                state.postsData.push(newPost);
+                state.newPostText = '';
+
+            } else if (action.type === UPDATE_NEW_POST_TEXT) {
+                state.newPostText = action.newText;
+            } 
+
+            return state;
+        }
+
+        export default profileReducer;
+
+
+    Dialogs reducer:
+
+        const SEND_MSG = 'SEND-MSG';
+        const UPDATE_NEW_MSG_BODY = 'UPDATE-NEW-MSG-BODY';
+
+        const dialogsReducer = (state, action) => {
+
+            if (action.type === UPDATE_NEW_MSG_BODY) {
+                state.newMsgBody = action.newMsgBody;
+            } else if (action.type === SEND_MSG) {
+                let newMsg =  state.newMsgBody
+                
+                state.newMsgBody = '';
+                state.messagesData.push({ id: 6, newMsg});
+            }
+
+            return state;
+        }
+
+        export default dialogsReducer;
+
+
+    редюсеры готовы, теперь ими нужно воспользоваться - импортируем их в state, вызываем и каждому отдаем соответствующий _state
+        и action который пришел в dispatch, так как редюсер отдает нам измененный кусочек state который мы ему передали, то можно
+        сразу присвоить его старому кусочку state(для обновления данных) и оставим вызов subscriber для обновления state
+
+        this._state.profilePage = profileReducer(this._state.profilePage, action);
+
+
+        import dialogsReducer from './dialogs-reducer';
+        import profileReducer from './profile-reducer';
+
+
+        let store = {
+            _state: {
+                profilePage: {
+                    postsData: [
+                        { id: 1, post: "yo", likesCount: 12 },
+                        { id: 2, post: "It's my fist post.", likesCount: 11 },
+                        { id: 3, post: "0", likesCount: 50 }],
+                    newPostText: 'Type Post'
+                },
+                dialogsPage: {
+                    dialogsData: [
+                        { id: 1, name: "Dmitriy" },
+                        { id: 2, name: "Andrey" },
+                        { id: 3, name: "Valera" },
+                        { id: 4, name: "Sveta" },
+                        { id: 5, name: "Viktor" }],
+                    messagesData: [
+                        { id: 1, msg: "Hi" },
+                        { id: 2, msg: "Yo" },
+                        { id: 3, msg: "What's up?" },
+                        { id: 4, msg: "Hi" },
+                        { id: 5, msg: "Yo" }],
+                    newMsgBody: 'Type Msg'
+                }
+            },
+            _callSubscriber() {
+
+            },
+
+            getState() {
+                return this._state;
+            },
+            subscribe(observer) {
+                this._callSubscriber = observer;
+            },
+
+            dispatch(action) {
+
+                this._state.profilePage = profileReducer(this._state.profilePage, action);
+                this._state.dialogsPage = dialogsReducer(this._state.dialogsPage, action);
+
+                this._callSubscriber(this._state);
+            }
+        }
+
+
+        export const addPostActionCreator = () => ({ type: ADD_POST })
+
+        export const updateNewPostTextActionCreator = (text) => {
+            return { type: UPDATE_NEW_POST_TEXT, newText: text }
+        }
+
+        export const sendMsgCreator = () => ({ type: SEND_MSG })
+
+        export const updateNewMsgBodyCreator = (msgBody) => {
+            return { type: UPDATE_NEW_MSG_BODY, newMsgBody: msgBody }
+        }
+
+
+        export default store;
+        window.store = store;
 
 
 
+    Сделаем рефаторинг if else в switch в редюсерах(если количество кейсов в if else это конкретное число, а не бесконечное 
+        множество автор рекомендует сделать switch вместо if else). Переносим всё в switch, вместо общего return будем в каждом
+        case возвращать state и тогда break нам не нужен, и сделаем default если ни один из кейсов не сработал. Перенесем 
+        actionCreaterы в редюсеры и сделаем реимпорт их в файлах MyPosts и Dialogs
+
+
+        Profile reducer:
+
+        const ADD_POST = 'ADD-POST';
+        const UPDATE_NEW_POST_TEXT = 'UPDATE-NEW-POST-TEXT';
+
+        const profileReducer = (state, action) => {
+            
+            switch(action.type) {
+                case ADD_POST:
+                    let newPost = {
+                        id: 5,
+                        post: state.newPostText,
+                        likesCount: 0
+                    };
+
+                    state.postsData.push(newPost);
+                    state.newPostText = '';
+                    return state;
+
+                case UPDATE_NEW_POST_TEXT:
+                    state.newPostText = action.newText;
+                    return state;
+
+                default:
+                    return state;
+            }
+        }
+
+
+        export const addPostActionCreator = () => ({ type: ADD_POST })
+
+        export const updateNewPostTextActionCreator = (text) => {
+            return { type: UPDATE_NEW_POST_TEXT, newText: text }
+        }
+
+        export default profileReducer;
+
+
+        Dialogs reducer:
+
+        const SEND_MSG = 'SEND-MSG';
+        const UPDATE_NEW_MSG_BODY = 'UPDATE-NEW-MSG-BODY';
+
+        const dialogsReducer = (state, action) => {
+
+            switch(action.type) {
+                case UPDATE_NEW_MSG_BODY:
+                    state.newMsgBody = action.newMsgBody;
+                    return state;
+
+                case SEND_MSG:
+                    let newMsg =  state.newMsgBody
+                    state.newMsgBody = '';
+                    state.messagesData.push({ id: 6, newMsg});
+                    return state;
+
+                default:
+                    return state;
+            }
+        }
+
+        export const sendMsgCreator = () => ({ type: SEND_MSG })
+
+        export const updateNewMsgBodyCreator = (msgBody) => {
+            return { type: UPDATE_NEW_MSG_BODY, newMsgBody: msgBody }
+        }
+
+        export default dialogsReducer;
 
 
 
+        Dialogs:
+        import { sendMsgCreator, updateNewMsgBodyCreator } from "../redux/dialogs-reducer";
 
+
+        MyPosts
+        import { addPostActionCreator, updateNewPostTextActionCreator } from "../../redux/profile-reducer";
+
+*/}
+
+
+{/*    ====    42. Практика - redux     ====
+
+    Автор переименовал state.js в store я переименую позже чтобы всё не сломалось(испортировать в index и в render(ф-я addPost
+        импортируется из state, уже наверное сломалось)), у него всё заработало и так(вебшторм сам наверное сделал переимспорт).
+
+    
+    Redux - отдельная библиотека, нужно ее проинсталлировать: npm install redux --save
+
+
+    Redux предоставляет некоторые возможности, одна из них - создать store. Создадим новый файл redux-strore.js и в нем пропишем
+        createStore при этом его проимпортировав из redux:
+
+        import {createStore} from 'redux';
+
+        let store = createStore();
+        
+        export default store;
+
+    
+
+    В index.js заменяем импорт нашего store на redux-store. 
+
+
+    В нашем store была некая логика, в redux-store - методы getState и subscribe - такие же, поэтому тут переписывать ничего не
+        нужно. Из dispatch логику мы вынесли в редюсеры поэтому всё что нам нужно сделать для нового dispatch - отдать редюсеры
+        в redux-store. Для этого наши редюсеры нужно склеить вместе при момощи метода combineReducers в него передаем объект в
+        котором имя ключа = свойство старого _state, а значения импортируем из редюсеров, думаем что есть profilePage и за него
+        отвечает profileReducer. Теперь эти закомбайненый редюсеры передаем в createStore. createStore автоматически создает
+        внутри себя state у которого есть эти свойства profilePage и dialogsPage.
+
+        import {createStore, combineReducers} from 'redux';
+        import  profileReducer from './profile-reducer'
+        import dialogsReducer from './dialogs-reducer'
+
+        let reducers = combineReducers({
+            profilePage: profileReducer,
+            dialogsPage: dialogsReducer
+        });
+
+        let store = createStore(reducers);
+
+        export default store;
+
+
+    Но у созданных свойст state нету значений в redux-store. Для этого редакс посылает action в редюсер чтобы сформировать
+        первоначальный state и отобразить его, но мы в редюсерах не прописывали никакой заготовки и action не совпадет ни с одним
+        условием и вернет undefined из редюсера. Данные state у нас были захардкожены в старом _state и нам нужно эти данные
+        перенести в редюсеры как данные по умолчанию. Создадим переменную для инициализации InitialState в нее поместим нужную
+        для этого редюсера часть старого _state и укажем что если state не передали в ф-ю profileReducer то он по умолчанию
+        будет равен InitialState - (state = InitialState, action). Также сделаем в dialogs-reducer:
+
+
+        let InitialState = {
+            postsData: [
+                { id: 1, post: "yo", likesCount: 12 },
+                { id: 2, post: "It's my fist post.", likesCount: 11 },
+                { id: 3, post: "0", likesCount: 50 }],
+            newPostText: 'Type Post'
+        }
+
+        const profileReducer = (state = InitialState, action) => {
+
+
+
+        let InitialState = {
+            dialogsData: [
+                { id: 1, name: "Dmitriy" },
+                { id: 2, name: "Andrey" },
+                { id: 3, name: "Valera" },
+                { id: 4, name: "Sveta" },
+                { id: 5, name: "Viktor" }],
+            messagesData: [
+                { id: 1, msg: "Hi" },
+                { id: 2, msg: "Yo" },
+                { id: 3, msg: "What's up?" },
+                { id: 4, msg: "Hi" },
+                { id: 5, msg: "Yo" }],
+            newMsgBody: 'Type Msg'
+        }
+
+        const dialogsReducer = (state = InitialState, action) => {
+
+
+            25-35
 
 
 
