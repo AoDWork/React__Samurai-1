@@ -1,5 +1,4 @@
 import React from "react";
-import ReactDOM from 'react-dom/client';
 import './App.css';
 import Header from "./Components/Header/Header"
 import Navbar from "./Components/Navbar/Navbar";
@@ -16,9 +15,9 @@ function App(props) {
                 <Navbar />
                 <div className='app-wrapper-content'>
                     <Routes>
-                        <Route path="/profile"  element={<Profile profilePage={props.appState.profilePage}
-                                                dispatch={props.dispatch} />} />
-                        <Route path="/dialogs" element={<Dialogs state={props.appState.dialogsPage} 
+                        <Route path="/dialogs" element={<Dialogs store={props.store} />} />
+
+                        <Route path="/profile"  element={<Profile profilePage={props.state.profilePage}
                                                 dispatch={props.dispatch} />} />
                     </Routes>
                 </div>
