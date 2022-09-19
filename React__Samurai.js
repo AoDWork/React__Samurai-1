@@ -3612,12 +3612,12 @@
         это всё равно логика из редакса, далее этот диспатч идет в МайПостс и там загрязняет знанием о сторе этот компонент.
         МайПостс все равно нужно что-то получить чтобы сообщить в стейт что нажалась кнопка в МайПостс, но как сделать это без
         диспатча - передать в компонент отдельную коллбек ф-ю, а диспатч это не отдельная ф-я, а универсальная ф-я взаимодействия
-        со стором. Раньше у нас так и было props.addPost() и props.updateNewPostText(text) вместо диспатча. 
+        со стором. Раньше у нас так и было колбек ф-ии props.addPost() и props.updateNewPostText(text) вместо диспатча. 
         
-    Перепишем как было по старому с колбеками и компонент МайПостс перестает что-либо знать диспатче или каком-либо интерфейсе 
+    Если перепишем как было по старому с колбеками и компонент МайПостс перестает что-либо знать диспатче или каком-либо интерфейсе 
         редакса, это просто компонент который вызывает коллбек чтобы сообщить родителю, а родитель пусть сам разбирается что с этим
         сделать и как законектится к стору, грубо говоря мы поднимаем эту зависимость из МайПостс и уходим вверх в Профайл, и так 
-        далее мы можем зачистить почти всё, но по итогу всеравно кто-то должен обзаться со стором. Если мы поднимем таким образом
+        далее мы можем зачистить почти всё, но по итогу всеравно кто-то должен общаться со стором. Если мы поднимем таким образом
         всё до Индекса, то нам нужно будет прокидывать кучу колбеков и мы не будем этому рады, так мы один стор прокидываем, а так
         кучу коллбеков, и прийдем к тому с чего начинали, так не годится, нужно выбрать оптимальную точку для общения со стором.
 
@@ -3630,17 +3630,176 @@
         компонента store остается внешним.
 
 
-
-        12-00
-
-
-
+    Создаем контейнерный компонент для MyPosts - копируем MyPosts и переназываем его в MyPostsContainer. Переименовываем название 
+        ф-ии в середине с MyPosts на MyPostsContainer. Задача этого контейнерного компонента - отрисовать MyPosts, поэтому в
+        return оставляем только <MyPosts /> и будем в него передавать нужные данные. Импортируем MyPosts в MyPostsContainer.
 
 
+        Очистим таким способом компонент MyPosts от лишних данных, начнем с onPostChange удалим диспатч и будем использовать
+        переданную нам ф-ю updateNewPostText, в нее передадим text.
+
+            let onPostChange = () => {
+                let text = newPostElement.current.value;
+                props.updateNewPostText(text);
+            };
+
+
+        В MyPostsContainer преобразуем эту же ф-ю, теперь она не знает ничего о newPostElement.current, а text получает из
+        MyPosts и запускает updateNewPostTextActionCreator из dispatch с принятым text. Эту ф-ю передадим в MyPosts для 
+        ее вызова там.
+
+            let onPostChange = (text) => {
+                props.dispatch( updateNewPostTextActionCreator(text) );
+            };
+
+            return ( <MyPosts updateNewPostText={onPostChange} /> );
 
 
 
+        Также очищаем и ф-ю addPost и переименуем ф-ю addPost которую навешиваем на обработчик события чтобы не путаться
 
+            let onAddPost = () => {
+                props.addPost();
+            };
+
+            <button onClick={ onAddPost }>Add Post</button>
+
+
+         В MyPostsContainer
+
+            let addPost = () => {
+                props.dispatch( addPostActionCreator() );
+            };
+
+            return ( <MyPosts updateNewPostText={onPostChange} addPost={addPost}/> );
+
+
+        Из MyPostsContainer удаляем - postsElementspostsElements так как они используются в самом компоненте MyPosts
+
+        Также прокидываем посты postsData={props.postsData} через MyPostsContainer.
+
+    
+    Так как MyPostsContainer разрешено быть грязным компонентом сделаем так чтобы она ожидала весь store:
+
+        let addPost = () => {
+            props.store.dispatch( addPostActionCreator() );
+        };
+
+        let onPostChange = (text) => {
+            props.store.dispatch( updateNewPostTextActionCreator(text) );
+        };
+
+
+
+    Теперь заменим в Profile компонент MyPosts на MyPostsContainer и все прокидываемые props на store:
+
+        import React from "react";
+        import MyPostsContainer from "./MyPosts/MyPostsContainer";
+        import ProfileInfo from './ProfileInfo/ProfileInfo'
+
+
+        const Profile = (props) => {
+            return(
+                <main>
+                    <ProfileInfo />
+                    <MyPostsContainer store={props.store} />
+                </main>
+            );
+        }
+
+        export default Profile;
+        
+
+    и для работы с этим store в MyPostsContainer вытаскиваем state и прокдываем дальше нужные данные 
+
+        const MyPostsContainer = (props) => {
+
+            let state = props.store.getState();
+
+            let addPost = () => {
+                props.store.dispatch( addPostActionCreator() );
+            };
+
+            let onPostChange = (text) => {
+             props.store.dispatch( updateNewPostTextActionCreator(text) );
+            };
+
+            return ( <MyPosts updateNewPostText={onPostChange} addPost={addPost} 
+                            postsData={state.profilePage.postsData} 
+                            newPostText={state.profilePage.newPostText} /> );
+        }
+
+
+        Получаем ошибку, потому что в Profile не приходит store из Апп потому что там мы его разделяли и вытаскивали
+        отдельно state и dispatch, но так как теперь будем рефакторить все компоненты оборачивая их контейнерными
+        можно store прокинуть полностью:
+
+        <Route path="/profile"  element={<Profile store={props.store} />} />
+
+        //*! Как заработали методы диспатч если мы байндили их в индексе и передавали дальше, так получается байнд
+        //! работать не должен, а у нас все работает.
+
+
+
+    //*! пока оборачиваем контейнерами те компоненты где была логика(нажатие на кнопку, и т.п.)
+    По аналогии рефакторим Dialogs. 
+    
+
+        В Апп заменяем Dialogs на DialogsContainer + импорт
+    
+            <Route path="/dialogs" element={<DialogsContainer store={props.store} />} />:
+
+
+        Копируем Dialogs и переименовываем его в DialogsContainer. В нем переименовываем ф-ю и экспортируем ее новое название,
+        удаляем разметку и оставляем только компонент <Dialogs/> :
+
+            const DialogsContainer = (props) => {
+
+            let state = props.store.getState().dialogsPage;
+
+            let onSendMsgClick = () => {
+                props.store.dispatch(sendMsgCreator());
+            };
+
+            let onNewMsgChange = (msgBody) => {
+                props.store.dispatch(updateNewMsgBodyCreator(msgBody));
+            };
+
+
+            return  <Dialogs updateNewMsgBody={onNewMsgChange} sendMsg={onSendMsgClick} 
+                            dialogsPage={state}/> ;
+            }
+
+            export default DialogsContainer;
+
+
+        В Dialogs изменились:
+
+            let state = props.dialogsPage;
+
+            let onSendMsgClick = () => {
+                props.sendMsg();
+            };
+
+            let onNewMsgChange = (e) => {
+                let msgBody = e.target.value;
+                props.updateNewMsgBody(msgBody);
+            };
+
+
+    //*! Исправил ошибку в Диалог редюсерс - теперь всё работает!!! Ну кроме той фишки что уходит из фокус textarea.
+
+    // todo Осталась проблема - каким образом эффективнее прокидывать store, мы прокидываем его через props по всем
+        компонентам. И чтобы такого не было будем использовать context, он позволяет в родительском компоненте создать
+        контекст(объект который живет в стороне) и он будет доступен всем дочерним компонентам(всему дочернему дереву).
+        То есть если для Апп добавить store в context то любой контейнерный компонент которому нужен store, он может
+        получить доступ к context напрямую без прокидывания через props. Это тема следующего урока и после него
+        //*! перейдем к React-Redux библиотеке, это прослойка между Реактом и Редаксом.
+
+*/}
+
+
+{/*    ====    44. Практика - Context API     ====
 
 
 */}
