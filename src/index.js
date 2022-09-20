@@ -3,6 +3,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
+import StoreContext from './StoreContext';
 
 
 
@@ -10,7 +11,9 @@ let rerenderEntireTree = (state) => {
   const root = ReactDOM.createRoot(document.getElementById('root'));
   root.render(
     <React.StrictMode>
-      <App state={state} dispatch={store.dispatch.bind(store)} store={store}/>
+      <StoreContext.Provider value={store}>
+        <App />
+      </StoreContext.Provider>
     </React.StrictMode>
   );
 }
@@ -21,3 +24,5 @@ store.subscribe(() => {
   let state = store.getState();
   rerenderEntireTree(state)
 });
+
+// state={state} dispatch={store.dispatch.bind(store)} store={store} - из Апп компонента

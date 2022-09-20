@@ -7,9 +7,11 @@ const Profile = (props) => {
     return(
         <main>
             <ProfileInfo />
-            <MyPostsContainer store={props.store} />
+            <MyPostsContainer />
         </main>
     );
 }
 
 export default Profile;
+
+// <MyPostsContainer store={props.store} />

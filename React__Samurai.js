@@ -3801,5 +3801,94 @@
 
 {/*    ====    44. Практика - Context API     ====
 
+    //*! Проверить синтаксис context, он мог измениться.
+
+    Context - используется для глобальных вещей(тема сайта, язык, активный пользовтель), не нужно использовать его для всех данных
+        потому что так они становятся глобальными и к ним может получить доступ любой дочерний компонент(менее защищены), таже 
+        становится труднее дебажить код.
+
+
+    Попробуем сделать вручную контекст и к нем обратиться. 
+    //*! В следующем уроке будем подключать библиотеку которая будет делать тоже самое(прокидывать store через сcntext) но скрытно 
+    от нас(без нашего участия).
+
+
+    Создадим новый файл - storeContext.js в папке src(все равно дальше мы его использовать не будем и в последующем удалим), а в 
+        нем создаем переменную для хранения контекста, пока пустую и экспортируем ее:
+
+        import React from 'react';
+
+        const StoreContext = React.createContext(null);
+
+        export default StoreContext;
+
+
+    Теперь в index.js импортируем StoreContext и заключим компонент Апп в компонент StoreContext.Provider и передадим value={store},
+        то есть все компоненты которые вложены в Апп(возможно и сам Апп) могут пользоваться теперь этим store.
+
+        import StoreContext from './StoreContext';
+
+        let rerenderEntireTree = (state) => {
+            const root = ReactDOM.createRoot(document.getElementById('root'));
+            root.render(
+                <React.StrictMode>
+                    <StoreContext.Provider value={store}>
+                        <App />
+                    </StoreContext.Provider>
+                </React.StrictMode>
+            );
+        }
+
+    
+    Во всех последующих компонентах где раньше прокидывали store через  props удалим передачу через props. А получать store будет
+        контейнерный компонент(что бы не загрязнять чистую ф-ю).  В Profile теперь место <MyPostsContainer store={props.store} />
+        будем вытаскивать store из контекста. Оборачиваем компонет MyPosts в контейнерном компоненте в  <StoreContext.Consumer>
+        в середине которого вызывается ф-я со значением store к которому может обращаться возвращаемая ф-ей разметка. Так как
+        компонент у нас раньше брал значение из переменных которые лежат выше него и теперь эти переменные не имеют доступа к
+        стору, теперь мы их переместим в саму ф-ю возвращающую разметку и будем брать стор напрямую.
+
+        import StoreContext from '../../../StoreContext' //! проверить путь
+
+        const MyPostsContainer = (props) => {
+          return (
+                <StoreContext.Consumer> {
+                    (store) => {
+                        let state = store.getState(); //*! тут автор не удалил props. перед store
+                        let addPost = () => { store.dispatch(addPostActionCreator()); };
+                        let onPostChange = (text) => { store.dispatch(updateNewPostTextActionCreator(text)); };
+
+                        return (<MyPosts updateNewPostText={onPostChange} 
+                                addPost={addPost}
+                                postsData={state.profilePage.postsData}
+                                newPostText={state.profilePage.newPostText} />)
+                    }
+                }
+                </StoreContext.Consumer>
+            );
+        }
+
+
+
+    Делаем также для компонента DialogsContainer:
+
+
+
+    18-00
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 */}
