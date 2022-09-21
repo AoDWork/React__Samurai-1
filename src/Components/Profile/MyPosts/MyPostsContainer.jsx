@@ -4,8 +4,7 @@ import MyPosts from "./MyPosts";
 import StoreContext from "../../../StoreContext";
 
 
-const MyPostsContainer = (props) => {
-  debugger;
+const MyPostsContainer = () => {
   // let state = props.store.getState();
 
   // let addPost = () => {
@@ -17,16 +16,16 @@ const MyPostsContainer = (props) => {
   // };
 
   return (
-    <StoreContext.Consumer> {
-      (store) => {
+    <StoreContext.Consumer> 
+    { (store) => {
         let state = store.getState();
         let addPost = () => { store.dispatch(addPostActionCreator()); };
         let onPostChange = (text) => { store.dispatch(updateNewPostTextActionCreator(text)); };
 
-        return (<MyPosts updateNewPostText={onPostChange} 
+        return <MyPosts updateNewPostText={onPostChange} 
                   addPost={addPost}
                   postsData={state.profilePage.postsData}
-                  newPostText={state.profilePage.newPostText} />)
+                  newPostText={state.profilePage.newPostText} />
       }
     }
     </StoreContext.Consumer>

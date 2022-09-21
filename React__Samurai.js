@@ -3847,13 +3847,13 @@
         компонент у нас раньше брал значение из переменных которые лежат выше него и теперь эти переменные не имеют доступа к
         стору, теперь мы их переместим в саму ф-ю возвращающую разметку и будем брать стор напрямую.
 
-        import StoreContext from '../../../StoreContext' //! проверить путь
+        import StoreContext from '../../../StoreContext' 
 
         const MyPostsContainer = (props) => {
           return (
                 <StoreContext.Consumer> {
                     (store) => {
-                        let state = store.getState(); //*! тут автор не удалил props. перед store
+                        let state = store.getState();
                         let addPost = () => { store.dispatch(addPostActionCreator()); };
                         let onPostChange = (text) => { store.dispatch(updateNewPostTextActionCreator(text)); };
 
@@ -3871,21 +3871,36 @@
 
     Делаем также для компонента DialogsContainer:
 
+        import StoreContext from "../../StoreContext"
+
+        const DialogsContainer = () => {
+            return <StoreContext.Consumer>{
+                        (store) => {
+                            let state = store.getState().dialogsPage;
+                            let onSendMsgClick = () => { store.dispatch(sendMsgCreator()); };
+                            let onNewMsgChange = (msgBody) => { store.dispatch(updateNewMsgBodyCreator(msgBody)); };
+
+                            return <Dialogs updateNewMsgBody={onNewMsgChange}
+                                            sendMsg={onSendMsgClick}
+                                            dialogsPage={state} />;
+                        }
+                    }
+                    </StoreContext.Consumer>
+        }
+
+        export default DialogsContainer;
 
 
-    18-00
+    Появилась ошибка у автора - render is not a function (update ContextConsumer). В результате поиска ошибки нашли сообщение 
+        children of Consumer without new line gives "TypeError render is not a function". Окзалось что после 
+        <StoreContext.Consumer> { - эта фигунрная скобка должна быть на новой строке.
+
+        Изменил у себя, теперь всё должно работать.
+
+*/}
 
 
-
-
-
-
-
-
-
-
-
-
+{/*    ====    45. Практика - connect, mapStateToProps, mapDispatchToProps     ====
 
 
 
