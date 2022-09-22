@@ -2,7 +2,7 @@ import React from "react";
 import { sendMsgCreator, updateNewMsgBodyCreator } from "../redux/dialogs-reducer";
 import Dialogs from "./Dialogs";
 // import StoreContext from "../../StoreContext"
-import connect from 'react-redux';
+import {connect} from 'react-redux';
 
 
 // const DialogsContainer = () => {
