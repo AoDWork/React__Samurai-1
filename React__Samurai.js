@@ -4099,7 +4099,7 @@
 */}
 
 
-{/*    ====    47. Практика - делаем копию состояния в ProfileReducer     ====
+{/*    ====    47. Практика - делаем копию состояния в profileReducer     ====
 
     Для выявления ошибки(не обновляется информация на странице при нажатии кнопки поста или записи в текст эреа) посмотрим сначала
         отрабатывают ли ф-ии и приходит ли информация в store. Для этого в ReduxStore присвоим стор глобальному объекту window
@@ -4134,7 +4134,207 @@
         сделать копию state и провести изменения в копии и вернуть ее из редюсера.
 
 
-        8-30
+    Раньше в index.js мы подписывались на изменение state и перерисовывали всё дерево от любого изменения state. Не происходит 
+        сейчас эта перерисовка потому что connect делае свой внутренний subscribe(подписку), поэтому происходит глобальная 
+        блокировка перерисовки. Сейчас компонент сам смотрит нужно ему перерисоваться или нет, происходит локальная перерисовка
+        вместо обновления всего дерева, это еще более оптимизирует работу приложения.
+            
+        Теперь нам не нужен наш subscribe для обновления, убираем его. Просто отрисовываем дерево единожды при загрузке приложения
+        поэтому убираем всё лишнее. Теперь за перерисовку отвечает локальный сабскрайб который создался при подключении компонента
+        с помощью ф-и connect. 
+        
+        Он работает так - каждый раз когда в state происходит изменение запускается ф-я mapStateToProps и формируется новый объект
+        внутренности которого сравниваются с внутренностями(значениями свойств) старого объекта, и если в state не изменились
+        посты postsData и newPostText - тогда компонент не перерисовывается.
+
+            let mapStateToProps = (state) => {
+                return {
+                    postsData: state.profilePage.postsData,
+                    newPostText: state.profilePage.newPostText
+                }
+            }
+
+
+        Но у нас же state изменяется, почему же не происходит ререндер. Потому что реакт и редакс( может реакт-редакс?) из-за 
+        правила иммутабельности считает что объект не изменен, потому что по сути объект остался тот же(сравнивает по ссылке? не
+        лезет внутрь) но мы внесли в него изменения,а так делать нельзя , нужно скопировать объект и в него внести правки и тогда
+        при сравнении этих двух объектов  они будут не равны потому что это уже два разны объекта. 
+
+
+        То есть нам нужно изменить принцип занесения информации в state в profile-reducer и dialog-reducer. Сначала делаем покпию
+        state, пока что для каждого case и поэтому берем в фигурные скобки код в кейсе чтобы не было конфликта двух одинаковых
+        переменных(позже отрефакторим). Делаем изменения в копии и возвращаем копию, для массива postsData делаем глубокую копию.
+
+            const profileReducer = (state = InitialState, action) => {
+                switch(action.type) {
+                    case ADD_POST: {
+                        let newPost = {
+                            id: 5,
+                            post: state.newPostText,
+                            likesCount: 0
+                        };
+
+                        let stateCopy = {...state};
+                        stateCopy.postsData =  [...state.postsData];
+                        stateCopy.postsData.push(newPost);
+                        stateCopy.newPostText = '';
+                        return stateCopy;
+                    }
+                    case UPDATE_NEW_POST_TEXT: {
+                        let stateCopy = {...state};
+                        stateCopy.newPostText = action.newText;
+                        return stateCopy;
+                    }
+                    default:
+                        return state;
+                }
+            }
+
+        Теперь connect видит что state изменился - другой объект и соответственно перерисует данный компонент.
+
+        Копию делаем только того участка state который будем менять, тоесть если это свойство newPostText - в нем сидит примитив,
+        достаточно сделать поверхностную копию, чтобы не затрагивать postsData и не заставлять компонент от него зависящий его 
+        перерисовывать(так как будет создан новый объект но по факту внутренние свойства и значения теже). А если нужно
+        поменять postsData тогда уже делаем для него глубокое копирование.
+            
+
+    //todo Переделать самостоятельно редюсер для диалогов. Автор будет переделывать в следующем уроке и покажет более рациональные
+        методы копирования объекта.
+
+*/}
+
+
+{/*    ====    48. Практика - делаем копию состояния в dialogsReducer     ====
+
+    В dialogsReducer сделаем переменную с копией state перед конструкцией switch, чтобы она была доступна в любом кейсе свича.
+        Запишем в одну строку, //!сначала всегда делаем спред state, а потом перезаписываем свойство, иначе свойство 
+        изменится у оригинала, а потом создастся поверхностная копия.
+
+                let stateCopy = {
+                    ...state,
+                    messagesData: [...state.messagesData]
+                };
+
+                switch(action.type) {
+                    case UPDATE_NEW_MSG_BODY:
+                        stateCopy.newMsgBody = action.newMsgBody;
+                        return stateCopy;
+
+                    case SEND_MSG:
+                        let msg =  state.newMsgBody; //! тут автор оставил state потому что из текущего state достаем то что будем
+                                                                                                        добавлять в новый state
+                        stateCopy.messagesData.push({ id: 6, msg});
+                        stateCopy.newMsgBody = '';
+                        return stateCopy;
+
+                    default:
+                        return state;
+                }
+            }
+
+        //! и не заработало полез дебажить и чтобы устранить ошибку везде где map добавил key который = id элемента из которого
+        получаем JSX элемент. Потом вылезла ошибка что два чилдрена с одним и тем же key, потому что он у нас захардкоджен при 
+        впечатывании сообщения, так получилось потому что в предыдущих уроках он в диспатчере перепутал местами акшены, после 
+        замены работает, хотя он //! оставил в этом случае ТОЛЬКО поверхностную копию let stateCopy = {...state,}; потому что
+        в DialogsContainer мы передаем сразу весь объект -  dialogsPage: state.dialogsPage, а не дробим его как в MyPostsContainer
+        postsData: state.profilePage.postsData, newPostText: state.profilePage.newPostText. Поэтому будет перерисовываться
+        компонент даже при поверхностном копировании //! но получается сообщения будут пушиться в оригинальный объект - да
+        автор говорит что нарушен принцип иммутабельности. Но если мы сделаем копию messagesData, то так как эта копия делается
+        до switch то даже при впечатывании текста будет создаваться новый массив с постами, а так тоже делать не нужно(надо 
+        копировать только то что изменяем) потому что засоряется память 
+        
+        //! значит будем делать нужную копию в зависимости от экшена, перенесем  в сами кейсы, но так как в прошлом примере со 
+        скобками выглядит не красиво, а без скобок нельзя объявить две одинаковые переменные, сделаем объявление до switch, а 
+        присваивание уже в самом кейсе.
+
+            const dialogsReducer = (state = InitialState, action) => {
+
+                let stateCopy;
+                
+                switch(action.type) {
+                    case UPDATE_NEW_MSG_BODY:
+                        stateCopy = {...state};
+                        stateCopy.newMsgBody = action.newMsgBody;
+                        return stateCopy;
+
+                    case SEND_MSG:
+                        stateCopy = {...state, messagesData: [...state.messagesData] };
+
+                        let msg =  stateCopy.newMsgBody;
+
+                        stateCopy.messagesData.push({ id: 6, msg});
+                        stateCopy.newMsgBody = '';
+                        return stateCopy;
+
+                    default:
+                        return state;
+                }
+            }
+
+
+
+        Теперь отрефакторим чтобы выполнять изменения при создании объекта. Так как при копировании messagesData мы уже раскрываем
+        массив [...state.messagesData], то теперь можно вместо push в копированный массив, добавить новый объект после запятой: 
+        messagesData:  [...state.messagesData, { id: 6, msg} ]  - так мы добави эл. в конец массива, если нужно в начало, тогда
+        сразу пишем добавляемый аргумент, а через запятую спред стейта.
+
+            const dialogsReducer = (state = InitialState, action) => {
+
+                let stateCopy;
+
+                switch(action.type) {
+                    case UPDATE_NEW_MSG_BODY:
+                        stateCopy = {
+                            ...state,
+                            newMsgBody: action.newMsgBody
+                        };
+                        return stateCopy;
+
+                    case SEND_MSG:
+                        let msg =  state.newMsgBody;
+                        stateCopy = {
+                            ...state,
+                            newMsgBody: '',
+                            messagesData:  [...state.messagesData, { id: 6, msg} ] 
+                        };
+                        return stateCopy;
+
+                    default:
+                        return state;
+                }
+            }
+
+
+        Можно даже избавиться от переменной и сразу возвращать скопированный объект:
+
+            const dialogsReducer = (state = InitialState, action) => {
+
+                switch(action.type) {
+                    case UPDATE_NEW_MSG_BODY:
+                        return {
+                            ...state,
+                            newMsgBody: action.newMsgBody
+                        };
+
+                    case SEND_MSG:
+                        let msg =  state.newMsgBody;
+                        return {
+                            ...state,
+                            newMsgBody: '',
+                            messagesData:  [...state.messagesData, { id: 6, msg} ] 
+                        };
+
+                    default:
+                        return state;
+                }
+            }
+
+
+
+    Зарефакторим profileReducer и пофиксим ошибку(не обнуляется поле после отправки поста):
+
+            
+            31-55
 
 
 
