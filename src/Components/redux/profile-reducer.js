@@ -21,9 +21,8 @@ const profileReducer = (state = InitialState, action) => {
 
             return {
                 ...state,
-                newPostText: '',
                 postsData: [...state.postsData, newPost],
-
+                newPostText: ''
             };
             // stateCopy.postsData =  [...state.postsData];
             // stateCopy.postsData.push(newPost);
