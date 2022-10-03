@@ -4404,12 +4404,104 @@
         на которую будут к этим 4м еще на страницу добавляться еще 4 пользователя и т.д. - это всё мы можем узнать у заказчика
         (почему эта строчка - статус. а не дескрипшн) что бы не додумывать. 
 
-        //todo почитать книгу Domen Driven Design - Эрих Дж. Эванс - по этой теме.
+        //todo почитать книгу Domen Driven Design - Эрик Дж. Эванс - по этой теме.
+
+        Заполняем InitialState. Переименуем его в usersData. id оставляем (особенно если это массив объектов, она будет браться
+        с сервера, там будут создаваться сущности и на сервере есть идентификатор), добавляем fullname и location - место
+        проживания как объект в котором есть city и country. Также сделаем флаг followed чтобы видеть пользователь у нас в 
+        друзьях или нет.
+
+            let InitialState = {
+                usersData: [
+                    { id: 1, followed: false, fullName: "Dmitry", status: 'I am a boss', location: {city: 'Minsk' , country:'Belarus' } },
+                    { id: 2, followed: true, fullName: "Sasha", status:'I am a boss too', location: {city: 'Moskov', country:'Russia'  } },
+                    { id: 3, followed: false, fullName: "Vitya", status: 'I am a super boss',location: {city: 'Kyiv', country:'Ukraine' }  }
+                ]
+            }
+
+
+        Кнопку show more будем добавлять уже после того как сделаем вывод пользоватьелей на страницу. Для реализации кнопки - follow и unfollow
+        нам нужно два action их и реализуем в диспатче. Поменяем ф-и которые отдаем и константы, в ф-ии которые отдаем нам нужно принять 
+        параметром userId - айди того юзера которого нужно поменять.
+        
+            const FOLLOW = 'FOLLOW';
+            const UNFOLLOW = 'UNFOLLOW';
+
+            export const followAC = (userId) => ({ type: FOLLOW, userId })
+            export const unfollowAC = (userId) => ({ type: UNFOLLOW, userId })
+
+
+        Далее для того чтобы применить экшены в редюсере нужно скопировать state и сделать копию массива users который будем изменять.
+
+            let stateCopy = { ...state, users:[...state.usersData] } - так мы делали если нужно было добавить что то в массив
+
+
+        Когда нужно перебрать массив и изменить один из его текущих элементов используем - map - возвращает новый массив на основе
+        старого(копирует). Но копирует только того пользователя которого изменяем, если изменения не требуются то возвращает старый
+        массив.
+
+            const usersReducer = (state = InitialState, action) => {
+    
+                switch(action.type) {
+                    case FOLLOW:
+                        return { 
+                            ...state, 
+                            users: state.usersData.map( u => {
+                                if(u.id === action.userId) {
+                                    return {...u, followed: true}
+                                }
+                                return u;
+                            })
+                        }
+
+                    case UNFOLLOW:
+                        return { 
+                            ...state, 
+                            users: state.usersData.map( u => {
+                                if(u.id === action.userId) {
+                                    return {...u, followed: false}
+                                }
+                                return u;
+                            })
+                        }
+
+                    default:
+                        return state;
+                }
+            }
+
+        
+        Пока мы захардкодили юзеров, но на самом деле массив будет пустой изначально, а потом мы получим данные пользователей
+        с сервера и нам их нужно будет добавить в массив для этого нужно создать еше один action назовем его setUsers. В
+        switch case SET_USERS: копируем state, копируем юзеров ...state.usersData и также раскрывая через спред оператор
+        вставляем юзеров из action - ...action.users (склеиваем два массива).
+
+            const SET_USERS = 'SET_USERS';
+
+                    case SET_USERS:
+            return {
+                ...state,
+                users: [ ...state.usersData, ...action.users ]
+            }
+
+            export const setUsers = (users) => ({ type: SET_USERS, users })
+
+        
+        Bll для юзеров готов теперь сделаем UI.
+
+
+
+    Создадим UsersContainer так как данные мы будем брать из store и изменим ее в Апп
 
 
 
 
-        14-00
+
+
+
+
+
+
 
 
 

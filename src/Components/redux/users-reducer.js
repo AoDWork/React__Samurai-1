@@ -1,28 +1,57 @@
-const ADD_POST = 'ADD-POST';
-const UPDATE_NEW_POST_TEXT = 'UPDATE-NEW-POST-TEXT';
+const FOLLOW = 'FOLLOW';
+const UNFOLLOW = 'UNFOLLOW';
+const SET_USERS = 'SET_USERS';
+
 
 let InitialState = {
-    postsData: [
-        { id: 1, post: "yo", likesCount: 12 },
-        { id: 2, post: "It's my fist post.", likesCount: 11 },
-        { id: 3, post: "0", likesCount: 50 }],
-    newPostText: 'Type Post'
+    usersData: [
+        { id: 1, followed: false, fullName: "Dmitry", status: 'I am a boss', location: {city: 'Minsk' , country:'Belarus' } },
+        { id: 2, followed: true, fullName: "Sasha", status:'I am a boss too', location: {city: 'Moskov', country:'Russia'  } },
+        { id: 3, followed: false, fullName: "Vitya", status: 'I am a super boss',location: {city: 'Kyiv', country:'Ukraine' }  }
+    ]
 }
 
 const usersReducer = (state = InitialState, action) => {
     
     switch(action.type) {
-        
+        case FOLLOW:
+            return { 
+                ...state, 
+                users: state.usersData.map( u => {
+                    if(u.id === action.userId) {
+                        return {...u, followed: true}
+                    }
+                    return u;
+                })
+            }
+
+        case UNFOLLOW:
+            return { 
+                ...state, 
+                users: state.usersData.map( u => {
+                    if(u.id === action.userId) {
+                        return {...u, followed: false}
+                    }
+                    return u;
+                })
+            }
+
+        case SET_USERS:
+            return {
+                ...state,
+                users: [ ...state.usersData, ...action.users ]
+            }
+
         default:
             return state;
     }
 }
 
 
-export const addPostActionCreator = () => ({ type: ADD_POST })
+export const followAC = (userId) => ({ type: FOLLOW, userId })
+export const unfollowAC = (userId) => ({ type: UNFOLLOW, userId })
+export const setUsers = (users) => ({ type: SET_USERS, users })
 
-export const updateNewPostTextActionCreator = (text) => {
-    return { type: UPDATE_NEW_POST_TEXT, newText: text }
-}
+
 
 export default usersReducer;

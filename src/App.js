@@ -18,7 +18,7 @@ function App(props) {
                     <Routes>
                         <Route path="/dialogs" element={<DialogsContainer />} />
                         <Route path="/profile" element={<Profile />} />
-                        <Route path="/users" element={<Users />} />
+                        <Route path="/users" element={<UsersContainer />} />
                     </Routes>
                 </div>
             </div>
@@ -27,6 +27,3 @@ function App(props) {
 }
 
 export default App;
-
-// < Route path = "/dialogs" element = {< DialogsContainer store = { props.store } />} />
-//     < Route path = "/profile"  element = {< Profile store = { props.store } />} />
