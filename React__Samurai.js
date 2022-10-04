@@ -4484,27 +4484,192 @@
                 users: [ ...state.usersData, ...action.users ]
             }
 
-            export const setUsers = (users) => ({ type: SET_USERS, users })
+            export const setUsersAC = (users) => ({ type: SET_USERS, users })
 
         
         Bll для юзеров готов теперь сделаем UI.
 
 
 
-    Создадим UsersContainer так как данные мы будем брать из store и изменим ее в Апп
+    Создадим UsersContainer для снабжения компонента Users данными из store(state),  изменим в Апп просто компонент Users на 
+        UsersContainer. Диспатчим не action creator a результат его работы(он возвращает нам action ) и мы диспатчим action который
+        вернул action creator - простой объект который как минимум должен содержать тип(type). setUsers тоже добавляем ( как будто
+        это намерение пользователя засетать юзеров) - да пользователь не нажимает никакую кнопку для отображения пользователей, они
+        отображаются на странице автоматически, но ведь он зашел на эту страницу, поэтому это можно считать за его действие, при
+        котором презентационный компонент  диспатчит action в state и отрисовываются пользователи которые приходят уже из state.
+        
+            import React from 'react';
+            import Users from './Users';
+            import {connect} from 'react-redux';
+            import {followAC, unfollowAC, setUsersAC} from '../redux/users-reducer'
+
+
+            let mapDispatchToProps = (state) => {
+                return {
+                    users: state.usersPage.usersData
+                }
+            };
+
+            let mapDispatchToProps = (dispatch) => {
+                return {
+                    follow: (userId) => { dispatch(followAC(userId)); },
+                    unfollow: (userId) => { dispatch(unfollowAC(userId)); },
+                    setUsers: (users) => { dispatch(setUsersAC(users)); }
+                }
+            };
+
+
+            export default connect (mapStateToProps, mapDispatchToProps)(Users);
+          
+        
+    Добавим в Redux-store в reducers users:
+
+            import usersReducer from './users-reducer';
+
+            let reducers = combineReducers({
+                profilePage: profileReducer,
+                dialogsPage: dialogsReducer,
+                usersPage: usersReducer
+            })
+
+
+    Теперь компонент Users получает необходимые данные(колбеки и state) и можно приступить к их обработке. Берем массив юзеров и
+        маппим их чтобы для каждого возвращалась разметка с нужными значениями(пока что закидывем всё в span чтобы не париться с 
+        версткой, в одном span отрисуем картинку аватарки(добавим в reduser для каждого пользователя photoUrl) и кнопку, во втором
+        две колонки 1(имя и статус) 2(страна+ город)). Добавим импорт styles и создадим Users.module.css чтобы уменьшить размер
+        аватарок:
+
+            import React from 'react';
+            import styles from './Users.module.css';
+
+            let Users = (props) => {
+                return(
+                    <div>
+                        {
+                            props.users.map(user => <div key = {user.id}>
+                                <span>
+                                    <div><img src={user.photoUrl} className={styles.userPhoto} /></div>
+                                    <div>
+                                        {user.followed 
+                                            ? <button onClick = { ()=> {props.unfollow(user.id)} }>Unfollow</button> 
+                                            : <button onClick = { ()=> {props.follow(user.id)} }>Follow</button>}
+                                    </div>
+                                </span>
+                                <span>
+                                    <span>
+                                        <div>{user.fullName}</div>
+                                        <div>{user.status}</div>
+                                    </span>
+                                    <span>
+                                        <div>{user.location.country}</div>
+                                        <div>{user.location.city}</div>
+                                    </span>
+                                </span>
+                            </div>)
+                        }
+                    </div>
+                )
+            }
+
+            export default Users;    
+
+        Такой вид с захаркоджеными юзерами. Сетюзерс еще не применяли.
 
 
 
+    //! Для эмуляции получения данных о пользователях с сервера( поместим их пока в презентационный компонет Users ) в котором перед 
+        отрисовкой вызовем setUsers и передадим туда данные пользователей:
+
+            let Users = (props) => {
+
+            props.setUsers([
+                { id: 1, photoUrl: 'https://images.archive-digger.com/taboola/image/fetch/f_jpg%2Cq_auto%2Ch_225%2Cw_300%2Cc_fill%2Cg_faces:auto%2Ce_sharpen/https%3A%2F%2Fi.imgur.com%2FhDNiJvY.png', 
+                    followed: false, fullName: "Dmitry", status: 'I am a boss', location: {city: 'Minsk' , country:'Belarus' } },
+                { id: 2, photoUrl: 'https://images.archive-digger.com/taboola/image/fetch/f_jpg%2Cq_auto%2Ch_225%2Cw_300%2Cc_fill%2Cg_faces:auto%2Ce_sharpen/https%3A%2F%2Fi.imgur.com%2FhDNiJvY.png', 
+                    followed: true, fullName: "Sasha", status:'I am a boss too', location: {city: 'Moskov', country:'Russia'  } },
+                { id: 3, photoUrl: 'https://images.archive-digger.com/taboola/image/fetch/f_jpg%2Cq_auto%2Ch_225%2Cw_300%2Cc_fill%2Cg_faces:auto%2Ce_sharpen/https%3A%2F%2Fi.imgur.com%2FhDNiJvY.png', 
+                    followed: false, fullName: "Vitya", status: 'I am a super boss',location: {city: 'Kyiv', country:'Ukraine' }  }
+            ]);
+
+        //! появилась ошибка - maximum update depth exceeded(достигнуто максимальное количество глубины по апдейту) - так получилось
+        потому что: ф-й компонент Users вызывается когда где-то отрисовывается ее тег( у нас это UsersContainer который потом
+        отрисовывается в App). Тоесть он вызывается и должен вернуть JSX разметку, но перед возвратом компонент отправляет список
+        пользователей в state, он меняется - поступает сигнал перерисовать компонент Users но в нем перед перерисовкой снова идет 
+        отправка пользователей и снова изменяется state, возврат JSX разметки происходит постоянно, мы сделали бесконечный цикл. 
+        
+        Для избежания такой ситуации будем setUsers если их у нас еще нету.
+
+            if (props.setUsers.length === 0 ) ([
+                { id: 1, photoUrl:
+
+
+        Теперь все работает но в ф-м компоненте появляется побочный эффект(изменение данных state) и компонент уже не чистая ф-я.
+        Если бы этот диспатч работал по нажатию кнопки это одно дело, но тут он работает во время вызова ф-и Users. Пока не знаем
+        как взять эти данные с сервера нас такой порядок дел устраивает.
+
+*/}
+
+
+{/*    ====    50. Практика - Rest API (краткая теория)     ====
+
+    Interface - то как мы работаем с объектом(дверь - ручка, замок; гитара - струны).
+
+    API (Application Programm[-ing] interface) - интерфейс взаимодействия с приложением(программой). Программа - сервер написанная
+        на Node (js) или (Apache(php), Django(pyton), ...) тут нас интересует только интерфейс взаимодействия с сервером API. У 
+        каждой программы сервера есть программные endpoint (конечные точки) - каждый endpoint(ресурс) имеет характеристики: 
+        
+        1) url адрес на который мы можем делать запросы (URL: "https://samuraiJS.com/api/users" ) - тут ресурс users
+        2) тип запроса  (http-request type: get / post)
+        3) request payload   (данные которые должны послать на сервер) - правильно заполнить запрос(аналогия заполнения action )
+        4) responce data     (данные которые должны получить с сервера) - нужно знать какой ответ к нам прийдет чтобы правильно его
+                        обработать.
+        5) http codes: 404 not found, 5xx -server errors, 3xx -redirect, 2xx - ok (в зависимости от возвращенного кода ответа в нашем
+                        кода будут производиться различные действия)
 
 
 
+    Server REST API - правила запросов для типизации запросов (типичность запросов от проекта к проекту).
+        Раньше были такие запросы
+
+            https://samuraiJS.com/api/users/get     - get
+            https://samuraiJS.com/api/users/create  - post
+            https://samuraiJS.com/api/users/update  - post
+            https://samuraiJS.com/api/users/delete  - post
+
+        Потом подумали что нужно использовать все запросы для этих целей, а не только get и post, и теперь шлем запрос на один
+        breakpoint но запросы разные. На сервер приходит запрос на один endpoint и в зависимости от типа запроса сервер сам 
+        определяет что нужно сделать. На самом деле REST API немного про другое, про разделение API на определенные сущности и
+        взаимодействия между ними.
+
+            https://samuraiJS.com/api/users     GET - POST - PUT - DELETE (CRUD - create - read- update - delete)   
 
 
 
+    Запросы отличаются размером payload - допустимого размера отправляемых на сервер данных, для get и delete он будет 
+        небольшим потому что мы ничего по сути не отправляем, только хотим получить или удалить, для put и post он будет больше
+        ведь нам нужно или создать нового пользователя или обновить картинку аватарки.
 
 
+    //! Использовать будем библиотеку Axios для нативных способов использования AJAX запросов. XML HTTP request - самая 
+        олдскульная технология(но уж не используемая). Раньше использовали JQuery библиотеку, но она слишком громоздкая. 
+        Fetch - делает нативные AJAX запросы, возвращает промисы - но для таких низкоуровневых библиотек нужно писать свою
+        обертку, чтобы было удобно делать запросы, реализовать объекты отправляемые на сервак, устанавливать параметры ...
+        То есть по сути мы создадим свой axios вокруг fetcha или другой библиотеки, это затратно и нужно поддерживать его 
+        актуальность, поэтому можно использовать готовые решения.
+
+        При работе с axios мы выполняем асинхронные запрос, во время ожидания которого остальное приложение работает. Пишем:
+            axios потом через точку get происходит запрос и ожидание, дальше выполняется  console.log("after request"); а когда
+            прийдет ответ с сервера выполниться код в then. То есть axios возвращает промис на который мы подписываемя при помощи
+            then и когда будет получен ответ выполниться колбек ф-я в then. Пока в промисы не вникаем.
 
 
+            axios 
+                .get('https://blabla.com/users')
+                .then( data => console.log(data) );
 
+            console.log("after request");
+
+
+    //todo Можно посмотреть на канале it kamasutra playlist - AJAX в деталях, там очень много всего, что понадобится потом.
 
 */}
