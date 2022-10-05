@@ -1,6 +1,11 @@
 import React from 'react';
 import styles from './Users.module.css';
-import * as axios from 'axios';
+import axios from 'axios';
+
+const srcApiSamurai = 'https://social-network.samuraijs.com/api/1.0/users';
+const srcApiJson = 'https://jsonplaceholder.typicode.com/users'
+
+axios.get(srcApiJson).then( responce => { console.log(responce); } )
 
 
 let Users = (props) => {
