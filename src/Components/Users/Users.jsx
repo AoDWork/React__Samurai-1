@@ -9,46 +9,47 @@ const srcApiJson = 'https://jsonplaceholder.typicode.com/users'
 axios.get(srcApiSamurai).then( responce => { console.log(responce.data); } )
 
 
-let Users = (props) => {
-    
-    let getUsers = () => {
-        if (props.users.length === 0 ) {
-            axios.get(srcApiSamurai)
-                .then( responce => { 
-                    props.setUsers(responce.data.items); 
-                });
-        }
-    };
+class Users extends React.Component {
 
-    // console.log(props.users)
+    constructor(props) {
+        super(props);
 
-    return(
-        <div>
-            <button onClick = {getUsers} >Get Users</button>
-            {
-                props.users.map(user => <div key = {user.id}>
-                    <span>
-                        <div><img src={user.photos.small !==null ? user.photos.small : userPhoto } className={styles.userPhoto} /></div>
-                        <div>
-                            {user.followed 
-                                ? <button onClick = { ()=> {props.unfollow(user.id)} }>Unfollow</button> 
-                                : <button onClick = { ()=> {props.follow(user.id)} }>Follow</button>}
-                        </div>
-                    </span>
-                    <span>
+        axios.get(srcApiSamurai)
+            .then( responce => { 
+                this.props.setUsers(responce.data.items); 
+            });
+        
+    }
+
+    render() {
+        return(
+            <div>
+                {
+                    this.props.users.map(user => <div key = {user.id}>
                         <span>
-                            <div>{user.name}</div>
-                            <div>{user.status}</div>
+                            <div><img src={user.photos.small !==null ? user.photos.small : userPhoto } className={styles.userPhoto} /></div>
+                            <div>
+                                {user.followed 
+                                    ? <button onClick = { ()=> {this.props.unfollow(user.id)} }>Unfollow</button> 
+                                    : <button onClick = { ()=> {this.props.follow(user.id)} }>Follow</button>}
+                            </div>
                         </span>
                         <span>
-                            <div>{'user.location.country'}</div>
-                            <div>{'user.location.city'}</div>
+                            <span>
+                                <div>{user.name}</div>
+                                <div>{user.status}</div>
+                            </span>
+                            <span>
+                                <div>{'user.location.country'}</div>
+                                <div>{'user.location.city'}</div>
+                            </span>
                         </span>
-                    </span>
-                </div>)
-            }
-        </div>
-    )
+                    </div>)
+                }
+            </div>
+        )
+    }
 }
+
 
 export default Users;
