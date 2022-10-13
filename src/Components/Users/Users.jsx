@@ -11,14 +11,15 @@ axios.get(srcApiSamurai).then( responce => { console.log(responce.data); } )
 
 class Users extends React.Component {
 
-    constructor(props) {
-        super(props);
+    // constructor(props) {
+    //     super(props);
+    // }
 
+    componentDidMount() {
         axios.get(srcApiSamurai)
             .then( responce => { 
                 this.props.setUsers(responce.data.items); 
             });
-        
     }
 
     render() {
