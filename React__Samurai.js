@@ -3924,7 +3924,7 @@
         его можно использовать с нативным JS, Angular, ... Проблема в том что достучаться к этому редаксовскому стору немного
         затруднительно, нужно создавать контекст провайдер, в компоненте которой нужен стор создавать контент консумер. Для более
         удобной работы с редаксом установим библиотеку react-redux  это такая прослойка между реактом(UI) и редаксом(BLL) для того
-        чтобы эффективно и легче образаться к редаксу. Мы по сути будем обращаться к реакт-редаксу, а она будет обращаться к редаксу
+        чтобы эффективно и легче обращаться к редаксу. Мы по сути будем обращаться к реакт-редаксу, а она будет обращаться к редаксу
         сама.
 
         npm instal react-redux --save
@@ -3933,7 +3933,7 @@
     Проблемы которые будем решать:
         1) передача store через Context (мы создали свой Provider). Теперь можно пользоваться Provider из библиотеки, у него такой
             же синтаксис как у нас был(хоть и немного другая реализация в самой библиотеке), теперь можно удалить файл StoreContext
-            где мы создавали свой Context. Теперь Provider в index где мы его используем будем испортировать из библиотеки 
+            где мы создавали свой Context. Теперь Provider в index где мы его используем будем импортировать из библиотеки 
             react-redux.
 
                 import {Provider} from 'react-redux';
@@ -3977,8 +3977,7 @@
 
                 
 
-
-            Коннект выдает позволяет нам забыть про store и предоставляет его составные части, state теперь можно брать без
+            Коннект позволяет нам забыть про store и предоставляет его составные части, state теперь можно брать без
             вызова ф-ии getState просто передав стейт в параметры ф-и 1, и тогда можно обращаться к стейту минуя стор, тоесть
             dialogsPage={store.getState().dialogsPage;}  -  dialogsPage: state.dialogsPage , в пропсы к презентационному компоненту
             попадет такая же конструкция dialogsPage = {state.dialogsPage} сформировавшаяся из пары ключ-значение объекта в ф-и.
@@ -5145,7 +5144,8 @@
 
     //! У меня юзеры добавляются по 2 раза, причем если перейти на другую страницу, а потом вернуться то их прибавиться еще 2 списка.
     //! А если обновить просто 2. Если дописать условие то при любых манипуляциях всё равно получается двойной список. Пока оставлю
-    //! так как у автора.
+    //! так как у автора. Прищла мысль что может такое поведение вызвано тем что массив у меня не [] пустой, а там 
+    //! закомментированный код был, сейчас убрал нужно проверить как себя будет вести.
 
 */}
 
@@ -5186,10 +5186,244 @@
 
 
     Если посмотреть на сервер  https://social-network.samuraijs.com/api/1.0/users то в документации написаны параметры get запросв
-        по умолчанию возвращает 10 пользователей, и тд... Будем внедрять в наш проект.
+        по умолчанию возвращает 10 пользователей(count defualt -10, maximum - 100), page (default -1) - страница будет отображаться
+        по умолчанию, и тд... Будем внедрять в наш проект.
 
 
-        14-00
+
+    Сделаем отображение общего количества пользователей по страницам (1 2 3 ... ). Для этого в Users добавим разметку с этими 
+        значениями над пользователями. Для начала сделаем заглушку для визуала.
+
+            return(
+            <div>
+                <div>
+                    <span className={styles.Selectedpage}>1</span>
+                    <span>2</span>
+                    <span>3</span>
+                    <span>4</span>
+                    <span>5</span>
+                </div>
+
+
+        Сделаем в БЛЛ так чтобы из него бралось это количество кнопок которые нужно отрисовать(помним что это число
+        считается из деления totalCount(юзеры которые приходят с сервера)/pageSize(размер страницы который мы определяем сами)) и
+        это число у нас должно быть в БЛЛ(store) в users-reducer initialState где и определяется наш store. Добавим эти значения,
+        причем totalUsersCount мы не знаем какое будет число пока не получим ответ от сервера - оставим его первоначальное 
+        значение - 0.
+        
+            let InitialState = {
+                usersData: [ ],
+                pageSize: 5,
+                totalUsersCount: 0
+            }
+
+
+        Эти свойства прокидываем через props в комопнент Users. Для этого в UsersContainer добавим эти свойства в ф-ю 
+        передающую  sate в презентационный компонент Users 
+
+            let mapStateToProps = (state) => {
+                return {
+                    users: state.usersPage.usersData,
+                    pageSize: state.usersPage.pageSize,
+                    totalUsersCount: state.usersPage.totalUsersCount
+                }
+            };
+
+
+        В users можно сделать переменную в которой будем на основании этих данных из props посчитать сколько нужно 
+        отобразить страниц. Получаем число, теперь чтобы отобразить такое же количество элементов (их мы отображали пробегаясь
+        map по массиву с элментами) сделаем на основе числа через цикл for массив с колличеством эл. равным числу, и так как 
+        на сайте будет отсчет от 1 а не от 0, то i = 1. 
+        
+             render() {
+                let pegesCount = this.props.totalUsersCount / this.props.pageSize;
+                let pages = [];
+
+                for (let i = 1; i <= pegesCount; i++) {
+                    pages.push(i);
+                }
+
+                return(
+                    <div>
+                        <div>
+                            { pages.map( page => {<span className={true && styles.Selectedpage}>{page}</span>} ) }
+                        </div>
+
+
+        Также для отображения выбранной страницы нужно ввести условие если true тогда отображать как выделенную, это true нам нужно
+        откуда то взять, и конечно нужно его как свойство добавить в наш state, назовем его currentPage, присвоим значение 1 по
+        умолчанию, всегда будем запрашивать первую страницу у сервера.
+
+            let InitialState = {
+                usersData: [],
+                pageSize: 5,
+                totalUsersCount: 0,
+                currentPage: 1
+            }
+
+        
+        Прокинем и это свойство через props в компонент Users.
+
+            let mapStateToProps = (state) => {
+                return {
+                    users: state.usersPage.usersData,
+                    pageSize: state.usersPage.pageSize,
+                    totalUsersCount: state.usersPage.totalUsersCount,
+                    currentPage: state.usersPage.currentPage
+                }
+            };
+
+
+        Применим в условие это свойство сравнивая его с текущим (значением?) page
+
+             <div>
+                { pages.map( page => {
+                    return <span className={this.props.currentPage === page && styles.Selectedpage}>{page}</span> }) 
+                }
+            </div>
+
+
+        Пока не видно никаких цифр потому что у нас totalUsersCount - 0, для проверки можно его изменить на какое то число
+        (например 20) и поменять currentPage чтобы увидеть как отрабатывает условие. Работает но если например у нас будет
+        число юзеров 19, тоесть на 4й странице их будет не 5, а 4 и нам их тоже нужно показать, но при таком делении как у нас
+        на странице отображается всего 3 страницы, тоесть на 4ю нам не нажать даже. При делении у нас получается дробное число,
+        чтобы исправить такое поведение нужно рез-т округлять к большему целому с помощью  Math.ceil .
+
+             let pegesCount = Math.ceil( this.props.totalUsersCount / this.props.pageSize );
+
+
+
+    Будем использовать свойства state в запросе на сервер
+
+        componentDidMount() {
+            axios.get(
+                `https://social-network.samuraijs.com/api/1.0/users?page=${ this.props.currentPage }&count=${ this.props.pageSize}`
+                )
+        .then( responce => { 
+
+        Видим что есть ответ и пользователей на странице 5 вместо 10ти, поменяем в state currentPage на 2 видим что пришли другие
+        пользователи.
+
+
+
+    Сделаем переключение страниц по клику(изменяя currentPage в state) для этого в reducere сделаем новую константу, ф-ю, АС:
+
+            const SET_CURRENT_PAGE = 'SET_CURRENT_PAGE';
+
+            case SET_CURRENT_PAGE:
+                return { ...state, currentPage: action.currentPage }
+
+            export const setCurrentPageAC = (currentPage) => ({ type: SET_CURRENT_PAGE, currentPage })
+
+        
+        Принимаем action для использования в UsersContainer
+
+            setCurrentPage: (currentPage) => { dispatch(setCurrentPageAC(currentPage)); }
+
+
+        Используем в users  onClick={() => { this.props.setCurrentPage(page):
+
+            { pages.map( page => {
+                        return <span className={this.props.currentPage === page && styles.Selectedpage}
+                        onClick={() => { this.props.setCurrentPage(page) } }>{page}</span> }) 
+                    }
+
+            
+        Номера страниц меняются(происходит выделение цифры) значит в state отправляются данные и происходит перерисовка, но юзеры
+        пока не меняются потому что не идет запрос на сервер. Запрос на сервер нужно делать в момент клика юзера чтобы оперативно
+        показываеть ему новую страницу, чтобы не нагромождать в onClick кучу всего сделаем метод который и будем использовать при
+        клике. 
+
+        Назначим анонимную ф-ю обработчиком события чтобы она принимала "е" (чтобы разгрузить наш метод onPageChanged от этого
+        чтобы он смог принять страницу по которой кликнули), для того чтобы при вызове метода она передавала в него кликнутую 
+        страницу. Так как "е" мы нигде не используем то можно его убрать но для наглядности что это обработчик события оставим.
+        Благодаря замыканию мы сохранили наш page.
+
+            onPageChanged = (pageNumber) => {
+                this.props.setCurrentPage(pageNumber)
+            }
+            
+
+            { pages.map( page => {
+                return <span className={this.props.currentPage === page && styles.Selectedpage}
+                onClick={(e) => { this.onPageChanged(page) } }>{page}</span> }) 
+            }
+
+
+        Вставим в метод запрос на сервер модифиируя его, изменим props.currentPage на pageNumber который мы диспатчим в state
+        чтобы запрос был по актуальной странице(так как в props еще старый номер страницы) и тогда юзеры засетаются в state и 
+        произойдет перерисовка уже по актуальным юзерам. PageSize пока не меняется его оставляем как есть.
+
+             onPageChanged = (pageNumber) => {
+                this.props.setCurrentPage(pageNumber);
+                axios.get(`https://social-network.samuraijs.com/api/1.0/users?page=${pageNumber}&count=${ this.props.pageSize}`)
+                    .then( responce => { 
+                        this.props.setUsers(responce.data.items); 
+                    });
+            }
+
+        Сейчас работает так что при клике на номер странички новые юзеры добавляются в конец( к старым ). Уберем это поведение
+        изменив диспатч, так новые юзеры которые приходят будут затирать предыдущих
+
+             case SET_USERS:
+                return { ...state, usersData: action.users }
+
+
+
+    Сделаем получение реального числа юзеров totalUsersCount, так как оно у нас не меняется при каждом запросе то можно сделать
+        такое получение 1 раз при первом запросе.
+
+            componentDidMount() {
+                axios.get(`https://social-network.samuraijs.com/api/1.0/users?page=${ this.props.currentPage }&count=${ this.props.pageSize}`)
+                    .then( responce => { 
+                        this.props.setUsers(responce.data.items);
+                        this.props.setTotalUsersCount(responce.data.totalCount); 
+                    });
+            }
+
+        
+
+        Нужно создать этот коллбек и диспатч.
+
+            let mapDispatchToProps = (dispatch) => {
+                return {
+                    follow: (userId) => { dispatch(followAC(userId)); },
+                    unfollow: (userId) => { dispatch(unfollowAC(userId)); },
+                    setUsers: (users) => { dispatch(setUsersAC(users)); },
+                    setCurrentPage: (currentPage) => { dispatch(setCurrentPageAC(currentPage)); },
+                    setTotalUsersCount: (totalCount) => { dispatch(setTotalUsersCountAC(totalCount)); }
+                }
+            };
+
+
+            const SET_TOTAL_USERS_COUNT = 'SET_TOTAL_USERS_COUNT';
+
+            case SET_TOTAL_USERS_COUNT:
+                return { ...state, totalUsersCount: action.count }
+
+            export const setTotalUsersCountAC = (totalUsersCount) => ({ type: SET_TOTAL_USERS_COUNT, count: totalUsersCount  })
+
+
+    Paginator готов (не слишком красивый, но работает).
+
+    //todo проверить работоспособность. Проверить как ведет себя список юзеров после удаления комментов из [] юзеров в state
+
+*/}
+
+
+{/*    ====    56. Практика - Презентационный и Контейнерный компоненты     ====
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 */}

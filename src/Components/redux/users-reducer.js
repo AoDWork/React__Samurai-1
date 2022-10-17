@@ -1,17 +1,15 @@
 const FOLLOW = 'FOLLOW';
 const UNFOLLOW = 'UNFOLLOW';
 const SET_USERS = 'SET_USERS';
+const SET_CURRENT_PAGE = 'SET_CURRENT_PAGE';
+const SET_TOTAL_USERS_COUNT = 'SET_TOTAL_USERS_COUNT';
 
 
 let InitialState = {
-    usersData: [
-        // { id: 1, photoUrl: 'https://images.archive-digger.com/taboola/image/fetch/f_jpg%2Cq_auto%2Ch_225%2Cw_300%2Cc_fill%2Cg_faces:auto%2Ce_sharpen/https%3A%2F%2Fi.imgur.com%2FhDNiJvY.png', 
-        //     followed: false, fullName: "Dmitry", status: 'I am a boss', location: {city: 'Minsk' , country:'Belarus' } },
-        // { id: 2, photoUrl: 'https://images.archive-digger.com/taboola/image/fetch/f_jpg%2Cq_auto%2Ch_225%2Cw_300%2Cc_fill%2Cg_faces:auto%2Ce_sharpen/https%3A%2F%2Fi.imgur.com%2FhDNiJvY.png', 
-        //     followed: true, fullName: "Sasha", status:'I am a boss too', location: {city: 'Moskov', country:'Russia'  } },
-        // { id: 3, photoUrl: 'https://images.archive-digger.com/taboola/image/fetch/f_jpg%2Cq_auto%2Ch_225%2Cw_300%2Cc_fill%2Cg_faces:auto%2Ce_sharpen/https%3A%2F%2Fi.imgur.com%2FhDNiJvY.png', 
-        //     followed: false, fullName: "Vitya", status: 'I am a super boss',location: {city: 'Kyiv', country:'Ukraine' }  }
-    ]
+    usersData: [],
+    pageSize: 5,
+    totalUsersCount: 0,
+    currentPage: 1
 }
 
 const usersReducer = (state = InitialState, action) => {
@@ -40,7 +38,13 @@ const usersReducer = (state = InitialState, action) => {
             }
 
         case SET_USERS:
-            return { ...state, usersData: [ ...state.usersData, ...action.users ]}
+            return { ...state, usersData: action.users }
+        
+        case SET_CURRENT_PAGE:
+            return { ...state, currentPage: action.currentPage }
+        
+        case SET_TOTAL_USERS_COUNT:
+            return { ...state, totalUsersCount: action.count }
 
         default:
             return state;
@@ -51,7 +55,8 @@ const usersReducer = (state = InitialState, action) => {
 export const followAC = (userId) => ({ type: FOLLOW, userId })
 export const unfollowAC = (userId) => ({ type: UNFOLLOW, userId })
 export const setUsersAC = (users) => ({ type: SET_USERS, users })
-
+export const setCurrentPageAC = (currentPage) => ({ type: SET_CURRENT_PAGE, currentPage })
+export const setTotalUsersCountAC = (totalUsersCount) => ({ type: SET_TOTAL_USERS_COUNT, count: totalUsersCount  })
 
 
 export default usersReducer;
