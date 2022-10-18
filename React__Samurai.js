@@ -5526,7 +5526,7 @@
 */}
 
 
-{/*    ====    57. Практика - пример Preloader, loader-gif, isFetching indication     ====
+{/*    ====    57. Пример - Preloader, loader-gif, isFetching indication     ====
 
     Preloader - анимация (крутилка) которая визуализирует загрузку чего-либо(сайта, запроса на сервер после клика по кнопке ).
 
@@ -5559,8 +5559,82 @@
                 </>
             }
 
+        проверку прошло успешно.  
 
-            15-00
+
+    Cоздаем action creater в users-reducer, переменную и кейс. //! Можно было бы сделать так чтобы не принимать action.isFetching, 
+        //! а просто менять !isFetching - текущий на противоположный, но если будет много запросов будет неразбериха с этим 
+        //! значением поэтому мы будем принимать конкретно action.isFetching уже сформированный как true или false в компоненте.
+            
+            const TOGGLE_IS_FETCHING = 'TOGGLE_IS_FETCHING';
+
+            case TOGGLE_IS_FETCHING:
+                return { ...state, isFetching: action.isFetching }
+
+            export const toggleIsFetchingAC = (isFetching) => ({ type: TOGGLE_IS_FETCHING, isFetching  })
+
+
+    В UsersContainer создаем коллбек чтобы классовый компонент его мог принять. //! Мы диспатчим не action creater, а его вызов.
+        //!  action creater возвращает объект action который и диспатчится, потому что так работает redux - ему нужен объект в
+        //! котором есть тип который redux достанет и сделает нужное действие:
+
+            toggleIsFetching: (isFetching) => { dispatch(toggleIsFetchingAC(isFetching)); }
+
+
+        теперь можно использовать toggleIsFetching при запросе - отправим true чтобы показывать крутилку, а когда получим ответ от
+        сервера отправим false чтобы крулка не показывалась:
+
+            componentDidMount() {
+                this.props.toggleIsFetching(true);
+                axios.get(`https://social-network.samuraijs.com/api/1.0/users?page=${this.props.currentPage}&count=${this.props.pageSize}`)
+                    .then(responce => {
+                        this.props.toggleIsFetching(false);
+                        this.props.setUsers(responce.data.items);
+                        this.props.setTotalUsersCount(responce.data.totalCount);
+                    });
+            }
+
+            onPageChanged = (pageNumber) => {
+                this.props.setCurrentPage(pageNumber);
+                this.props.toggleIsFetching(true);
+                axios.get(`https://social-network.samuraijs.com/api/1.0/users?page=${pageNumber}&count=${this.props.pageSize}`)
+                    .then(responce => {
+                        this.props.toggleIsFetching(false);
+                        this.props.setUsers(responce.data.items);
+                    });
+            }
+            
+        //! У автора не показывалась крутился, точнее даже при замедлении интернета как slow 3G в вкладке Network инспектора кода
+        //! она как бы моргала(место под нее было но она не успевала показываться) так происходило потому что стояла галочка 
+        //! disable cash и таким образом каждый раз крутилку подгружало с сервера и она загружалась за мгновение до загрузки юзеров
+        //! поэтому ее не было видно. Нужно preloader сохранить в папку с картинками проекта. 
+
+
+
+    Так как preloader у нас может использоваться на многих страницах приложения, то можно его вынести как отдельный компонент.
+        Создаем папку common (общие) в ней папку preloader и там уже Preloader.jsx и скопируем туда код(создавая ф-й компонент,
+        импортируя реакт, експортируя комопнент) также импортируем Preloader в UsersContiner
+
+            import React from 'react';
+            import preloader from '../../../assets/images/preloader'
+
+            const Preloader = (props) => {
+                return <>
+                    <img src={preloader} />
+                </>
+
+            }
+
+            export default Preloader;
+
+*/}
+
+
+{/*    ====    58.  mapDispatchToProps лайф-хак     ====
+
+
+
+
 
 
 */}
