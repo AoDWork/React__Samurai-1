@@ -5415,17 +5415,152 @@
 
 {/*    ====    56. Практика - Презентационный и Контейнерный компоненты     ====
 
+    Сейчас Users слишком умный компонент с сайд эффектом AJAX запроса. Нужно сделать из нее чистый омпонент оставив AJAX запросы
+        для контейнерного компонента. Тоесть у нас будет 2 контейнерных компонента: 1 общается со store( с помощью connect через
+        context API ) и прокидывает props, 2й делает запросы и будет чистый компонент который только возвращает JSX разметку. 
+
+    
+    Создадим отдельный чистый ф-й компонент Users и будем его возвращать в классовом компоненте UsersAPIComponent(который 
+        делает запросы), в Users будет возвращаемая разметка и логика которая отвечает за внешний вид, также нужно передать в нее
+        props из UsersAPIComponent:
+
+            
+            import React from 'react';
+            import styles from './Users.module.css';
+            import userPhoto from '../../assets/images/user.jpg'
+
+
+            let Users = (props) => {
+
+                let pegesCount = Math.ceil(props.totalUsersCount / props.pageSize);
+                let pages = [];
+
+                for (let i = 1; i <= pegesCount; i++) {
+                    pages.push(i);
+                }
+
+                return <div>
+                    <div>
+                        {pages.map(page => {
+                            return <span className={props.currentPage === page && styles.selectedPage}
+                                onClick={(e) => { props.onPageChanged(page); }}> {page} </span>
+                        })
+                        }
+                    </div>
+                    {
+                        props.users.map(user => <div key={user.id}>
+                            <span>
+                                <div><img src={user.photos.small !== null ? user.photos.small : userPhoto} className={styles.userPhoto} /></div>
+                                <div>
+                                    {user.followed
+                                        ? <button onClick={() => { props.unfollow(user.id) }}>Unfollow</button>
+                                        : <button onClick={() => { props.follow(user.id) }}>Follow</button>}
+                                </div>
+                            </span>
+                            <span>
+                                <span>
+                                    <div>{user.name}</div>
+                                    <div>{user.status}</div>
+                                </span>
+                                <span>
+                                    <div>{'user.location.country'}</div>
+                                    <div>{'user.location.city'}</div>
+                                </span>
+                            </span>
+                        </div>)
+                    }
+                </div>
+            }
+
+
+            export default Users;
 
 
 
 
+    Но два контейнерных компонента тоже не очень удобно, порэтому перенесем UsersAPIComponent в UsersContainer и переименуем
+        UsersAPIComponent в UsersContainer - это у нас будет классовый компонент внутри файла UsersContainer :
+
+            import React from 'react';
+            import {connect} from 'react-redux';
+            import {followAC, unfollowAC, setUsersAC, setCurrentPageAC, setTotalUsersCountAC} from '../redux/users-reducer'
+            import axios from 'axios';
+            import Users from './Users'
 
 
+            class UsersContainer extends React.Component {
+
+                componentDidMount() {
+                    axios.get(`https://social-network.samuraijs.com/api/1.0/users?page=${this.props.currentPage}&count=${ this.props.pageSize}`)
+                        .then( responce => { 
+                            this.props.setUsers(responce.data.items);
+                            this.props.setTotalUsersCount(responce.data.totalCount); 
+                        });
+                }
+
+                onPageChanged = (pageNumber) => {
+                    this.props.setCurrentPage(pageNumber);
+                    axios.get(`https://social-network.samuraijs.com/api/1.0/users?page=${pageNumber}&count=${ this.props.pageSize}`)
+                        .then( responce => { 
+                            this.props.setUsers(responce.data.items); 
+                        });
+                }
+
+                render() { return <Users totalUsersCount={this.props.totalUsersCount}
+                                        pageSize={this.props.pageSize}
+                                        currentPage={this.props.currentPage}
+                                        onPageChanged={this.onPageChanged}
+                                        users={this.props.users}
+                                        follow={this.props.follow}
+                                        unfollow={this.props.unfollow}
+                                    />
+                }
+            }
+
+            let mapStateToProps = (state) => {...
+
+            let mapDispatchToProps = (dispatch) => {...
+
+            export default connect (mapStateToProps, mapDispatchToProps)(UsersContainer);
+
+*/}
 
 
+{/*    ====    57. Практика - пример Preloader, loader-gif, isFetching indication     ====
+
+    Preloader - анимация (крутилка) которая визуализирует загрузку чего-либо(сайта, запроса на сервер после клика по кнопке ).
+
+    Любая визуальная часть показывается в зависимости от состояния БЛЛ, значит нам нужно внести изменение в store чтобы компонент
+        знал когда показывать, а когда не показывать preloader и это будет зависеть от состояния свойства в state.
+
+    
+    В users-reducer добавим свойство isFetching со значением false. Когда компонент будет посылать AJAX запрос он также изменит
+         это значение на true через диспатч(коллбек) и тогда будет отображаться крутилка до того момента пока компонент не получит
+         ответ и не задиспатчит изменения в state.
 
 
+    Пока просто прокинем это свойство через mapStateToProps чтобы посмотреть как будет реагировать UI без создания action. Получаем
+        этот props в классовом компоненте UsersContainer и дальше нам в принципе не нужно его прокидывать, потому что запрос 
+        делается тут и поэтому тут можем отобразить крутилку вторым тегом и в последстии делать диспатч. Добавим пустой элемент
+        чтобы поместить в него тег Users и тег с крутилкой, раньше нужно быо div элемент делать а сейчас можно просто пустой.
+        //todo найти картинку для тега - <img src=''/> вставить в src, можно проимпортировать и потом вставить как объект { }
 
+            render() {
+                return <>
+                    { this.props.isFetching ? <img src=''/> : null }
+                    <Users totalUsersCount={this.props.totalUsersCount}
+                        pageSize={this.props.pageSize}
+                        currentPage={this.props.currentPage}
+                        onPageChanged={this.onPageChanged}
+                        users={this.props.users}
+                        follow={this.props.follow}
+                        unfollow={this.props.unfollow}
+                    />
+                </>
+            }
+
+
+            15-00
 
 
 */}
