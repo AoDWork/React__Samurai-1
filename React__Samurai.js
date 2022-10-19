@@ -5629,12 +5629,87 @@
 
 
 
-    //! Проверено дома, работает, но крутился все равно как-то 2 раза из 3х показывается.
+    //! Проверено дома, работает, но крутилка все равно как-то 2 раза из 3х показывается.
 
 */}
 
 
 {/*    ====    58.  mapDispatchToProps лайф-хак     ====
+
+    mapStateToProps и mapDispatchToProps позволяют пркидывать в нужный компонент в пропсах свойства и коллбеки. mapStateToProps
+        возвращает объект со свойствами которые мы берем из state по отдельности, это для того чтобы прокинуть в компонент только
+        нужные ему свойства от которых зависит его перерисовка(чтобы он не ререндерился если обновится какое то свойство state не 
+        участвующее в компоненте). mapDispatchToProps прокидывает коллбеки(ф-и) возвращая объект с этими ф-ями. Эти свойства и
+        коллбеки connect собирает в один общий объект props. 
+
+
+    Так как по сути в mapDispatchToProps мы делаем обертку(коллбек) для ф-и(объекта) экшен криэйтера который создан в памяти,
+        мы по сути делаем на него ссылку в новом обхекте mapDispatchToProps. Коннект может это сделать за нас, даже если мы
+        просто передадим объект со свойствами вместо ф-й
+
+            было
+            follow: (userId) => { dispatch(followAC(userId)); },
+
+            станет
+            follow: followAC,
+
+        и connect сам сделает из них коллбеки, тогда надобность в mapDispatchToProps отпадает и мы передадим в connect просто
+        объект.
+
+            export default connect(mapStateToProps, {
+                follow: followAC,
+                unfollow: unfollowAC,
+                setUsers: setUsersAC,
+                setCurrentPage: setCurrentPageAC,
+                setTotalUsersCount: setTotalUsersCountAC,
+                toggleIsFetching: toggleIsFetchingAC
+            })(UsersContainer);
+
+
+    
+    Так как современный синтаксис дает нам возможность делать запись таким образом что при создании объекта если имя его свойства
+        такое же как имя его значения name: name - можно сократить запись до просто name. В данном случае переменную name помещаем
+        в объект obj как свойство, и объект понимает что если есть одно имя свойства, значит где то есть переменная с таким
+        именем, он посмотрит выше найдет переменную name и присвоит свойству name ее значение.
+
+            let name = 'Alex';
+            let obj = {
+                name
+            }
+            alert(obj.name)
+
+
+        Таким образом если в reducere убрать из названия action createrов буквы AC можно еще сократить наш код(подправим и импорт),
+        наш код станет еще короче:
+
+            import { follow, unfollow, setUsers, setCurrentPage, setTotalUsersCount, toggleIsFetching } from '../redux/users-reducer'
+
+            export default connect(mapStateToProps, 
+                        { follow, unfollow, setUsers, setCurrentPage, setTotalUsersCount, toggleIsFetching})
+                        (UsersContainer);
+
+*/}
+
+
+{/*    ====    59.  profile page, ajax, api     ====
+
+    Сейчас на странице profile показывается только наш профиль. Сделаем так чтобы при клике на юзера на странице Users открывался
+        его профиль. Сделаем это обернув аватарку юзера в тег navlink чтобы создавался путь к профилю пользователя, этот путь 
+        можно будет скопировать и отправить кому-то:
+
+         4 - 00
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
