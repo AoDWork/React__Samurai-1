@@ -6,12 +6,10 @@ import ProfileInfo from './ProfileInfo/ProfileInfo'
 const Profile = (props) => {
     return(
         <main>
-            <ProfileInfo />
+            <ProfileInfo profile={props.profile}/>
             <MyPostsContainer />
         </main>
     );
 }
 
 export default Profile;
-
-// <MyPostsContainer store={props.store} />
