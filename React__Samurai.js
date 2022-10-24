@@ -5956,7 +5956,200 @@
 */}
 
 
-{/*    ====    61.  ___     ====
+{/*    ====    61.  cookie, login в теории, auth me     ====
 
+    В браузере для каждого сайта храниться cookie - файл который передается автоматически на серверс с КАЖДЫМ запросом(со старта
+        cookie пустой). 
+        
+    Упрощенно эта печенька возвращается и от сервера, например при вводе логина и пароля мы посылаем запрос на сервер и если мы
+        залогинились(совпал логин/пароль) то сервер в обратную печеньку записывает информацию(наш айди) в  ЗАКОДИРОВАННОМ виде
+        (кодировку/декодировку производит только сервер). Печенька может жить или одну сессию или если поставить на сайте галочку -
+        запомнить меня - будет продлеваться информация в печеньке с каждым запросом или установиться длительный срок. Теперь при
+        каждом запросе на сервер - например к messages сервер знает что у нас такой айди и даст нам только наши сообщения.
+
+    Сейчас у нас браузер подключен к localhost - это один домен и куки для него одна, и потом мы делаем запрос на сервер с юзерами
+        это другой домен и куки для него другая. Такие запросы кросдоменные(когда с одного домена делается запрос на другой)
+        запрещены политикой КОРС, но если сервер разрешает такие запросы то браузер их пропустит как сайчас и происходит.
+
+        Тоесть когда залогинились на сервере юзеров создалась куки, и потом когда происходит запрос из приложения используется эта 
+        же куки поэтому сервер с юъерами нас узнает.
+
+    
+    На сервере юзеров досупен новый ендпоинт по которому можно получить ответ от сервера авторизирован ли юзер или нет. Если
+        да то приходит объект с пустым сообщением и объектом data в котором есть id, login, email. Если нет - тогда приходит объект
+        с пустым объектом data и со свойством messages : ['You are not authorisec'] и свойством resultCode: 1 (при да - это свойство
+        со значением - 0).
+        
+            https://social-network.samuraijs.com/api/1.0/aut/me
+
+        Теперь можно это использовать для определения юзера не создавая у себя авторизацию. Тоесть юзер авторизируется на сервере
+        юзеров, а в зависимости от ответа сервера мы можем показать данные юзера(имя или кнопку логин если он не залогинился), его
+        аватарку, и тд...
+
+
+
+    В компоненте Header //!(это не совмесем правильно делать в ней, но пока сделаем так) создадим контейнерный компонент в нем в 
+        componentDidMount сделаем запрос на сервер на /aut/me , проанализируем ответ и покажем тот или иной интерфейс.
+
+        Снова подготовим для этого весь цикл: reducer нам нужно диспатчить/мапить и т.д. //! До сейчас мы делали для каждой страници
+        свой reducer с аналогичным названием, но reducer это БЛЛ и он не должен отвечать полностью структуре реакта, создадим 
+        редюсер с названием auth-reducer.js который будет использовать компонент Header.
+
+
+        С сервера приходит id, login, email в объекте data, сделаем такие же свойства в initaialState. В экшене мы создадим один
+        объект data и в него положим все эти 3 свойства и деструктуризируем его чтобы они сразу распаковались в наш редюсерский
+        объект. Чтобы более понятно что за data(данные) к нам приходят в экшен криэйтере примем все свойства которые будут и упакуем в
+        data.
+
+            const SET_USER_DATA = 'SET_USER_DATA';
+
+            let initialState = {
+                userId: null,
+                email: null,
+                login: null
+            }
+
+            const authReducer = (state = initialState, action) => {
+                
+                switch(action.type) {
+                    case SET_USER_DATA:
+                        return { 
+                            ...state, 
+                            ...action.data
+                        }
+                    
+                    default:
+                        return state;
+                }
+            }
+
+            export const setUserData = (userId, email, login) => ({ type: SET_USER_DATA, data:{ userId, email, login}  })
+
+            export default authReducer;
+
+
+    Добавим этот редюсер в redux-store
+
+            import authReducer from './auth-reducer'
+            
+            auth: authReducer
+
+
+    Добавим в Header еще блок с авторизацией, присвоим класснейм и пока выровняем float по правой стороне. В этот див поместим
+        navlink на страницу логина '/login' :
+
+            <header className={style.header}>
+                <img src="https://th.bing.com/th/id/OIP.PBVmERenoA81uh26kHU04QHaHa?pid=ImgDet&rs=1" />
+                <div className={style.loginBlock}>
+                    <NavLink to={ '/login'}>
+                        Login
+                    </NavLink>
+                </div>
+
+
+    Создадим контейнерный компонент HeaderContainer.jsx в котором будем делать запрос. Заменим Header на HeaderContainer в App:
+
+            class HeaderContainer extends React.Component {
+
+                componentDidMount() {
+                    axios.get(`https://social-network.samuraijs.com/api/1.0/auth/me`)
+                    .then(responce => {
+                        debugger;
+                    });
+                }
+
+                render() {
+                    return <Header {...this.props} />
+                }
+            }
+
+        //! запрос вернул ошибку - не авторизованы. При кроссерверном запросе браузер автоматически не прицемпляет куки и для 
+        //! этого нужно к гет запросу добавить параметр с настройками запроса withCredentials: true - означает что мы хотим 
+        //! передавать логин, пароль и т.д. и если сервак поддерживает тогда пойдет запрос авторизованный и получим нужный ответ
+
+             axios.get(`https://social-network.samuraijs.com/api/1.0/auth/me`, { withCredentials: true })
+                .then(responce => {
+
+        Теперь HeaderContainer узнал что мы авторизованы и он может сделать диспатч этой информации в редюсер.
+
+            import React from "react";
+            import Header from './Header'
+            import axios from 'axios';
+            import { connect } from 'react-redux';
+            import {setAuthUserData} from '../redux/auth-reducer'
+
+
+            class HeaderContainer extends React.Component {
+
+                componentDidMount() {
+                    axios.get(`https://social-network.samuraijs.com/api/1.0/auth/me`, { withCredentials: true })
+                    .then(responce => {
+                        if(!responce.data.resultCode === 0) {
+                            let { id, login, email} = responce.data.data;
+                            this.props.setAuthUserData( id, login, email );
+                        }
+                    });
+                }
+
+                render() {
+                    return <Header {...this.props} />
+                }
+            }
+
+            const mapStateToProps = (state) => ( {  } );
+
+            export default  connect(mapStateToProps, { setAuthUserData } )(HeaderContainer);
+
+
+        Через debugger проверяем чтобы в state были данные которые нам нужны. Сделали деструктуризацию ответа 
+        
+            let { id, login, email} = responce.data.data; чтобы дальше писать сокращенно id, а не responce.data.data.id для каждого
+
+        своства.
+
+
+    В Header сделаем показ логина если он есть в state, для этого добавим в редюсер свойство isAuth для проврки условия, и в диспатч
+    добавляем что если диспатче данных юзера это свойство меняется на true. В контейнерном компоненте прокинем эти свойства :
+
+                login: null,
+                isAuth: false
+            }
+
+            const authReducer = (state = initialState, action) => {
+                switch(action.type) {
+                    case SET_AUTH_USER_DATA:
+                        return { 
+                            ...state, 
+                            ...action.data,
+                            isAuth: true
+                        }
+
+
+        в Heade props.login - покажеться как текст:
+
+            <div className={style.loginBlock}>
+                { props.isAuth ?  props.login : <NavLink to={ '/login'}>Login</NavLink>}
+            </div>
+
+
+    //todo можно сделать показ аватарки юзера, для этого уже зная айди посылаем после первого запроса второй тутже и получаем его
+    //todo автарку или другую инфу и для этой инфы сделать в state соответствующие свойства и брать потом инфу из них.
+
+*/}
+
+
+{/*    ====    62.  ___     ====
+
+
+
+
+
+
+
+
+
+
+
+    
 
 */}

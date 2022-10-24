@@ -11,10 +11,10 @@ const UserId = () => {
     return {id};
 }
 
-class ProfileContainer extends React.Component {
+const ProfileContainerDyn = () => {
 
-    componentDidMount() {
-        let userId = this.props.match.params.userId;
+    let componentDidMount = () => {
+        let userId = UserId; //this.props.match.params.userId;
         if (!userId) {
             userId = 2;
         }
@@ -24,13 +24,13 @@ class ProfileContainer extends React.Component {
         });
     }
 
-    render() {
-        return <Profile {...this.props} profile={this.props.profile}/>
-    }
+
+    return <Profile {...this.props} profile={this.props.profile}/>
+
 }
 
 let mapStateToProps = (state) => ( { profile: state.profilePage.userProfile } );
 
-let WithUrlDataContainerComponent = useParams(ProfileContainer);
+// let WithUrlDataContainerComponent = useParams(ProfileContainer);
 
-export default  connect(mapStateToProps, { setUserProfile } )(WithUrlDataContainerComponent);
+export default  connect(mapStateToProps, { setUserProfile } )(ProfileContainerDyn);
