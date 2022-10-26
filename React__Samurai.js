@@ -6138,18 +6138,396 @@
 */}
 
 
-{/*    ====    62.  ___     ====
+{/*    ====    62.  follow-unfollow api     ====
+
+    Сейчас поведение follow-unfollow реализовано локально. При нажатии на кнопку диспатчим в state новое значение свойства.
+
+    Сделаем чтобы такой диспатч происходил только после подтверждения сервера что мы подписались или отписались. Тоесть сначала
+        выполнятся POST(создать) запрос на сервер с номером(айди) юзера на которого мы хотим подписаться //! мы должны быть 
+        //! залогинены при этом, потом сервер дает ответ что изменилось состояние и потом производим диспатч + перерисовку. Чтобы
+        отписаться нужно послать DELETE(удалить) запрос.
+
+
+    Сейчас у нас есть 2 кнопки follow unfollow к которым прицеплен обработчик события onClick в него передана анонимная ф-я 
+        которая при нажатии на кнопку из props вызывает коллбек follow/unfollow. connect автоматически за нас создал эти коллбек
+        ф-и, в них connect вызывает follow - action creater, он возвращает action который потом диспатчится.
+
+        Теперь при нажатии кнопок будем вызывать не коллбек ф-ии, а свои ф-и которые будут посылать запрос на сервер, эти ф-и будут
+        находиться в этом же компоненте, это не сайд эффект, а просто компонент стал немного умнее чем должен.
+
+
+    Пока пропишем логику прямо в onClick потом чтобы не загромождать разметку логикой вынесем ее в отдельные ф-и. Для подписки или
+        отписки нужно слать запрос на follow/userId - так написано в документации на сервер, и в ответе приходит resultCode: 0
+        если операция успешна или 1 если неудачно. Так как нам нужно быть авторизованными для того чтобы выполнять подписку/отписку
+        нужно посылать параметр { withCredentials: true } но в post запросе он идет 3м, пока вторым посылаем null или пустой объект.
+        После проверки ответа сервера, если опарация успешна запускаем коллбек ф-ю, так же сделаем и с отпиской но DELETE запрос 
+        как и get объект настройки принимает вторым.
+
+             : <button onClick={() => { 
+                                axios.post(`https://social-network.samuraijs.com/api/1.0/follow/${user.id}`, {}, 
+                                { withCredentials: true })
+                                .then(responce => {
+                                    if (responce.data.resultCode == 0) {
+                                        props.follow(user.id);
+                                    }
+                                });
+                            }}>Follow</button>}
+
+
+    Появилась ошибка, в консоли  CORS требует headers - заголовки, для всех запросов кроме get. В заголовок мы должны вставить 
+        сгенерированный в профиле на сервере ключ. Его вставляем в заголовок в объекте настроек.
+        //! посмотреть как сейчас пишется, на момент видео еще не было инструкции для вставки этого ключа и вставить свой ключ 
+
+             { withCredentials: true,
+                headers: {"API-KEY": "some generated key"}
+              })                        
+
+        //! теперь ошибки нету, и ответ от сервера был - вы уже фоловите этого юзера, а кнопка не сменилась на unfollow, так
+        //! произошло потому что при запросе страницы юзеров, запрос проходил анонимно(без withCredentials ) и поэтому для 
+        //! всех юзеров followed возвращается false. Нужно добавить авторизацию в запрос по юзерам.
+
+        //! Все заработало у автора. В консоли в Network видим на один наш клик 2 запроса. 1й (preflight - предполетный) запрос дает 
+        //! браузер на сервер - request method: OPTIONS, спрашивая можно ли слать такой то запрос не сервер, а сервер отвечает если
+        //! да, то браузер делает этот(наш) запрос, если нет - то браузер не пропускает его, тоесть за CORS безопасность отвечает
+        //! браузер. Это общение идет с помощью хедеров.
+
+*/}
+
+
+{/*    ====    63.  DAL, axios create     ====
+
+    Сейчас с множеством запросов на сервер получается много повторяющегося кода + нагромождение в коде логики. Для решения этой
+        проблемы будем разделять на уровни. Сейчас у нас UI + БЛЛ нам нужно добавить еще DAL.
+
+
+    DAL - Data access level. В классическом подходе UI общаеться с БЛЛ, а БЛЛ общается с DAL (UI в DAL не лезет). К этому мы еще 
+        прийдем.
+
+    В нашем случае DAL будет общаться с сервером(API) и с UI , это нам позволит забрать у компонентов ф-ю запросов к серверу и
+        поместив их в DAL вернуть компонентам сингл респонсибилити.
 
 
 
+    Создаем к корне(папка src) папку api а в ней файл api.js и в него перенесем axios get запрос из UsersContainer DidMount и 
+        обернем эту логику ф-й getUsers и сделаем return ответа на запрос - вынесем ответ из ф-ии:
+
+            import axios from 'axios';
+
+            export const getUsers = () => {
+                return axios.get(`https://social-network.samuraijs.com/api/1.0/users?page=${this.props.currentPage}&count=${this.props.pageSize}`,
+                        { withCredentials: true }) 
+            }
 
 
+    Теперь можем использовать эту ф-ю в UsersContainer вместо всего того запрос который был раньше:
+
+            import { getUsers } from '../../api/api'  
+
+              getUsers().then(responce => {
+                this.props.toggleIsFetching(false);
+                this.props.setUsers(responce.data.items);
+                this.props.setTotalUsersCount(responce.data.totalCount);
+            });
 
 
+        Получается ошибка, так происходит потому что в api у нас прописан this - но он может быть только в классовом компоненте,
+        и props которые нам не передают, значит удаляем их, а нужные currentPage и pageSize помещаем в параметры чтобы при вызове
+        ф-ии тот кто вызывает нам их передавал, также установих их значение по умолчанию. А в UsersComponent при вызове ф-ии
+        передадим туда параметры коотрые у нас были с this и также заменяем запрос который при изменении страницы происходит,
+        только вместо this.props.currentPage берем это значение из параметров ф-ии onPageChange.
+
+            export const getUsers = (currentPage = 1, pageSize = 10) => {
+                return axios.get(`https://social-network.samuraijs.com/api/1.0/users?page=${currentPage}&count=${pageSize}`,
 
 
+                getUsers(this.props.currentPage, this.props.pageSize).then(responce => {
 
+            onPageChanged = (pageNumber) => {
+                this.props.setCurrentPage(pageNumber);
+                this.props.toggleIsFetching(true);
+                getUsers(pageNumber, this.props.pageSize).then(responce => {
+
+
+    Работает, но нужно ли компоненту вся та информация коотрая приходит с сервера? Обычно нет, поэтому в api мы из response вытащим
+        только объект data который нужен компоненту:
+
+            export const getUsers = (currentPage = 1, pageSize = 10) => {
+                return axios.get(`https://social-network.samuraijs.com/api/1.0/users?page=${currentPage}&count=${pageSize}`,
+                        { withCredentials: true })
+                        .then(response => response.data);
+            }
+
+        тоесть мы отдаем не промис response, a промис который уже вытащил из response объект data, можно написать так 
+
+                .then(response => {return  response.data });
 
     
+    //todo почитать про промисы.
+
+
+    В UsersComponent можно избавиться от response и переименовать его в data чтобы подсказать что мы используем только часто ответа
+            
+            componentDidMount() {
+                this.props.toggleIsFetching(true);
+                    getUsers(this.props.currentPage, this.props.pageSize).then(data => {
+                        this.props.toggleIsFetching(false);
+                        this.props.setUsers(data.items);
+                        this.props.setTotalUsersCount(data.totalCount);
+                    });
+            }
+
+            onPageChanged = (pageNumber) => {
+                this.props.setCurrentPage(pageNumber);
+                this.props.toggleIsFetching(true);
+                getUsers(pageNumber, this.props.pageSize).then(data => {
+                        this.props.toggleIsFetching(false);
+                        this.props.setUsers(data.items);
+                    });
+            }
+
+
+    //todo сделать так - перенести в api запросы follow/unfollow и запрос на авторизацию. При этом начнет дублироваться базовый
+    //todo URL вынесем его в отделюную переменную   const baseUrl = 'https://social-network.samuraijs.com/api/1.0/';
+
+
+    //! Создадим instance чере axios.create() - это будет экземпляр(объект) axios с нужными настройками, такое нужно например чтобы
+    //! разные instance работали с разными частями или разными версиями серверов(разными API).
+
+
+    Сделаем instance аксиоса с нужными настройками, базовый урл перенесем тудаже, при этом нам не нужно будет дописывать в каждую
+        ф-ю одинаковые параметры:
+
+            import axios from 'axios';
+
+            const instance = axios.create({
+                withCredentials: true,
+                baseURL: 'https://social-network.samuraijs.com/api/1.0/',
+                headers: {"API-KEY": "some generated key"}
+            });
+
+            export const getUsers = (currentPage = 1, pageSize = 10) => {
+                return instance.get( `users?page=${currentPage}&count=${pageSize}`)
+                        .then(response => response.data);
+            }
+
+
+
+    Можно сделать не ф-ями а объект, а в нем методы, для каждго ендпоинта свой объект с методами работы с ендпоинтом:
+            
+            export const usersAPI = {
+                getUsers (currentPage = 1, pageSize = 10) {
+                    return instance.get(`users?page=${currentPage}&count=${pageSize}`)
+                        .then(response => response.data);
+                }
+            }
+
+        тогда и в UsersContainer нужно изменить:
+
+            import { usersAPI } from '../../api/api'
+
+            class UsersContainer extends React.Component {
+                componentDidMount() {
+                    this.props.toggleIsFetching(true);
+                        usersAPI.getUsers(this.props.currentPage, this.props.pageSize).then(data => {
+                            this.props.toggleIsFetching(false);
+                            this.props.setUsers(data.items);
+                            this.props.setTotalUsersCount(data.totalCount);
+                        });
+                }
+
+                onPageChanged = (pageNumber) => {
+                    this.props.setCurrentPage(pageNumber);
+                    this.props.toggleIsFetching(true);
+                        usersAPI.getUsers(pageNumber, this.props.pageSize).then(data => {
+                            this.props.toggleIsFetching(false);
+                            this.props.setUsers(data.items);
+                        });
+                }
+
+
+    //! Архитектура этого API зависит от разработчика, можно и ф-ями можно и объектами , можно и классами + наследование сделать.
+
+    //! Перенес Aut и follow/unfollow в api. Работает или нет не понятно, нужно исправить withRouter чтобы spa работало.
+
+*/}
+
+
+{/*    ====    64.  button disabled(follow unfollow)     ====
+
+    После нажатия кнопки идет запрос на сервер, но если юзер этого не видит (например как у нас при нажатии кнопки follow/unf) то 
+        юзер может нажать на кнопку еще несколько раз думая что запрос не отправился, и пока будет идти ответ на первый запрос
+        юзер может наклацать еще десяток запросов. Есть области где это очень критично например в банковских операциях. Чтобы
+        избежать такого поведения будем прятать кнопку до того момента как получим ответ от сервера, чтобы юзер ее не клацал
+        лишние разы, принцип такой же как с крутилкой preloader.
+
+
+    В users-reducer у нас уже есть свойство isFetching но оно нам не подходит потому что если будем использовать его то будет 
+        отображаться большая крутилка, а нам нужно спрятать кнопку. Создадим новое свойство followingInProgress: false. Создадим
+        константу и экшн криэйтер для него.
+
+            const TOGGLE_FOLLOWING_IN_PROGRESS = 'TOGGLE_FOLLOWING_IN_PROGRESS';
+
+            case TOGGLE_FOLLOWING_IN_PROGRESS:
+                return { ...state, followingInProgress: action.isFetching }
+
+            export const toggleFollowingInProgress = (isFetching) => ({ type: TOGGLE_FOLLOWING_IN_PROGRESS, isFetching  })
+
+        isFetching такое название символизирует процесс ответа сервера, этот isFetching не пересекается с другим АС 
+
+
+
+    Через UsersContainer прокинем этот АС сначала испортируем его, потом коннектом прокидываем в UsersContainer классовый коспонент
+        коннект для него делает коллбек и помещает в props и через props нужно прокинуть его в Users. Также через mapStateToProps
+        прокинем followingInProgress - свойство чтобы скрывать или отображать кнопку в зависимости от его значения.
+
+
+
+    В Users используем коллбек toggleFollowingInProgress до отправки запроса сменим на true, a после получения ответа на false.
+        toggleFollowingInProgress выносим за условиу if для того чтобы если будет негативный ответ от сервера кнопка показалась.
+        disabled={props.followingInProgress} - вешаем на кнопку, если followingInProgress будет truу то кнопка задизейблится.
+
+             {user.followed
+                ? <button disabled={props.followingInProgress} onClick={() => { 
+                    props.toggleFollowingInProgress(true);
+                    usersTracking.unfollow(user.id)
+                    .then(data => {
+                        if (data.resultCode == 0) {
+                            props.unfollow(user.id); 
+                        }
+                        props.toggleFollowingInProgress(false);
+                    });
+                }}>Unfollow</button>
+                : <button disabled={props.followingInProgress} onClick={() => { 
+                    props.toggleFollowingInProgress(true);
+                    usersTracking.follow(user.id).then(data => {
+                        if (data.resultCode == 0) {
+                            props.follow(user.id);
+                        }
+                        props.toggleFollowingInProgress(true);
+                    });
+                }}>Follow</button>}
+
+        Работает но //! дизейбляться все кнопки. Автор предложил сделать followingInProgress массивом и получать вместо булевого
+        значения массив с id юзеров на кнопку котороых нажали, тогда сопоставив этот id с id на странице задизейбляться только
+        кнопкпи id которых совпадает, проверку делает метод some который возвращает false если id нету в массиве. Добавим передачу
+        в action id юзера.
+        
+
+            в Users 
+            <button disabled={props.followingInProgress.some(id => id === user.id )} onClick={() => {
+
+            props.toggleFollowingInProgress(true, user.id );
+
+
+            в reducer - свойство = массив. В кейсе если action.isFetching - тру тогда надо добавить в копию(деструктуризируем) 
+            свойства followingInProgress айдишку юзера action.userId, а если фолс(пришел ответ от сервера) тогда 
+            фильтруется этот массив (при этом создается новая копия автоматически, метод filter возвращает) тогда сравниваются
+            id который пришел с теми которые есть в массиве != - (не равно) и получается удаляется только тот который в action
+            пришел, остальные если есть остаются. 
+
+            followingInProgress: []
+
+            case TOGGLE_FOLLOWING_IN_PROGRESS:
+                return { ...state,
+                        followingInProgress: action.isFetching ?
+                        [...state.followingInProgress, action.userId ] 
+                        : state.followingInProgress.filter(id => id != action.userId) 
+                }
+
+            export const toggleFollowingInProgress = (isFetching, userId) => ({ type: TOGGLE_FOLLOWING_IN_PROGRESS, isFetching, userId  })
+
+
+    //todo почитать про методы some every.
+    
+*/}
+
+
+{/*    ====    65.  redux-thunk (санки) теория в деталях     ====
+
+    Сейчас у нас UI выступает в роли менеджера. Через DAL он делает запрос на сервер берет оттуда данные и диспатчит их в БЛЛ.
+
+
+    UI не должен таким заниматься, он должен в БЛЛ только доносить намеренья юзера через диспатч, например вывести список юзеров,
+        тогда БЛЛ смотрит что их у него нету и обращается через DAL чтобы не загрязнять себя этой логикой на серврер, берет данные
+        сохраняет в state и на основании нового state UI перерисовывается.
+
+
+    Как сделать чтобы БЛЛ делал запрос. У него есть store и три метода которые нам интересны .getState .subscribe .dispatch.
+        UI может общаться с БЛЛ только dispatchem, но при диспатче мы посылаем action(объект с как мининмум типом) и он 
+        раскидывается по reduceram. Reducer - это чистая синхронная ф-я которая не делает сайд эффекты  и должна моментально 
+        изменить state если  нужно и вернуть его. А запрос на сервер это асинхронная операция поэтому мы не можем сделать такой 
+        запрос из редюсера.
+    
+    
+    Поэтому сейчас мы и делаем запросы на сервер из UI. Он состоит из диспатча - покажи крутилку потом делаем запрос, потом при
+        ответе диспатч - выключить крутилку, и третий диспатч - например добавить сообщение в state. Эти операции у нас неразрывны,
+        мы не можем без диспатча крутилки начать запрос на серврер, получается эти действия объединены в группу. Значит их можно
+        обернуть в ф-ю addMessage например. И эта ф-я должна быть помещена в БЛЛ, это и есть thunk, ф-я которая делает асинхронные
+        запросы и диспатчи, может и не быть в ней асинхрю запросов или быть только 1 диспатч.
+
+
+    Так как с БЛЛ UI может общаться только через диспатч то нам нужно такую ф-ю задиспатчить. Но это ф-я, а диспатчим мы только
+        объект action который сразу уходит по редюсерам, так не получается потому что наша ф-я должна запуститься перед редюсерами
+        и вообще не должна в них попасть. Тоесть нам нужно диспатчить уже ф-ю - thunk предназначенную для чего то другого нежели
+        action. Она должна будет просто запуститься.
+
+
+    Thunk - ф-я которая делае асинхронную задачу и умеет диспатчить обычные action. При диспатче такой ф-и store(redux) поймет что 
+        это thunk и не пустит ее в редюсеры , и запустит ее выполнение. Чтобы thunk могла выполнять диспатчи обычных action в нее в
+        параметры должа прийти ф-я dispatch - которую закинет сам redux при ее запуске.
+
+            const addPost = (dispatch) => {
+                dispatch(onLoading())
+                axios.post({message}).then( ()=> {
+                    dispatch(addPost(message))
+                    dispatch(offLoading())
+                }
+            }
+
+
+    Нам еще нужно передать то самое сообщение которое нужно добавить, в параметрах мы этого сделать не можем потому что мы 
+        диспатчим только название санки но не вызываем её. Тут нам поможет замыкание, мы создадим другую ф-ю которая будет
+        создавать санку и содержать сообщение, потом эта санка будет через замыкание брать это сообщение из родительской ф-ии.
+        Ф-ии такие будут на подобие АС(экшн криэйтеров) только thunk creater. Например
+
+            const addPostThunkCreator = (message) => (dispatch) => {
+                dispatch(onLoading())
+                axios.post({message}).then( ()=> {
+                    dispatch(addPost(message))
+                    dispatch(offLoading())
+                }
+            }
+
+        Мы вызываем санк креэйтер помещаем в него сообщание он вернте санку которую и будем диспатчить, и потом когда она будет
+        вызвана message она возьмет из замыкания. //! по сути как и с АС мы диспатчим не санку а ВЫЗОВ санк криэетера который 
+        //! вернет санку 
+
+    
+    //todo прочитать про замыкания
+
+
+    //! Сам store не умеет работать с санками для этого используется thunk middle wear(wire?) который вклинивается в работу store
+    //! и если видит что пришел action он его дальше перенаправляет по обычному пути, а если пришла санка он ее запустит, закинет 
+    //! в нее диспатч. После запуска если в санке будет обычный диспатч то thunk middle wear передаст этот диспатч снова в store
+    //! для обычной работы, но если внутри этой санки он наткнется на другую санку он снова ее запустит и разберет на составляющие.
+    //! После таких циклов редюсеры получат обычные action преобразуют state и будет результат. 
+
+    //! thunk middle wear - нужно встроить в store при его создании(на стадии combine).
+
+*/}
+
+
+{/*    ====    66.  redux-thunk (санки) практика в деталях     ====
+
+    3-0
+
+
+
+
+
+
+
+
+
 
 */}
