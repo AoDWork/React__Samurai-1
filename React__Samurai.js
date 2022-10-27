@@ -6506,20 +6506,223 @@
     //todo прочитать про замыкания
 
 
-    //! Сам store не умеет работать с санками для этого используется thunk middle wear(wire?) который вклинивается в работу store
+    //! Сам store не умеет работать с санками для этого используется thunk middleware который вклинивается в работу store
     //! и если видит что пришел action он его дальше перенаправляет по обычному пути, а если пришла санка он ее запустит, закинет 
     //! в нее диспатч. После запуска если в санке будет обычный диспатч то thunk middle wear передаст этот диспатч снова в store
     //! для обычной работы, но если внутри этой санки он наткнется на другую санку он снова ее запустит и разберет на составляющие.
     //! После таких циклов редюсеры получат обычные action преобразуют state и будет результат. 
 
-    //! thunk middle wear - нужно встроить в store при его создании(на стадии combine).
+    //! thunk middle wear - нужно встроить в store при его создании(на стадии combine дописать код).
 
 */}
 
 
 {/*    ====    66.  redux-thunk (санки) практика в деталях     ====
 
-    3-0
+    Для метода componentDidMount в классе Userscontainer нам нужнен список юзеров для показа, и для этого мы делаем запрос на
+        сервер, а потом результат сетаем в state. Вынесем эту логику в users-reducer создав санку getUsersThunk. В ней теперь
+        можно диспатчить АС сразу без this и props потому что АС находяться тут же.  usersAPI импортируем.
+
+
+            export const getUsersThunk = (dispatch) => {
+                dispatch( toggleIsFetching(true) );
+
+                usersAPI.getUsers(this.props.currentPage, this.props.pageSize).then(data => {
+                    dispatch( toggleIsFetching(false) );
+                    dispatch( setUsers(data.items) );
+                    dispatch( setTotalUsersCount(data.totalCount) );
+                });
+            }
+
+        
+        Но проблема с this.props.currentPage и this.props.pageSize откуда их взять, теперь делаем внешнюю ф-ю thunk creator для 
+        того чтобы санка взяла эти параметры через замыкание. thunk creator может принимать параметры и возвращает санку которая
+        может взять параметры из thunk creator которые в нее передадут
+
+            export const getUsersThunkCreator = (currentPage, pageSize) => {
+                return (dispatch) => {
+                    dispatch(toggleIsFetching(true));
+                    usersAPI.getUsers(currentPage, pageSize).then(data => {
+                        dispatch(toggleIsFetching(false));
+                        dispatch(setUsers(data.items));
+                        dispatch(setTotalUsersCount(data.totalCount));
+                    });
+                }
+            }
+
+
+    Теперь можем задиспатчить этот ТС(thunk creator) из класса UsersContainer, предварительно его импортировав и передав в 
+        props через connect коллбек на него:
+
+            componentDidMount() {
+                this.props.getUsersThunkCreator(this.props.currentPage, this.props.pageSize);
+
+        //! Коллбек делается автоматически connectom, если писать вручную то будет такой вид
+
+            export default connect(mapStateToProps,
+            { follow, unfollow, setUsers, setCurrentPage, setTotalUsersCount, toggleIsFetching, toggleFollowingInProgress, 
+            //! getUsers: getUsersThunkCreator })
+
+        и теперь используем этот коллбек
+
+            componentDidMount() {
+                this.props.getUsers(this.props.currentPage, this.props.pageSize);
+            }
+
+
+
+    Появилась ошибка что диспатчить можно только простые объекты, а для async actions нужно использовать custom middleware,
+        теперь нам нужно его прикрутить там где создается store в redux-store импортировав из redux. Это редаксовский готовый
+        метод который сделали чтобы мы могли вклиниться в обычный поток со своей логикой:
+
+            import {applyMiddleware, createStore, combineReducers} from 'redux';
+
+            let store = createStore(reducers, applyMiddleware());
+
+
+        //! в applyMiddleware нужно передать конкретную Middleware которую хотим использовать, для этого нужно ее установить:
+
+            npm i redux-thunk
+
+        теперь ее тут же импортируем 
+
+            import thunkMiddleware from 'redux-thunk'; //! в документации import thunk - чтобы не путаться назвали thunkMiddleware
+
+            let store = createStore(reducers, applyMiddleware(thunkMiddleware));
+
+
+
+    Заменим туже логику в onPageChanged но передадим другой currentPage в параметры (pageNumber) - тот который запрашиваем:
+        //! вроде первой строки в санках нету this.props.setCurrentPage(pageNumber);
+
+            onPageChanged = (pageNumber) => {
+                this.props.getUsers(pageNumber, this.props.pageSize);
+            
+
+    Удалим ненужные теперь тут АС из коннекта, они стали теперь внутринними для санки, и переименуем getUsersThunkCreator в
+        getUsers - и так как они теперь с одинаковыми именами можно оставить в коннекте просто getUsers.
+
+            export default connect(mapStateToProps,
+            { follow, unfollow, setCurrentPage, toggleFollowingInProgress, getUsers })
+            (UsersContainer);
+
+
+    //! У автора работает без this.props.setCurrentPage(pageNumber); в onPageChanged страницы меняются но не выделяется цифра
+    //! текущей страницы, я у себя эту строчку оставил перед запросом.
+
+
+
+    Рефакторим Users переносим логику запросов из него в API. //! не сделал в API преобразование responce в data.
+
+    Создаем санку в users-reducer, переименуем follow/unfollow AC в followSuccess/unfollowSuccess чтобы санки навать 
+    follow/unfollow 
+
+            export const follow = (userId) => {
+                return (dispatch) => {
+                    dispatch(toggleFollowingInProgress(true, userId) );
+                    usersAPI.follow(userId).then(data => {
+                        if (data.resultCode == 0) {
+                            dispatch( followSuccess(userId) );
+                        }
+                        dispatch( toggleFollowingInProgress(true, userId) );
+                    });
+                }
+            }
+
+            export const unfollow = (userId) => {
+                return (dispatch) => {
+                    dispatch(toggleFollowingInProgress(true, userId) );
+                    usersAPI.unfollow(userId).then(data => {
+                        if (data.resultCode == 0) {
+                            dispatch( unfollowSuccess(userId) );
+                        }
+                        dispatch( toggleFollowingInProgress(true, userId) );
+                    });
+                }
+            }     
+
+
+    Зарефакторим Users:
+
+            {user.followed
+                ? <button disabled={props.followingInProgress.some(id => id === user.id )}
+                    onClick={ () => { props.unfollow( user.id ) }}>Unfollow</button>
+                : <button disabled={props.followingInProgress.some(id => id === user.id )} onClick={() => { 
+                    props.follow(user.id) } }>Follow</button>}
+
+        Эти санки прокидываются через контейнерный компонент так как у нас раньше прокидывались АС с такими же именами, но
+        некоторые лишние уже props нужно удалить:  - toggleFollowingInProgress удаляем, он уже внутренний АС.
+
+*/}
+
+
+{/*    ====    67.  redux-thunk (санки) практика в деталях 2ч.    ====
+
+    Переводим все остальные запросы на сервер сначала в API потом на санки.
+
+
+
+    Начнем с ProfileContainer там идет запрос профиля, назовем его getProfile:
+        
+        В API
+
+            getProfile(userId) {
+                return instance.get(`https://social-network.samuraijs.com/api/1.0/profile/${userId}`);
+            }
+            
+        В ProfileContainer:
+
+             usersAPI.getProfile(userId)
+                .then(responce => {
+                    this.props.setUserProfile(responce.data);
+                });
+    
+
+    
+    В HeaderContainer auth уже не совсем про юзеров, поэтому создадим в API другой объект authAPI с методом me() :
+
+            export const authAPI = {
+                me() {
+                    return instance.get(`auth/me`)
+                }
+            }        
+    
+
+        В HeaderContainer
+
+             componentDidMount() {
+                authAPI.me().then(responce => {
+                    if(!responce.data.resultCode === 0) {
+                        let { id, login, email} = responce.data.data;
+                        this.props.setAuthUserData( id, login, email );
+                    }
+                });
+            }
+
+
+
+    Создаем санку getUserProfile для ProfileContainer в profile reducer. Импортируем usersAPI.
+
+            export const getUserProfile = (userId) => (dispatch) => {
+                usersAPI.getProfile(userId) 
+                    .then(responce => {
+                        dispatch( setUserProfile(responce.data) );
+                    });
+            }
+
+
+        Используем ее в ProfileContainer - импортируем, вносим в connect и используем доставая из props:
+
+             componentDidMount() {
+                let userId = this.props.match.params.userId;
+                if (!userId) {
+                    userId = 2;
+                }
+                this.props.getUserProfile(userId);
+            }
+
+
+            16-00
 
 
 
@@ -6529,5 +6732,11 @@
 
 
 
+
+
+
+
+
+    //todo  1) ф-й компонент сделать, 2) установить redux-thunk, 3) почитать про promise и замыкание 
 
 */}
