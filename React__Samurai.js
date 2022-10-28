@@ -6722,21 +6722,37 @@
             }
 
 
-            16-00
 
+    Создаем санку getAuthUserData для HeaderContainer в auth reducer. Импортируем authAPI.
 
+            export const getAuthUserData = () => (dispatch) => {
+                authAPI.me().then(responce => {
+                    if(!responce.data.resultCode === 0) {
+                        let { id, login, email} = responce.data.data;
+                        dispatch( setAuthUserData( id, login, email ) );
+                    }
+                });
+            }
 
+        
+        Используем в HeaderContainer - импортируем, прокидываем в классовый компонент, используем из пропсов через this
 
+            import {getAuthUserData} from '../redux/auth-reducer'
 
+                componentDidMount() {
+                    this.props.getAuthUserData();
+                }
 
-
-
-
-
-
-
+            export default  connect(mapStateToProps, { getAuthUserData } )(HeaderContainer);
 
 
     //todo  1) ф-й компонент сделать, 2) установить redux-thunk, 3) почитать про promise и замыкание 
+
+*/}
+
+
+{/*    ====    68.  Redirect    ====
+
+
 
 */}

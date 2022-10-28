@@ -96,7 +96,7 @@ export const follow = (userId) => {
             if (data.resultCode == 0) {
                 dispatch( followSuccess(userId) );
             }
-            dispatch( toggleFollowingInProgress(true, userId) );
+            dispatch( toggleFollowingInProgress(false, userId) );
         });
     }
 }
@@ -108,7 +108,7 @@ export const unfollow = (userId) => {
             if (data.resultCode == 0) {
                 dispatch( unfollowSuccess(userId) );
             }
-            dispatch( toggleFollowingInProgress(true, userId) );
+            dispatch( toggleFollowingInProgress(false, userId) );
         });
     }
 }

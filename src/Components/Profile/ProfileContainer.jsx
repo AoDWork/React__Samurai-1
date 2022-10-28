@@ -23,6 +23,6 @@ class ProfileContainer extends React.Component {
 
 let mapStateToProps = (state) => ({ profile: state.profilePage.userProfile });
 
-let WithUrlDataContainerComponent = useParams(ProfileContainer);
+// let WithUrlDataContainerComponent = withRouter(ProfileContainer);
 
-export default connect(mapStateToProps, { getUserProfile })(WithUrlDataContainerComponent);
+export default connect(mapStateToProps, { getUserProfile })(ProfileContainer);
