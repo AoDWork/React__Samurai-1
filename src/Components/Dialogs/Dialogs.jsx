@@ -2,6 +2,7 @@ import React from "react";
 import style from './Dialogs.module.css'
 import DialogItem from "./DialogItem";
 import Message from "./Message";
+import {Navigate} from 'react-router-dom';
 
 
 const Dialogs = (props) => {
@@ -21,6 +22,7 @@ const Dialogs = (props) => {
     props.updateNewMsgBody(msgBody);
   };
 
+  if (props.isAuth == false) return <Navigate to={'/login'} />;
 
   return (
     <div>
