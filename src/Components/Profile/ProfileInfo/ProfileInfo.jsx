@@ -1,5 +1,7 @@
-import style from '../Profile.module.css'
-import Preloader from '../../common/preloader/Preloader'
+import React from 'react';
+import style from '../Profile.module.css';
+import Preloader from '../../common/preloader/Preloader';
+import ProfileStatus from './ProfileStatus';
 
 const ProfileInfo = (props) => {
 
@@ -10,10 +12,11 @@ const ProfileInfo = (props) => {
   return (
     <div>
       <div>
-        <img className={style.contentHeader} src="https://img-prod-cms-rt-microsoft-com.akamaized.net/cms/api/am/imageFileData/RE4wwuO?ver=1fc3" />
+        {/* <img className={style.contentHeader} src="https://img-prod-cms-rt-microsoft-com.akamaized.net/cms/api/am/imageFileData/RE4wwuO?ver=1fc3" /> */}
       </div>
       <div className={style.formUser}>
         <img className={style.userAvatar} src={props.profile.photos.large} />
+        <ProfileStatus status={'This is my status'}/>
         <div className={style.userDescription}>Description</div>
       </div>
     </div>

@@ -6806,23 +6806,427 @@
 
             return (
 
-        
+
+                
+    Сделаем также и для Profile. В ProfileContainer берем значение из state и прокидываем в ProfileContainer через mapSateToProps
+
+            let mapStateToProps = (state) => ({ profile: state.profilePage.userProfile,
+                                    isAuth: state.auth.isAuth });
+
+            
+        теперь в классовом компоненте ProfileContainer так как он классовы то условие будем делать в render перед обычным return, 
+        используем строгое равенство, а если булево значение то его можно не сравнивать с булевым, а просто указать если тру
+        (this.props.isAuth) - делаем это, или если false - не тру (!this.props.isAuth) - делаем это.
+
+            render() {
+
+                if(this.props.isAuth === false) return <Navigate to='/login'/>
+
+                return <Profile {...this.props} profile={this.props.profile} />
+            }
 
 
-            9-00
+    Так как у нас будет много компонентов которые мы хотим защитить таким образом то нужно будет в каждую прокидывать значение 
+        свойства isAuth через props и вписывать условие с Navigate. Это дублирование кода и лишняя ф-сть презентационных 
+        компонентов, можно вынести эту ф-сть в отдельный контейнерный компонент, но там тоже будет дублироваться код, тогда
+        можно создать ф-ю коотрая будет заниматься созданием таких контейнерных компонентов. Это тема следующего урока - HOC(High
+        Order Component) 
 
 
 
+    //! Работает, но не будут показаны страницы для авторизованного юзера
+
+*/}
+
+
+{/*    ====    69.  HOC(High Order Component)    ====
+
+    HOC(High Order Component) - компонент высшего порядка, это ф-я которая принимает компонент, а возвращает другой 
+        компонент(контейнерный). Задача такой ф-ии - создавать однообразные контейнерные компоненты для разных компонентов которые
+        мы ей передадим.
+
+
+    Созддим такой HOC для ProfileContainer. Вынесли редирект Navigate из комопонента ProfileContainer и создали для такого 
+        поведения отдельную ф-ю (HOC) AuthRedirectComponent - все props которые прийдут в него он передаст в ProfileContainer
+        и вернет его, а если пользователь будет не атворизован то сделает редирект - это контейнерный компонент над контейнерным
+        компонентом. Передадим AuthRedirectComponent в WithUrlDataContainerComponent вместо ProfileContainer
+
+            let AuthRedirectComponent = (props) => {
+                if(this.props.isAuth === false) return <Navigate to='/login'/>
+                return <ProfileContainer {...props} />
+            }
+
+            let WithUrlDataContainerComponent = withRouter(AuthRedirectComponent);
+
+            export default connect(mapStateToProps, { getUserProfile })(WithUrlDataContainerComponent);
 
 
 
+    Сделаем тоже для DialogsContainer и у нас уже будет дублироваться код, поэтому вынесем этот ф-л в отдельный файл 
+        withAuthRedirect.js в папке hoc. В нем создаем ф-ю которая создает класовый компонент(можно ф-й) и в нем делает
+        проверку, если проверка не проходит возвращает тот компонент который передали(Component - с большой буквы чтобы
+        отрисовать(вернуть) как компонент) с props и возвращаем этот классовый компонент из ф-и.
+
+            import React from 'react';
+
+            export const withAuthRedirect = (Component) => {
+
+                class RedirectComponent extends React.Component {
+                    render() {
+                        if(this.props.isAuth === false) return <Navigate to='/login'/>
+                        return <Component {...props} />
+                    }
+                }
+
+                return RedirectComponent
+            }
+
+
+    Теперь можно использовать этот hoc в нужный нам комопонентах. Например в ProfileContainer, импортируем withAuthRedirect из
+        файла, и замемяем вручную созданное поведение.
+
+            let AuthRedirectComponent = withAuthRedirect(ProfileContainer);
+
+
+    Аналогично заменяем в DialogsContainer:
+
+            let AuthRedirectComponent = withAuthRedirect(Dialogs);
+
+            const DialogsContainer = connect(mapStateToProps, mapDispatchToProps)(AuthRedirectComponent);
+
+
+    //! Hoc принято называть с первым словом with(С) так как они дают новые возможности или свойства и теперь компонент будет С ними.
+
+    Работает но все равно в компоненте мы прокидываем через props свойство isAuth каждый раз. Можно его поместить в наш hoc но
+        для каждого компонента который мы возвращаем еще нужны другие props которые отличаются. Поэтому сделаем двойной connect
+        чтобы на каждом этапе брать необходимые свойства из state. Для второго нового connect сделаем свой mapStateToProps в 
+        котором будем брать isAuth, а остальные нужные для конкретного компонента свойства будем брать в старом mapStateToProps.
 
 
 
-    //! Работает, но не будет показаны страницы для авторизованного юзера
+    Получается мы в AuthRedirectComponent получаем withAuthRedirect(ProfileContainer), потом в эту же переменную передаем через
+        connect props для аутентификации юзера взятые из state connect(mapStateToPropsRedirect)(AuthRedirectComponent);
+        с переданным компонентом из первой строчки withAuthRedirect(Pr... и потом уже готовый компонент с уже имеющимися props
+        передаем в следующий HOC WithUrlDataContainerComponent который потом передасться во второй connect.
+
+           let AuthRedirectComponent = withAuthRedirect(ProfileContainer);
+
+            let mapStateToPropsRedirect = (state) => ({isAuth: state.auth.isAuth });
+
+            AuthRedirectComponent = connect(mapStateToPropsRedirect)(AuthRedirectComponent);
+
+
+            let mapStateToProps = (state) => ({ profile: state.profilePage.userProfile });
+                
+            let WithUrlDataContainerComponent = withRouter(AuthRedirectComponent);
+
+            export default connect(mapStateToProps, { getUserProfile })(WithUrlDataContainerComponent);
+
+        //! Получается wrapper hell - ад из оберток, позже автор обещает сделать это лучшим способом.
+
+
+
+    Теперь можно этот connect вынести в сам hoc чтобы его не добавлять каждый раз и не знать о нем:
+
+            let mapStateToPropsRedirect = (state) => ({isAuth: state.auth.isAuth });
+
+            export const withAuthRedirect = (Component) => {
+
+                class RedirectComponent extends React.Component {
+                    render() {
+                        if(this.props.isAuth === false) return <Navigate to='/login'/>
+                        return <Component {...props} />
+                    }
+                }
+
+                let ConnectedAuthRedirectComponent = connect(mapStateToPropsRedirect)(RedirectComponent);
+
+                return ConnectedAuthRedirectComponent
+            }
+
+
+
+    Применим к DialogsContainer - уберем из props isAuth так как она теперь берется внутри withAuthRedirect и остается только hoc
+            
+            let AuthRedirectComponent = withAuthRedirect(Dialogs);
+
+
+    //! По сути при вызове withAuthRedirect получаем 2 контейнерных компонента один в одном - один делает коннект и берет значение
+    //! isAuth из state, а второй возвращает классовый(ф-й) комонент или редиректит уже в зависимости от значения isAuth.
+
+    Чтобы запись была не такой замудреной будем использовать ф-ю compose
+
+*/}
+
+
+{/*    ====    70.  Compose    ====
+
+    Ф-я compose сбивает в кучу все наши обработчики. присутствует в различных библиотеках или фреймворках, в нашем случаем в реакте
+        ее нету, а в redux он есть, будем брать отсуда
+
+
+    compose()() - двойной вызов - сначала вызывается ф-я, а потом вызывается то что вернула ф-я compose еще раз.
+
+        compose()(Dialogs) - закидываем целевой объект который будет изменяться.
+
+        Во вторых скобках будем идти снизу вверх как у нас было раньше
+
+            // let AuthRedirectComponent = withAuthRedirect(Dialogs);
+            // const DialogsContainer = connect(mapStateToProps, mapDispatchToProps)(AuthRedirectComponent);
+            // export default DialogsContainer;
+
+
+        //! Пришел Dialogs и он попадал в withAuthRedirect его мы и записываем во вторые скобки. Ф-я composу автоматически возьмет
+        Dialogs и закинет в вызов ф-ии withAuthRedirect - атоматически вызовет withAuthRedirect(поставит скобки) и передаст
+        Dialogs в него. Потом возьмет рез-т от выполнения этой ф-ии и перекинет в следующую ф-ю connect. Но не в сам connect
+        потому что connect(вызывается 2 раза) это не hoc, а ф-я которая возвращает hoc в который нам нужно закинуть наш компонент.
+        Поэтому сначала мы эту ф-ю вызываем сами - с помощью замыкания она создает нам специальный hoc с определенными настройками
+        и потом вызовется ф-й compose который закинет в нее предыдущий результат. То есть мы сами ставим одни скобки - вызовем
+        connect с настройками и он вернет нам hoc и второй раз уже этот hoc запустит compose. И теперь можно не создавать 
+        переменную для экспорта, а экспортировать рез-т выполнения compose:
+
+            export default compose(
+                connect(mapStateToProps, mapDispatchToProps),
+                withAuthRedirect
+            )(Dialogs);
+
+
+    Также зарефакторим ProfileContainer тут конвеер будет уже из 3х уровней:
+
+            export default compose(
+                    connect(mapStateToProps, { getUserProfile }),
+                    withRouter,
+                    withAuthRedirect
+                )(ProfileContainer);
+
+
+    Также зарефакторим UsersContainer:
+
+            export default compose (
+                connect(mapStateToProps, { follow, unfollow, setCurrentPage, toggleFollowingInProgress, getUsers }),
+                withAuthRedirect
+                )(UsersContainer);            
+
+
+
+    //! проверить есть ли compose в redux сейчас
+
+    //! У автора при обновлении приложения если он находился на странице профиля редиректит на логин, потом он нажимает на ссылку
+    //! профиля и все работает, сказал пофиксим позже, пока закоментировал строчку с редиректом в compose, я думаю это из-за того
+    //! что по умолчанию стоит false и сначала отрисовывается с ним а потом происходит запрос на сервер, меняется на true isAuth
+    //! снова происходит перерисовка но путь уже логина и назад автоматом не перкидывает
+
     //todo разобраться с авторизацией
+    //todo  1) ф-й компонент вместо withRouter, 2) установить redux-thunk, 3) почитать про promise и замыкание 4) почитать книги
+    //todo  Domen Driven Design - Эрик Дж. Эванс, Чистый код - автор хз
+
+*/}
 
 
-    //todo  1) ф-й компонент сделать, 2) установить redux-thunk, 3) почитать про promise и замыкание 
+{/*    ====    71.  setState, local state    ====
+
+    Будем делать status юзера. При даблклике активируется строка - в нее вбиваем новый текст, потом будем отводить фокус и она 
+        будет сохраняться(без кнопки сохранить).
+
+
+    Добавим в ProfileInfo тег для отрисовки статуса и закоментируем фоновую картинку, она пока только мешает, это будет умный тег
+        поэтому сразу пропишем как компонент:
+
+            return (
+                <div>
+                <div className={style.formUser}>
+                    <img className={style.userAvatar} src={props.profile.photos.large} />
+                    <ProfileStatus />
+                    <div className={style.userDescription}>Description</div>
+                </div>
+                </div>
+            );
+
+
+    Создадим компонент ProfileStatus в этой же папке:
+
+            import React from 'react';
+            import style from '../Profile.module.css';
+
+            const ProfileStatus = (props) => {
+
+                return (
+                    <div>
+                        <div>
+                            <span>{props.status}</span>
+                        </div>
+                         <div>
+                            <input value={props.status} />
+                        </div>
+                    </div>
+                );
+            }
+
+            export default ProfileStatus;
+
+        Для того чтобы был какой то текст захардкодим его в пропсы в ProfileInfo
+
+            <ProfileStatus status={'This is my status'}/>
+
+    
+    Видим что одновременно нам показывается и статус и инпут поле с одинаковым текстом. Но идея у нас такая - показывается status
+        при дабл клике на него показывается инпут в него вводим новый текст убираем фокус и он сохраняется уже в статус который
+        показывается, а инпут пропадает. 
+
+        Перерисовка UI всегда происходит с изменением state, поэтому нам нужно было бы диспатчить текст в state, а потом бы 
+        происходила перерисовка из-за измененного state. Можно было бы делать свойство при тру показывался бы режим редактирования
+        инпут поле, при фолс показывался бы статус - спан. Нужно было бы добавлять свойство в state добавлять диспатчи и т.д.
+
+        //! Сначала мы изменяли state и перерисовывалось условно всё приложение, потом начали использовать connect и таким образом
+        //! перерисовывался только тот компонент state от которого он зависит изменился.
+
+        
+    Можно было бы сделать как обычно но это свойство нужно только одному компоненту и его не целесообразно заносить в глобальный
+        state, для таких свойств существует локальный state, он работает по тем же правилам что и глобальный, тоесть компонент
+        перерисуется только тогда когда измениться что то в локальном state(//!также перерисуются все дочерние компоненты). 
+        
+        Он не позволяет хранить в себе такие данные с которыми работает только этот компонент и эти данные не для бизнеса, а 
+        только UI: например - cкрыто меню или раскрыто, статус в  редактировании или в отображении, hover эффект появился или нет.
+
+
+    Состояние нашего status будем хранить в локальном state, сначала реализуем как классовый компонент, потом через хуки когда
+        их изучим. В ProfileStatus переделываем компонент в классовый. //! Классы в JS нужны чтобы создавать однотипные объекты
+        //! когда реакт видит что пытаются отрисовать класовый компонент он в памяти создает объект с коотрым потом взаимодействует
+        //! поэтому изначально локальный state был только в классовых компонентах потому что он хранился в этом объекте.
+
+            class ProfileStatus extends React.Component {
+                render() {
+                    return (
+                        <div>
+                            <div>
+                                <span>{this.props.status}</span>
+                            </div>
+                            <div>
+                                <input value={this.props.status} />
+                            </div>
+                        </div>
+                    );
+                }
+            }
+
+        state содается как обычное свойство объекта и теперь можно обращаться как this.state.editMode
+
+            state = {
+                editMode: false
+            }
+
+
+        Пропишем условие если у нас эдитмод false тогда показываем span< а если true тогда input. Автор сделал через 2 условия
+        так ему легче читать по коду:
+
+            render() {
+                return (
+                    <div>
+                        {!this.state.editMode &&
+                            <div>
+                                <span>{this.props.status}</span>
+                            </div>
+                        }
+                        {this.state.editMode &&
+                            <div>
+                                <input value={this.props.status} />
+                            </div>
+                        }
+                    </div>
+                    
+                );
+            }
+
+    //! Очень удобно, почему же мы не использовали его для всей информации - потому что если какая то информация нужна была 
+    //! двум компонентам то чтобы не дублировать код мы поднимали ее до общего родителя, а потом прокидывали через props
+    //! и в итоге получалось что все равно нужно было выносить state почти на самый верхний уровень и мы выбрали redux 
+    //! как state manager для удобной работы со state.
+
+
+    Повесим на span обработчик события чтобы при двойном клике менять editMode. Чтобы не вписывать много кода в обработчик события
+        создадим метод(так как класс) для того чтобы изменять state. //! создаем метод как стрелочнаю ф-ю чтобы не потерялся 
+        //! контекст при вызове метода и не писать bind  в обработчике события или в конструкторе потому что это лишний код.
+        //! при стрелочной ф-и пишем onDoubleClick={}>{this.activateEditMode}, а при обычном методе activateEditMode() {  нужно
+        //! добавить bind - onDoubleClick={}>{this.activateEditMode.bind(this)}:
+
+            activateEditMode = () => {
+                this.state.editMode = true;
+            }
+
+
+        //! При обычном изменении state руками - реакт не перерисует компонент потому что не умеет следить за этим, для того чтобы
+        //! он увидел что произошло изменение в state используется метод setState в который нужно передать объект свойство которого
+        //! изменилось.
+
+            activateEditMode = () => {
+                this.setState({
+                    editMode: true
+                }) 
+            }
+
+        Теперь реакт автоматически возьмет этот объект и склеит его с тем объектом у которого переназначается это свойство.
+
+
+
+    //! Частый вопрос на собеседованиях - два консоль лога до изменения и после изменения - когда делаем дабл клик в консоль 
+        //! выводится 2 раза false - так происходит потому что setState - асинхронный, и он закидывается в очередь и будет выполнен
+        //! когда выполниться весь код который находиться в этой ф-ии. То есть выполняется 1й консоль лог, потом ставиться в 
+        //! очередь setState и выполняется 2й консольлог при этом значение еще false, а потом уже после этой ф-и выполниться 
+        //! setState и измениться значение свойства.
+
+             activateEditMode = () => {
+                console.log(this.state.editMode);
+                this.setState({
+                    editMode: true
+                });
+                console.log(this.state.editMode);
+            }
+
+
+
+    По аналогии сделаем deactivate ф-ю. //! можно было сделать toggle ф-ю, но автор предпочитает конкретику, хотя если toggle
+        //! сильно сокращает код то можно использовать иногда.
+
+            deactivateEditMode = () => {
+                this.setState({
+                    editMode: false
+                })
+            }
+
+
+    Повесим его на input на событие onBlur - оно срабатывает когда элемент в фокусе, а потом фокус с него уходит
+
+            {this.state.editMode &&
+                    <div>
+                        <input onBlur={this.deactivateEditMode} value={this.props.status} />
+                    </div>
+            }
+
+        //! добавим чтобы фокус помещался в поле input (каретка помещалась в поле при срабатывании), раньше нужно было играться
+        //! с ref. Надо было бы создать ref на input и когда он появиться вызвать нативный HTML метод focus.  Сейчас есть более
+        //! простой метод autoFocus={true}
+
+            {this.state.editMode &&
+                    <div>
+                        <input autoFocus={true} onBlur={this.deactivateEditMode} value={this.props.status} />
+                    </div>
+            }
+
+
+
+    В следующем уроке будем отображать реальный статус юзера из запроса на сервер.
+
+
+
+    //! проверить есть ли compose в redux сейчас
+    //todo разобраться с авторизацией
+    //todo  1) ф-й компонент вместо withRouter, 2) установить redux-thunk, 3) почитать про promise и замыкание 4) почитать книги
+    //todo  Domen Driven Design - Эрик Дж. Эванс, Чистый код - автор хз
+
+*/}
+
+
+{/*    ====    72.  обновляем create-react-app    ====
+
 
 */}
