@@ -6846,7 +6846,7 @@
         мы ей передадим.
 
 
-    Созддим такой HOC для ProfileContainer. Вынесли редирект Navigate из комопонента ProfileContainer и создали для такого 
+    Создадим такой HOC для ProfileContainer. Вынесли редирект Navigate из комопонента ProfileContainer и создали для такого 
         поведения отдельную ф-ю (HOC) AuthRedirectComponent - все props которые прийдут в него он передаст в ProfileContainer
         и вернет его, а если пользователь будет не атворизован то сделает редирект - это контейнерный компонент над контейнерным
         компонентом. Передадим AuthRedirectComponent в WithUrlDataContainerComponent вместо ProfileContainer
@@ -7316,8 +7316,9 @@
 
 
 
-    //! из-за авторизации не пускает дальше, не проходит проверка на авторизацию, похоже не изменяется state
-    //! проверить auth-reducer
+    //! из-за авторизации не пускает дальше, не проходит проверка на авторизацию, похоже не изменяется state проверить auth-reducer.
+    //! Даже если вручную установить isAuth - true в login всё равно приходит null хоть и меняется в хедере Login на пустой эл.
+    //! в котором должен быть логин юзера. Посмотреть порядок внесения в state - id login email
     //todo  1) ф-й компонент вместо withRouter, 2) установить redux-thunk, 3) почитать про promise и замыкание 
 
 */}
@@ -7325,25 +7326,206 @@
 
 {/*    ====    73.  http put, local state    ====
 
+    Завершим работу со status. Будем подгружать настоящий status и обновлять его.
+
+
+    Для подгрузки статуса сделаем API в DAL уровне. В API разделим юзер API и Profile. Вынесем getProfile в новый объект. Но 
+        старый у нас уже используется в коде, и чтобы не изменять это использование во всех местах сейчас, создадим в console
+        предупреждение - используется старый метод и сделает из старого метода вызов нового. В profileApi добавим tit методов
+        getStatus (//! чтобы послать запрос смотрим в документацию сервера там идет - get uri запрос profile profile/status/{userID}
+        //! uri запрос отличается от query тем что его параметр {userID} когда вбиваем в поле браузера не отличить от url адреса
+        //! и нельзя проскочить параметры(они должны идти строго последовательно), а для query запрос передаем параметры через
+        //! вопросительный знак и их можно передавать в любой последовательности и в строке браузера видно что url - это всё что до
+        //! вопросительного знака ).  
+
+        //! Для updateStatus нужно использовать PUT запрос, при этом с запросом мы должны передать тело запроса body. Смотрим в
+        //! документации требуется body с media type - application/json и type - object, и необходимым свойством (в нашем случае
+        //! status (string maxLength 300) ). Тело запроса передается вторым параметром после url, при этом юзер айди передавать
+        //! не нужно потому что мы можем обновить только свой статус, а сервер по куки и так знает кто мы.
+
+            getProfile(userId) {
+                    console.log('U use old method. Please use profileApi object.')
+                    return profileAPI.getProfile(userId);
+                }
+            }
+
+            export const profileAPI = {
+                getProfile(userId) {
+                    return instance.get(`profile/`+ userId);
+                },
+                getStatus(userId) {
+                    return instance.get(`profile/status/`+ userId);
+                },
+                updateStatus(status) {
+                    return instance.put(`profile/status/`, {status: status});
+                }
+            }
+
+        Теперь можно использовать нашу API
+
+
+    //! Get и delete запросы отправляют только url + параметры, потому что нужно только взять бъект с id или удалить объект с id
+    //! на серваке. POST и PUT вторым параметром, кроме url отправляют объект(смотреть в документации на сервак какой объект
+    //! нужен) с нужными свойствами.
 
 
 
+    В ProfileContainer сделаем запрос и для status юзера(нужно прописать в reducere метод) и потом раскидаем через props в нужные
+        компоненты.
+
+            componentDidMount() {
+                let userId = this.props.match.params.userId;
+                if (!userId) {
+                    userId = 2;
+                }
+                this.props.getUserProfile(userId);
+                this.props.getUserStatus(userId); 
+            }
+
+            let mapStateToProps = (state) => ({ profile: state.profilePage.userProfile,
+                                    status: state.profilePage.status });
+        
+
+
+    В profile-reducer сделает этот action, case , action creater, свойсво в state и так как у нас ajax запрос за получением статуса
+        должна быть санка (в этом значении приходит просто строка - это плохая практика лучше чтобы приходил json объект с value),
+        также сделаем сразу и для updateStatus(при ответе с сервера проверяем resultCode. если всё ок тогда сетаем этот status себе
+        в state чтобы произошла перерисовка) :
+
+            import { usersAPI, profileAPI } from "../../api/api";
+
+            const SET_STATUS = 'SET_STATUS';
+
+                userProfile: null,
+                status: ''
+            }
+
+            case SET_STATUS:
+                return { ...state, status: action.status };
+
+            export const setStatus = (status) => {
+                return { type: SET_STATUS, status }
+            }
+
+            export const updateUserStatus = (status) => (dispatch) => {
+                profileAPI.updateStatus(status) 
+                    .then(responce => {
+                        if(responce.data.resultCode === 0 )
+                        dispatch( setStatus(status) );
+                    });
+            }
 
 
 
+    В ProfileContainer прокидываем через connect и дальше в компонент props
+
+            render() {
+                return <Profile {...this.props} profile={this.props.profile} 
+                                                status={this.props.status} 
+                                                updateUserStatus={this.props.updateUserStatus}/>
+                }
+            }
+
+            export default compose(
+                    connect(mapStateToProps, { getUserProfile, getUserStatus, updateUserStatus }),
+
+
+    В profile прокидываем дальше 
+            
+            const Profile = (props) => {
+                return(
+                    <main>
+                        <ProfileInfo profile={props.profile} status={props.status} updateStatus={props.updateStatus}/>
 
 
 
+    В ProfileStatus в deactivateEditMode - после окончания редактирования нужно отправить запрос на сервер для обновления.
+        Предварительно прокинем в него updateStatus={props.updateStatus} и теперь нужно гдето взять введенный статус. Можно
+        повесить ref на инпут но он не сработает потому что у нас value зафиксированно от props из глобального state? а они еще не
+        обновятся, поэтому нужно использовать локальный state. //! если value зафиксирован нужно использовать onChange чтобы
+        //! видеть то что мы печатаем в input (чтобы происходила перерисовка инпута)
+
+        //! То есть принцып такой создаем в локальном state свойство status - оно береться из глобального state и при первом
+        //! запуске(и когда инпут неактивен) ставим тоже из глобального, сохраняется напечатанный текст пока печатаем в локальном 
+        //! state текущий status и при окончании редактирования этот локальный status пойдет на сервер, там изменится, вернеться 
+        //! в глоб. state там перезапишеться и тогда уже будем перерисовывать от глобального state.
+
+        //! Но если например слишком длинный статус мы впечатали он сохранился в локальном state послался на сервер, а там его не
+        //! пропустили то мы увидим снова глобальный (старый/до редактирования) статус, но если сделаем дабл клик то зайдем в
+        //! инпут и там будет отображаться статус из локального state который не применился и можно его подредактировать чтобы 
+        //! заново не перепечатывать. То есть у нас локальный state не синхронизирован с глобальным это как баг так и фича,
+        //! получается так из-за того что классовый компонент и при перерисовке компонента объект с данными сохраняется.
+
+            state = {
+                editMode: false,
+                status: this.props.status
+            }
+
+            activateEditMode = () => {
+                this.setState({
+                    editMode: true
+                }); 
+            }
+            
+            deactivateEditMode = () => {
+                this.setState({
+                    editMode: false
+                });
+                this.props.updateStatus(this.state.status);
+            }
+
+            onStatusChange= (e) => {
+                this.setState({
+                    status: e.currentTarget.value
+                })
+            
+            }
+
+            render() {
+                return (
+                    <div>
+                        {!this.state.editMode &&
+                            <div>
+                                <span onDoubleClick={this.activateEditMode}>{this.props.status}</span>
+                            </div>
+                        }
+                        {this.state.editMode &&
+                            <div>
+                                <input autoFocus={true} onChange={this.onStatusChange} 
+                                        onBlur={this.deactivateEditMode} value={this.state.status} />
+                            </div>
+                        }
+                    </div>
+                    
+                );
+            }
 
 
 
+    //! Вылез баг, у нас в глоб state - status - пустая строка, и когда первый раз инициализируется то нету статуса и даже не на
+        что кликнуть чтобы задать новый статус, поэтому нужно в спан добавить - показывать дефисы ----- если нету статуса
+
+             <div>
+                {!this.state.editMode &&
+                    <div>
+                        <span onDoubleClick={this.activateEditMode}>{this.props.status || "----------"}</span>
+                    </div>
+                }
+    
+    //! Так получается потому что при отрисовке компонента статуса у нас в глобальном state по умолчанию пустая строка, и она же
+    //! создается в локальном state. Потом идет запрос на сервер и получаем в глобальный state статус юзера, но так как у нас
+    //! не синхронизированы state(я так думаю, так и не понял логику автора) поэтому не происходит перерисовка компонента и
+    //! в локальном статусе у нас пустая строка лежит при том что в глобальном уже есть статус. Для того чтобы воспользоваться
+    //! статусом из глобального state есть метод жизненного цикла рассмотрим в следующем уроке
+
+*/}
 
 
+{/*    ====    74.  componentDidUpdate    ====
 
 
 
 
     
-
 
 */}
