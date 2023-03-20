@@ -7616,7 +7616,7 @@
                         <div>
                             <input placeholder={ 'Password' } />
                         </div>
-   cd                     <div>
+                       <div>
                             <input type={ "checkbox"} /> remember me
                         </div>
                         <div>
@@ -7646,8 +7646,8 @@
 
             
         //! redux form предоставляет нам HOC который вокруг нашего компонента создаст контейнерный компонент - задача которого 
-        //! общаться со своей частью которая будет добавлена в reducer. Для этого в reducer в метод combine добавим специальный
-        //! reducer. Сделаем его импорт из библиотеки
+        //! общаться со своей частью которая будет добавлена в reducer. Для этого в redux-store в reducer в метод combine добавим 
+        //! специальный reducer. Сделаем его импорт из библиотеки
 
             import { reducer as formReducer } from 'redux-form'
            
@@ -7670,7 +7670,7 @@
 
 
 
-    Создаем Login Redux Form - контейнерный компонент  который принимает нашу форму и регистрирует ее под названием login в state
+    Создаем LoginReduxForm - контейнерный компонент  который принимает нашу форму и регистрирует ее под названием login в state
         redux, отрисовываем на выходу уже контейнерный компонент:
 
             import reduxForm from "redux-from";
@@ -7755,12 +7755,196 @@
     //todo  1) ф-й компонент вместо withRouter, 2) почитать про promise и замыкание 
 
     // Подставил в Login тестовую форму, переделал нашу стандартную форму согласно ей. Заработало. 
-    //! не работает Логинизация!
+    //! не работает Логинизация! Посмотреть есть ли в консоли данные из формы
 
 */}
 
 
 {/*    ====    76.  redux form (React final form) - про базовые вещи    ====
+
+    Сделаем таким же образом с формами в Profile(отправка поста) и в Messages(Dialogs)(отправка сообщения).
+
+
+    Dialogs. Выносим поле с кнопкой в отдельный компонент в этом же файле. Оборачиваем в Form. Создаем саму форму form
+        к ней добавляем <form onSubmit={handleSubmit}> - обработчик событий который прописан в Form - из него берется.
+        Из кнопки удалим обработчик события при клике. (Для старой версии еще оборачивют ХОКом и уже его отрисовывают).
+        Еще нужно создать функцию которая будет получать данные из формы и запускаться для отправки этих данных в state,
+        ее будем прокидывать через props для отрисовываемого компонента(в Login она называлась onSubmit)
+
+            const addNewMsg = (values) => {
+                alert(values.newMsgBody);  - указываем name филда значение которого выводим
+            }
+
+
+            const AddMsgForm = (props) => {
+                return (
+                    <Form
+                    onSubmit={onSubmit}
+                    render={({ handleSubmit, form, submitting, pristine, values }) => (
+                        <form onSubmit={handleSubmit}>
+                        <div>
+                            <Field placeholder='Type Msg' name="newMsgBody" component='textarea' />
+                        </div>
+                        <div>
+                        <div><button>Send</button></div>
+                        </div>
+                        </form>
+                    )}
+                    />
+                )
+            }
+
+
+            ...
+            <AddMsgForm onSubmit={addNewMsg}/> - отрисовываемый компонент в компоненте Dialogs
+            ...
+
+
+    Должно работать(показывать в алерте напечатанное сообщение). Теперь нужно это значение отправить в бизнес.
+    
+    
+    //! Раньше мы в бизнес мы не отправляли значение, мы в бизнес при клике диспатчили action - props.sendMsg();
+            let onSendMsgClick = () => {
+                props.sendMsg();
+            };
+
+    //! а бизнес это новое сообщение брал из state. Так было возможно потому что в state у нас хранились временные значения для
+    //! сообщения. Достаточно было обратиться к state(в dialogs-reducer видно что есть редюсер SEND_MSG в котором новое
+    //! сообщение доставали из state.newMsgBody) чтобы добавить новое сообщение в массив сообщений. Теперь этого state.newMsgBody
+    у нас не будет. 
+    Тоесть раньше мы вызывали коллбек sendMsg()(который пришел из DialogsContainer) - в котором диспатчили action
+    который получали с помощью вызова action криэйтера sendMsgCreator и нам не нужно было диспатчить сам текст сообщения потому что
+    он уже был в стейте. Теперь его там не будет, и взять из хранилища form в redux даже в старой версии библиотеки нам запрещает 
+    автор, потому что лучше в этот state не лезть.
+
+
+    //! Есть библиотека Formik которая тоже используется для работы с формами но не использует редакс для хранения своих временных 
+    данных, а использует локал state.
+    
+
+    Теперь модернизируем addNewMsg, так чтобы получаемое значение(текст сообщения) передавать в sendMsg. Раньше он не принимал
+        никаких параметров, теперь будет принимать.
+
+            const addNewMsg = (values) => {
+                //alert(values.newMsgBody);
+                props.sendMsg(values.newMsgBody);
+            }
+
+        для этого в dialogsContainer в sendMsg добавим параметр newMsgBody и его же передадим дальше в action creator sendMsgCreator
+
+            let mapDispatchToProps = (dispatch) => {
+                return {
+                    updateNewMsgBody: (msgBody) => { dispatch(updateNewMsgBodyCreator(msgBody)); },
+                    sendMsg: (newMsgBody) => { dispatch(sendMsgCreator(newMsgBody)); }
+                }
+            }
+
+
+        добавим параметры и в dialogsReducer в принимаемые и в передаваемые, также newMsgBody мы теперь будем брать не из state
+        а из экшена. И уберем старое место хранения в let InitialState и строчку в SEND_MSG где затирали это старое место хранения.
+
+            case SEND_MSG:
+                        let msg =  action.newMsgBody;
+                        return {
+                            ...state,
+                            messagesData:  [...state.messagesData, { id: 6, msg} ] 
+                        };
+
+                    default:
+                        return state;
+            }
+
+            export const sendMsgCreator = (newMsgBody) => ({ type: SEND_MSG, newMsgBody })
+
+
+        Должно работать хоть и поле после клика на кнопку не очищается, нужно будет позже работать с механизмами React final form. 
+
+
+        Теперь нам не нужен в dialogs-reducerу action - updateNewMsgBodyCreator(который раньше обновлялиз state отображение вводимых
+        символов) и константа для него, как и case для него в switch.
+
+        В dialogsContainer updateNewMsgBody тоже теперь не нужен.
+
+        В Dialogs нам не нужен обработчик события onNewMsgChange и onSendMsgClick который мы заменили на addNewMsg.
+
+
+
+    Сделаем тоже самое с Posts в Profile.
+
+            import { Form, Field } from 'react-final-form'
+
+            const onAddPost = (values) => {
+                props.addPost(values.newPostText);
+            }
+
+            const AddNewPostForm = (props) => {
+                return (
+                    <Form
+                    onSubmit={onSubmit}
+                    render={({ handleSubmit, form, submitting, pristine, values }) => (
+                        <form onSubmit={handleSubmit}>
+                        <div>
+                            <Field placeholder='Type Msg' name="newPostText" component='textarea' />
+                        </div>
+                        <div>
+                        <div><button>Add Post</button></div>
+                        </div>
+                        </form>
+                    )}
+                    />
+                )
+            }
+
+            const MyPosts = (props) => {
+                let postsElements = 
+                    props.postsData.map((el, ind) => <Post  msg={el.post} likesCount={el.likesCount} key={ind} />);
+
+                return (
+                <div className={style.form__newPost}>
+                    <div className={style.newPost__title}>New Post
+                        <AddNewPostForm onSubmit={onAddPost}/>
+                    </div>
+                    {postsElements}
+                </div>
+                );
+            }
+
+
+        В MyPostContainer добавляем отправленное значение для его диспатча, и убираем апдейт.
+
+            let mapDispatchToProps = (dispatch) => {
+                return {
+                    addPost: (newPostText) => { dispatch(addPostActionCreator(newPostText)) }
+                }
+            }
+
+
+        В profile-reducer удаляем всё что связано с апдейтом поста, добавляем newPostText в action creator
+
+            export const addPostActionCreator = (newPostText) => ({ type: ADD_POST, newPostText })
+
+
+
+            
+    //! Проверить работоспособность. добавил скобки в profile-reducer, может заработает показ залогинен или нет
+
+            export const updateUserStatus = (status) => (dispatch) => {
+                profileAPI.updateStatus(status)
+                    .then(responce => {
+                        if (responce.data.resultCode === 0) {
+                            dispatch(setStatus(status));
+                        }
+                    });
+            }
+
+
+*/}
+
+
+{/*    ====    77.  redux form (React final form) - field validation(валидация, ошибки). Осторожно Замыкание!    ====
+
+
+
 
 
 */}
