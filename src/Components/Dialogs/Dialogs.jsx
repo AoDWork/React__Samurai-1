@@ -3,6 +3,8 @@ import style from './Dialogs.module.css'
 import DialogItem from "./DialogItem";
 import Message from "./Message";
 import { Form, Field } from 'react-final-form'
+import { Textarea } from "../common/FormControls/FormControls";
+import { required, maxLengthCreator } from "../../utils/validators/validators";
 import { Navigate } from 'react-router-dom';
 
 
@@ -11,6 +13,8 @@ const addNewMsg = (values) => {
   props.sendMsg(values.newMsgBody);
 }
 
+const maxLength100 = maxLengthCreator(100);
+
 const AddMsgForm = (props) => {
   return (
     <Form
@@ -18,7 +22,7 @@ const AddMsgForm = (props) => {
       render={({ handleSubmit, form, submitting, pristine, values }) => (
         <form onSubmit={handleSubmit}>
           <div>
-            <Field placeholder='Type Msg' name="newMsgBody" component='textarea' />
+            <Field placeholder='Type Msg' name="newMsgBody" component={Textarea} validate={[required, maxLength100]}/>
           </div>
           <div>
           <div><button>Send</button></div>

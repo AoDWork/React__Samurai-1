@@ -2,12 +2,16 @@ import React from "react";
 import style from './MyPosts.module.css'
 import Post from './Post/Post'
 import { Form, Field } from 'react-final-form'
+import { required, maxLengthCreator } from "../../../utils/validators/validators";
+import { Textarea } from "../../common/FormControls/FormControls";
 
 
 const onAddPost = (values) => {
   //alert(values.newPostText);
   props.addPost(values.newPostText);
 }
+
+const maxLength10 = maxLengthCreator(10);
 
 const AddNewPostForm = (props) => {
   return (
@@ -16,7 +20,7 @@ const AddNewPostForm = (props) => {
       render={({ handleSubmit, form, submitting, pristine, values }) => (
         <form onSubmit={handleSubmit}>
           <div>
-            <Field placeholder='Type Msg' name="newPostText" component='textarea' />
+            <Field name="newPostText" placeholder='Type Msg'  component={Textarea} validate={[required, maxLength10]} />
           </div>
           <div>
           <div><button>Add Post</button></div>

@@ -1,7 +1,58 @@
 import React from "react";
 //import { Field, reduxForm } from "redux-from";
 import { Form, Field } from 'react-final-form'
+import { Input } from "../common/FormControls/FormControls";
+import { required, maxLengthCreator } from "../../utils/validators/validators";
 // import { createForm } from 'final-form';
+
+
+const maxLength50 = maxLengthCreator(50);
+
+const LoginForm = (props) => {
+    return (
+        <Form
+            onSubmit={onSubmit}
+            render={({ handleSubmit, form, submitting, pristine, values }) => (
+                <form onSubmit={handleSubmit}>
+                    <div>
+                        <Field placeholder={'Login'} name={"login"} component={Input} validate={[required, maxLength50]} />
+                    </div>
+                    <div>
+                        <Field placeholder={'Password'} name={"password"} component={Input} validate={[required, maxLength50]}/>
+                    </div>
+                    <div>
+                        <Field type={"checkbox"} name={"rememberMe"} component={Input} /> remember me
+                    </div>
+                    <div>
+                        <button>Log In</button>
+                    </div>
+                </form>
+            )}
+        />
+    )
+}
+
+const onSubmit = (formData) => {
+    console.log(formData);
+}
+
+//const LoginReduxForm = reduxForm ({form: 'login'}) (LoginForm) - удалили так как нету хока теперь
+
+
+const Login = (props) => {
+    const onSubmit = (formData) => {
+        console.log(formData);
+    }
+
+    return <div>
+        <h1>Login</h1>
+        <LoginForm onSubmit={onSubmit} />
+    </div>
+}
+
+
+export default Login;
+
 
 
 // const form = createForm({
@@ -43,49 +94,3 @@ import { Form, Field } from 'react-final-form'
 
 // // Submit
 // form.submit() // only submits if all validation passes
-
-
-const LoginForm = (props) => {
-    return (
-        <Form
-            onSubmit={onSubmit}
-            render={({ handleSubmit, form, submitting, pristine, values }) => (
-                <form onSubmit={handleSubmit}>
-                    <div>
-                        <Field placeholder={'Login'} name={"login"} component={'input'} />
-                    </div>
-                    <div>
-                        <Field placeholder={'Password'} name={"password"} component={'input'} />
-                    </div>
-                    <div>
-                        <Field type={"checkbox"} name={"rememberMe"} component={'input'} /> remember me
-                    </div>
-                    <div>
-                        <button>Log In</button>
-                    </div>
-                </form>
-            )}
-        />
-    )
-}
-
-const onSubmit = (formData) => {
-    console.log(formData);
-}
-
-//const LoginReduxForm = reduxForm ({form: 'login'}) (LoginForm) - удалили так как нету хока теперь
-
-
-const Login = (props) => {
-    const onSubmit = (formData) => {
-        console.log(formData);
-    }
-
-    return <div>
-        <h1>Login</h1>
-        <LoginForm onSubmit={onSubmit} />
-    </div>
-}
-
-
-export default Login;

@@ -7946,8 +7946,304 @@
 
 {/*    ====    77.  redux form (React final form) - field validation(валидация, ошибки). Осторожно Замыкание!    ====
 
+    //! Доступ к сайту самурай доступен без ВПН  https://social-network.samuraijs.com/api/
+
+
+    Научимся делать валидацию формы(проверка правильности введенных данных). 
+
+    Смотрим на сайте redux-form в разделе field-level validation - означает что валидация будет привязана к конкретному input и 
+        подсветка неправильного ввода будет тоже завязана на конкретном input(есть еще отдельная подсветка валидации на всю
+        форму). 
+
+    На сайте видно что валидатор это ф-я которая выполняет проверку. Создадим валидаторы для наших форм, создадим их в отдельной
+        папке utils\validators в файле validators.js потому что они могут быть общими для input или похожими и мы будем их 
+        переиспользовать.
 
 
 
+    Создаем валидатор для обязательно заполненого поля. Это ф-я которая получает значение(из поля) если значение есть - 
+        возвращает undefined, если значения нет - сообщение что поле обязательное.
+
+            export const required = value => {
+                if (value) return undefined;
+
+                return "Field is required";
+            }
+
+        теперь прикрутим этот валидатор к форме в MyPosts для этого в Field нужно в параметре validate передать массивом все 
+        валидаторы которые использутся для поля. В нашем случае его нужно проимпортировать.
+        
+            import { required } from "../../../utils/validators/validators";
+
+            const AddNewPostForm = (props) => {
+                return (
+                    <Form
+                    onSubmit={onSubmit}
+                    render={({ handleSubmit, form, submitting, pristine, values }) => (
+                        <form onSubmit={handleSubmit}>
+                        <div>
+                            <Field name="newPostText" placeholder='Type Msg'  component='textarea' validate={required} />
+
+
+    Создадим валидатор для проверки максимального количества символов в инпуте(проверку есть ли вообще значение мы пока опустим)
+
+            export const maxLength30 = value => {
+                if (value.length > 30) return "Max length is 30 symbols";
+                return undefined;
+            }           
+
+        а если нам нужно будет изменить количество символов для нескольких полей и назначить каждому свое количество, для этого
+        нужно передавать в ф-ю число строк.
+        //! по старому образцу, так как нужно передать дополнительное значение  нужно создать по аналогии с санкКриэйтер(ф-ю 
+        //! которая возвращает санку и в нее передает данные, так как санка фиксированная и ей нужны данные извне) для создания 
+        //! санки, валидатор фиксированный, мы не можем передать maxValue вместе с value потому что ф-ю будем вызывать не мы а  
+        //! redux-form (как и санку которую вызывает store когда мы ее диспатчим и он передает в нее метод диспатч). 
+        
+        //! Поэтому создадим maxLengthCreator ф-ю которая возвращает другую ф-ю maxLength (по аналогии с санкой и санк криэйтером
+        //! у нас получился maxLengthCreator который принимает параметры(maxLength - макс. длинна) возвращает ф-ю валидатор в 
+        //! которой мы будем использовать maxLength)
+
+            export const maxLengthCreator =(maxLength) => value => {
+                if (value.length > maxLength) return `Max length is ${maxLength} symbols`;
+                return undefined;
+            }
+
+        //! Теперь чтобы получить валидатор для поля необходимой длинны мы(redux-form) должны вызвыть maxLengthCreator передав в
+        //! него нужную длинну и нам вернеться валидатор с уникальным значением для этого поля. 
+
+
+
+        В MyPosts 
+
+            import { required, maxLengthCreator } from "../../../utils/validators/validators";
+
+            const maxLength10 = maxLengthCreator(10);
+
+            const AddNewPostForm = (props) => {
+            return (
+                <Form
+                onSubmit={onSubmit}
+                render={({ handleSubmit, form, submitting, pristine, values }) => (
+                    <form onSubmit={handleSubmit}>
+                    <div>
+                        <Field name="newPostText" placeholder='Type Msg'  component='textarea' 
+                        validate={[required, maxLength10]} />
+
+        //! Чтобы избежать ошибки макс количества вложенности (когда ф-я вызывается слишком много раз) выносим создание 
+        //! maxLengthCreator в отдельную переменную которую уже и вставляем в validate. Если вставить сразу maxLengthCreator(10)
+        //! в validate то при каждой отрисовке поля будет посылаться значение в maxLengthCreator а он будет возвращать новую
+        //! ф-ю и полю нужно будет снова перерисовываться, так получается зацикливание.
+
+        Теперь при попытке добавить пустой пост или пост с больше чем 10 символом срабатывает валидатор и мы даже не попадаем в 
+        onAddPost и соответственно не добавляется пост. 
+
+
+
+    //! В новой редакции final-form в примере валидатор размещен прямо в файле с ф-ями и теперь если нужно больше чем 1 валидатор
+    //! для поля делают composeValodators а не массив и получиться что ошибка как выше не возникает.
+
+        const required => value => (value ? undefined : "Required")
+
+        const minValue => min => value => 
+                isNaN(value) || value >= min ? undefined : `Should be greater than ${min}`
+
+        const composeValidators = (...validators) => value =>
+                validators.reduce((error, validator) => error || validator(value), undefined)
+                
+
+            <Field validate={composeValidators( required, minValue(18) )}
+
+    //todo Проверить работоспособность как есть, или переделать по новому.
+
+
+
+    Срабатывает валидатор, но никакого сообщения или подсветки нету и юзеру не очевидно что есть ошибка. Чтобы красиво сделать input 
+        его нужно обернуть div(дополнительными обертками), чтобы было всплывающее сообщение нужно рядом с input сделать скрытый
+        span со специфическими классами, на который будет навешиваться сообщение, и т.д.
+
+        У нас также, на нужен не обычный component='textarea', а какой то навороченный textarea, значит нужно её создать.
+
+
+        В common\FormControls созадим файл FormControls.js и в нем создадим комопнент Textarea который подставим в MyPosts вместо
+        стандартного textarea уже не в кавычках, а в фигурных скобках потому что это компонент. Так как теперь redux-form будет
+        общаться не со стандартной textarea а с компонентом то нам нужно вместо обычных props, преобразовать их в тот тип который
+        будет воспринят внутренней textarea. В props приходят объекты input, meta и наши кастомные значения типа placeholder 
+        которые лежат как отдельные свойства. 
+
+        Чтобы преобразовать в нужный для textarea тип мы отдельно примем на входе input, meta и props, таким образом мы можем при 
+        передаче в textarea деструктуризировать отдельно  {...input} (мета не нужен элементу) и отдельно раскрыть наши кастомные
+        {...props}.
+
+
+            import React from "react";
+
+            export const Textarea = ({input, meta, ...props}) => {
+                return (
+                    <div>
+                        <textarea {...input} {...props} />
+                    </div>
+                )
+            }
+
+
+
+        В MyPosts
+
+            import { Textarea } from "../../common/FormControls/FormControls";
+
+             <Field name="newPostText" placeholder='Type Msg'  component={Textarea} validate={[required, maxLength10]} />
+
+
+
+    Теперь можно к компоненту Textarea привязать ксс для этого в этой же папке создаем ксс файл FormControls.module.css с 
+        классами которые будем цеплять к Textarea.
+
+            .formControl .error input,
+            .formControl .error textarea {
+                border: 2px solid red;
+            }
+
+            .formControl .error span {
+                color: red;
+            }
+
+
+        для проверки прицепим к Textarea
+
+            import React from "react";
+            import styles from "./FormControls.module.css"
+
+            export const Textarea = ({ input, meta, ...props }) => {
+                return (
+                    <div className={styles.formControl + " " + styles.error}>
+                        <div>
+                            <textarea {...input} {...props} />
+                        </div>
+                        <span>"Some Error"</span>
+                    </div>
+                )
+            }
+
+        Понятно что эти классы должны появляться когда будет ошибка.
+
+
+
+    Как мы узнаем что у нас ошибка. Так как всем круговоротом управляет redux-form, то при навешенных на field валидаторых redux-form
+        будет сообщать в Textarea что произошла ошибка и мы об этом можем узнать внутри нашей формы - в meta приходит touched, error,
+        warning. Теперь можно модернизировать компонент чтобы он показывал классы с ошибкой только если пользователь был в поле(touched)
+        и если есть ошибка. Если без touched тогда сразу при загрузке будет показываться ошибка ведь поле пустое.
+
+        Для динамического показа сообщений вытащим сообщение из meta.error и подставим в span 
+
+            const hasError = meta.touched && meta.error;
+
+            export const Textarea = ({ input, meta, ...props }) => {
+                return (
+                    <div className={styles.formControl + " " + (hasError ? styles.error : "")}>
+                        <div>
+                            <textarea {...input} {...props} />
+                        </div>
+                        { hasError && <span>{meta.error}</span> }
+                    </div>
+                )
+            }
+
+
+
+    
+    Теперь тоже самое сделаем для сообщенийв Dialogs, заменим стандартную textarea на нашу и добавим теже валидаторы.
+
+        import { Textarea } from "../common/FormControls/FormControls";
+        import { required, maxLengthCreator } from "../../../utils/validators/validators";
+
+        const maxLength100 = maxLengthCreator(100);
+        
+        const AddMsgForm = (props) => {
+            return (
+                <Form
+                onSubmit={onSubmit}
+                render={({ handleSubmit, form, submitting, pristine, values }) => (
+                    <form onSubmit={handleSubmit}>
+                    <div>
+                         <Field placeholder='Type Msg' name="newMsgBody" component={Textarea} 
+                                validate={[required, maxLength100]}/>
+
+
+
+
+    Также переделаем Login, но тут у нас не textarea, a input. Значит нужно сделать свой компонент.
+
+            import { Input } from "../common/FormControls/FormControls";
+            import { required, maxLengthCreator } from "../../utils/validators/validators";
+
+            const maxLength50 = maxLengthCreator(50);
+
+            const LoginForm = (props) => {
+                return (
+                    <Form
+                        onSubmit={onSubmit}
+                        render={({ handleSubmit, form, submitting, pristine, values }) => (
+                            <form onSubmit={handleSubmit}>
+                                <div>
+                                    <Field placeholder={'Login'} name={"login"} component={Input} validate={[required, maxLength50]} />
+                                </div>
+                                <div>
+                                    <Field placeholder={'Password'} name={"password"} component={Input} validate={[required, maxLength50]}/>
+                                </div>
+                                <div>
+                                    <Field type={"checkbox"} name={"rememberMe"} component={Input} /> remember me
+                                </div>
+                                <div>
+                                    <button>Log In</button>
+                                </div>
+                            </form>
+                        )}
+                    />
+                )
+            }
+
+
+        Теперь у нас дублирование кода Input и Textarea практически идентичны, сделаем рефакторинг. Так как у нас меняется только
+            середина, мы вместо нее напишем children(потомок) который будем настраивать в зависимости от потребности. При этом
+            props нужно деструктуризировать, а children берется из внутренности тега FormControl. 
+            
+            //! В видео еще в props был child, но он вроде не нужен, если не заработает добавить.
+            
+            const FormControl = ({ input, meta, ...props }) => {
+                return (
+                    <div className={styles.formControl + " " + (hasError ? styles.error : "")}>
+                        <div>
+                            {props.children}
+                        </div>
+                        { hasError && <span>{meta.error}</span> }
+                    </div>
+                )
+            }
+
+
+            export const Textarea = (props) => {
+                const { input, meta, ...restProps } = props;
+                return <FormControl {...props}> <textarea {...input} {...restProps} /> </FormControl>
+            }
+
+            export const Input = (props) => {
+                const { input, meta, ...restProps } = props;
+                return <FormControl {...props}> <input {...input} {...restProps} /> </FormControl>
+            }
+            
+
+    //todo Проверить работоспособность как есть, или переделать по новому.
+
+
+*/}
+
+
+{/*    ====    78.  login и logout API    ====
+
+
+
+
+
+    
 
 */}
