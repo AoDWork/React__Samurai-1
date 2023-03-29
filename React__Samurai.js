@@ -8040,7 +8040,7 @@
 
 
     //! В новой редакции final-form в примере валидатор размещен прямо в файле с ф-ями и теперь если нужно больше чем 1 валидатор
-    //! для поля делают composeValodators а не массив и получиться что ошибка как выше не возникает.
+    //! для поля делают composeValodators, а не массив и получиться что ошибка как выше не возникает.
 
         const required => value => (value ? undefined : "Required")
 
@@ -8134,10 +8134,9 @@
         и если есть ошибка. Если без touched тогда сразу при загрузке будет показываться ошибка ведь поле пустое.
 
         Для динамического показа сообщений вытащим сообщение из meta.error и подставим в span 
-
-            const hasError = meta.touched && meta.error;
-
+         
             export const Textarea = ({ input, meta, ...props }) => {
+                const hasError = meta.touched && meta.error;
                 return (
                     <div className={styles.formControl + " " + (hasError ? styles.error : "")}>
                         <div>
@@ -8233,6 +8232,65 @@
             
 
     //todo Проверить работоспособность как есть, или переделать по новому.
+
+    //! Пару раз не запускалось писало что не определены пропсы в Диалогс и МайПостс, потом запускалось без ошибок серый экран
+    //! потом запустилось нормально. Но не показывает формы даже на Логине, видимо нужно по новому записывать.
+    //! Заменил в Логине на новый синтаксис, получилось, но цвет текста белый и поля тоже не выделяются.
+
+            const maxLength16 = maxLengthCreator(16);
+
+            const composeValidators = (...validators) => value =>
+                            validators.reduce((error, validator) => error || validator(value), undefined);
+
+            const LoginForm = (props) => {
+                return (
+                    <Form
+                        onSubmit={onSubmit}
+                        render={({ handleSubmit, form, submitting, pristine, values }) => (
+                            <form onSubmit={handleSubmit}>
+                                <div>
+                                    <Field placeholder={'Login'} name={"login"} component={Input} 
+                                            validate={composeValidators(required, maxLength16)} />
+                                </div>
+                                <div>
+                                    <Field placeholder={'Password'} name={"password"} component={Input} 
+                                            validate={composeValidators(required, maxLength16)}/>
+                                </div>
+                                <div>
+                                    <Field type={"checkbox"} name={"rememberMe"} component={Input} /> remember me
+                                </div>
+                                <div>
+                                    <button>Log In</button>
+                                </div>
+                            </form>
+                        )}
+                    />
+                )
+            }
+
+
+    //! Заменил таким же образом в Диалогс и МайПостс вылезли ошибки
+        src\Components\Dialogs\Dialogs.jsx
+        Line 13:3:   'props' is not defined     no-undef
+        Line 24:17:  'onSubmit' is not defined  no-undef
+
+        src\Components\Profile\MyPosts\MyPosts.jsx
+        Line 11:3:   'props' is not defined     no-undef
+        Line 22:17:  'onSubmit' is not defined  no-undef
+    //! Перезапустил, всё вроде стабилизировалось. Но Профиль пустой, а на Диалогс не пускает без логина. Предположительно
+
+    //! В стилях убрал .formControl и они применились
+        .error input,
+        .error textarea {
+            border: 2px solid red;
+        }
+
+        .error span {
+            color: rgb(255, 217, 0);
+            font-weight: bold;
+        }
+        
+    //! Должно работать
 
 
 */}

@@ -13,6 +13,9 @@ const onAddPost = (values) => {
 
 const maxLength10 = maxLengthCreator(10);
 
+const composeValidators = (...validators) => value =>
+                validators.reduce((error, validator) => error || validator(value), undefined);
+
 const AddNewPostForm = (props) => {
   return (
     <Form
@@ -20,7 +23,7 @@ const AddNewPostForm = (props) => {
       render={({ handleSubmit, form, submitting, pristine, values }) => (
         <form onSubmit={handleSubmit}>
           <div>
-            <Field name="newPostText" placeholder='Type Msg'  component={Textarea} validate={[required, maxLength10]} />
+            <Field name="newPostText" placeholder='Type Msg'  component={Textarea} validate={composeValidators(required, maxLength10)} />
           </div>
           <div>
           <div><button>Add Post</button></div>

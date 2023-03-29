@@ -15,6 +15,9 @@ const addNewMsg = (values) => {
 
 const maxLength100 = maxLengthCreator(100);
 
+const composeValidators = (...validators) => value =>
+                validators.reduce((error, validator) => error || validator(value), undefined);
+
 const AddMsgForm = (props) => {
   return (
     <Form
@@ -22,7 +25,7 @@ const AddMsgForm = (props) => {
       render={({ handleSubmit, form, submitting, pristine, values }) => (
         <form onSubmit={handleSubmit}>
           <div>
-            <Field placeholder='Type Msg' name="newMsgBody" component={Textarea} validate={[required, maxLength100]}/>
+            <Field placeholder='Type Msg' name="newMsgBody" component={Textarea} validate={composeValidators(required, maxLength100)} />
           </div>
           <div>
           <div><button>Send</button></div>

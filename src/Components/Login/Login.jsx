@@ -6,7 +6,10 @@ import { required, maxLengthCreator } from "../../utils/validators/validators";
 // import { createForm } from 'final-form';
 
 
-const maxLength50 = maxLengthCreator(50);
+const maxLength16 = maxLengthCreator(16);
+
+const composeValidators = (...validators) => value =>
+                validators.reduce((error, validator) => error || validator(value), undefined);
 
 const LoginForm = (props) => {
     return (
@@ -15,10 +18,12 @@ const LoginForm = (props) => {
             render={({ handleSubmit, form, submitting, pristine, values }) => (
                 <form onSubmit={handleSubmit}>
                     <div>
-                        <Field placeholder={'Login'} name={"login"} component={Input} validate={[required, maxLength50]} />
+                        <Field placeholder={'Login'} name={"login"} component={Input} 
+                                validate={composeValidators(required, maxLength16)} />
                     </div>
                     <div>
-                        <Field placeholder={'Password'} name={"password"} component={Input} validate={[required, maxLength50]}/>
+                        <Field placeholder={'Password'} name={"password"} component={Input} 
+                                validate={composeValidators(required, maxLength16)}/>
                     </div>
                     <div>
                         <Field type={"checkbox"} name={"rememberMe"} component={Input} /> remember me
