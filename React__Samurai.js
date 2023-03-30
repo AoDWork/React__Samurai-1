@@ -4620,7 +4620,7 @@
         1) url адрес на который мы можем делать запросы (URL: "https://samuraiJS.com/api/users" ) - тут ресурс users
         2) тип запроса  (http-request type: get / post)
         3) request payload   (данные которые должны послать на сервер) - правильно заполнить запрос(аналогия заполнения action )
-        4) responce data     (данные которые должны получить с сервера) - нужно знать какой ответ к нам прийдет чтобы правильно его
+        4) response data     (данные которые должны получить с сервера) - нужно знать какой ответ к нам прийдет чтобы правильно его
                         обработать.
         5) http codes: 404 not found, 5xx -server errors, 3xx -redirect, 2xx - ok (в зависимости от возвращенного кода ответа в нашем
                         кода будут производиться различные действия)
@@ -4698,7 +4698,7 @@
         есть объекты и массивы как в JS но свойства тоже в кавычках, в данном случае глобальный объект со свойством items - массив
         в котором сидят элементы(объекты), дальше свойство total count со значением 44 и свойство error со значение null. Для 
         более удобного вида можно вбить этот ответ в любой онлайн JSON viwer, также в документации на этот url с которого приходит
-        ответ может быть пример ответа(responce).
+        ответ может быть пример ответа(response).
 
         Поставив debugger после запроса видим что вернулось в запросе много всего и среди прочего data - это те данные которые
         нам нужны, в них сидит items в котором объекты с пользователями.
@@ -4706,7 +4706,7 @@
             if (props.setUsers.length === 0 ) {
 
                 axios.get('https://social-network.samuraijs.com/api/1.0/users')
-                    .then( responce => { props.setUsers(responce.data.items); } );
+                    .then( response => { props.setUsers(response.data.items); } );
 
             };
 
@@ -4792,8 +4792,8 @@
             let getUsers = () => {
                 if (props.users.length === 0 ) {
                     axios.get(srcApiSamurai)
-                        .then( responce => { 
-                            props.setUsers(responce.data.items); 
+                        .then( response => { 
+                            props.setUsers(response.data.items); 
                         });
                 }
             };
@@ -4976,8 +4976,8 @@
                 getUsers = () => {
                     if (this.props.users.length === 0 ) {
                         axios.get(srcApiSamurai)
-                            .then( responce => { 
-                                this.props.setUsers(responce.data.items); 
+                            .then( response => { 
+                                this.props.setUsers(response.data.items); 
                             });
                     }
                 }
@@ -5034,8 +5034,8 @@
                     super(props);
 
                     axios.get(srcApiSamurai)
-                        .then( responce => { 
-                            this.props.setUsers(responce.data.items); 
+                        .then( response => { 
+                            this.props.setUsers(response.data.items); 
                         });
                     
                 }
@@ -5132,8 +5132,8 @@
 
                 componentDidMount() {
                     axios.get(srcApiSamurai)
-                        .then( responce => { 
-                            this.props.setUsers(responce.data.items); 
+                        .then( response => { 
+                            this.props.setUsers(response.data.items); 
                         });
                 }
 
@@ -5299,7 +5299,7 @@
             axios.get(
                 `https://social-network.samuraijs.com/api/1.0/users?page=${ this.props.currentPage }&count=${ this.props.pageSize}`
                 )
-        .then( responce => { 
+        .then( response => { 
 
         Видим что есть ответ и пользователей на странице 5 вместо 10ти, поменяем в state currentPage на 2 видим что пришли другие
         пользователи.
@@ -5357,8 +5357,8 @@
              onPageChanged = (pageNumber) => {
                 this.props.setCurrentPage(pageNumber);
                 axios.get(`https://social-network.samuraijs.com/api/1.0/users?page=${pageNumber}&count=${ this.props.pageSize}`)
-                    .then( responce => { 
-                        this.props.setUsers(responce.data.items); 
+                    .then( response => { 
+                        this.props.setUsers(response.data.items); 
                     });
             }
 
@@ -5375,9 +5375,9 @@
 
             componentDidMount() {
                 axios.get(`https://social-network.samuraijs.com/api/1.0/users?page=${ this.props.currentPage }&count=${ this.props.pageSize}`)
-                    .then( responce => { 
-                        this.props.setUsers(responce.data.items);
-                        this.props.setTotalUsersCount(responce.data.totalCount); 
+                    .then( response => { 
+                        this.props.setUsers(response.data.items);
+                        this.props.setTotalUsersCount(response.data.totalCount); 
                     });
             }
 
@@ -5492,17 +5492,17 @@
 
                 componentDidMount() {
                     axios.get(`https://social-network.samuraijs.com/api/1.0/users?page=${this.props.currentPage}&count=${ this.props.pageSize}`)
-                        .then( responce => { 
-                            this.props.setUsers(responce.data.items);
-                            this.props.setTotalUsersCount(responce.data.totalCount); 
+                        .then( response => { 
+                            this.props.setUsers(response.data.items);
+                            this.props.setTotalUsersCount(response.data.totalCount); 
                         });
                 }
 
                 onPageChanged = (pageNumber) => {
                     this.props.setCurrentPage(pageNumber);
                     axios.get(`https://social-network.samuraijs.com/api/1.0/users?page=${pageNumber}&count=${ this.props.pageSize}`)
-                        .then( responce => { 
-                            this.props.setUsers(responce.data.items); 
+                        .then( response => { 
+                            this.props.setUsers(response.data.items); 
                         });
                 }
 
@@ -5587,10 +5587,10 @@
             componentDidMount() {
                 this.props.toggleIsFetching(true);
                 axios.get(`https://social-network.samuraijs.com/api/1.0/users?page=${this.props.currentPage}&count=${this.props.pageSize}`)
-                    .then(responce => {
+                    .then(response => {
                         this.props.toggleIsFetching(false);
-                        this.props.setUsers(responce.data.items);
-                        this.props.setTotalUsersCount(responce.data.totalCount);
+                        this.props.setUsers(response.data.items);
+                        this.props.setTotalUsersCount(response.data.totalCount);
                     });
             }
 
@@ -5598,9 +5598,9 @@
                 this.props.setCurrentPage(pageNumber);
                 this.props.toggleIsFetching(true);
                 axios.get(`https://social-network.samuraijs.com/api/1.0/users?page=${pageNumber}&count=${this.props.pageSize}`)
-                    .then(responce => {
+                    .then(response => {
                         this.props.toggleIsFetching(false);
-                        this.props.setUsers(responce.data.items);
+                        this.props.setUsers(response.data.items);
                     });
             }
             
@@ -5744,13 +5744,13 @@
 
     Дополняем стандартный метод объекта componentDidMount нашим поведением - запросом на сервер. Для получению профиля юзера к
         стандартному URL добавляем profile, но какого юзера мы получим пока не умеем определять, захардкодим пока юзера номер 2
-        приходящий responce содержит множество информации, но нужная нам(профиль) находится в объекте data поэтому его мы и будем
-        из responce сетать в reducer:
+        приходящий response содержит множество информации, но нужная нам(профиль) находится в объекте data поэтому его мы и будем
+        из response сетать в reducer:
 
             componentDidMount() {
                 axios.get(`https://social-network.samuraijs.com/api/1.0/profile/2`)
-                .then(responce => {
-                    this.props.setUserProfile(responce.data);
+                .then(response => {
+                    this.props.setUserProfile(response.data);
                 });
             }
 
@@ -6053,7 +6053,7 @@
 
                 componentDidMount() {
                     axios.get(`https://social-network.samuraijs.com/api/1.0/auth/me`)
-                    .then(responce => {
+                    .then(response => {
                         debugger;
                     });
                 }
@@ -6068,7 +6068,7 @@
         //! передавать логин, пароль и т.д. и если сервак поддерживает тогда пойдет запрос авторизованный и получим нужный ответ
 
              axios.get(`https://social-network.samuraijs.com/api/1.0/auth/me`, { withCredentials: true })
-                .then(responce => {
+                .then(response => {
 
         Теперь HeaderContainer узнал что мы авторизованы и он может сделать диспатч этой информации в редюсер.
 
@@ -6083,9 +6083,9 @@
 
                 componentDidMount() {
                     axios.get(`https://social-network.samuraijs.com/api/1.0/auth/me`, { withCredentials: true })
-                    .then(responce => {
-                        if(!responce.data.resultCode === 0) {
-                            let { id, login, email} = responce.data.data;
+                    .then(response => {
+                        if(!response.data.resultCode === 0) {
+                            let { id, login, email} = response.data.data;
                             this.props.setAuthUserData( id, login, email );
                         }
                     });
@@ -6103,7 +6103,7 @@
 
         Через debugger проверяем чтобы в state были данные которые нам нужны. Сделали деструктуризацию ответа 
         
-            let { id, login, email} = responce.data.data; чтобы дальше писать сокращенно id, а не responce.data.data.id для каждого
+            let { id, login, email} = response.data.data; чтобы дальше писать сокращенно id, а не response.data.data.id для каждого
 
         своства.
 
@@ -6166,8 +6166,8 @@
              : <button onClick={() => { 
                                 axios.post(`https://social-network.samuraijs.com/api/1.0/follow/${user.id}`, {}, 
                                 { withCredentials: true })
-                                .then(responce => {
-                                    if (responce.data.resultCode == 0) {
+                                .then(response => {
+                                    if (response.data.resultCode == 0) {
                                         props.follow(user.id);
                                     }
                                 });
@@ -6223,10 +6223,10 @@
 
             import { getUsers } from '../../api/api'  
 
-              getUsers().then(responce => {
+              getUsers().then(response => {
                 this.props.toggleIsFetching(false);
-                this.props.setUsers(responce.data.items);
-                this.props.setTotalUsersCount(responce.data.totalCount);
+                this.props.setUsers(response.data.items);
+                this.props.setTotalUsersCount(response.data.totalCount);
             });
 
 
@@ -6240,12 +6240,12 @@
                 return axios.get(`https://social-network.samuraijs.com/api/1.0/users?page=${currentPage}&count=${pageSize}`,
 
 
-                getUsers(this.props.currentPage, this.props.pageSize).then(responce => {
+                getUsers(this.props.currentPage, this.props.pageSize).then(response => {
 
             onPageChanged = (pageNumber) => {
                 this.props.setCurrentPage(pageNumber);
                 this.props.toggleIsFetching(true);
-                getUsers(pageNumber, this.props.pageSize).then(responce => {
+                getUsers(pageNumber, this.props.pageSize).then(response => {
 
 
     Работает, но нужно ли компоненту вся та информация коотрая приходит с сервера? Обычно нет, поэтому в api мы из response вытащим
@@ -6612,7 +6612,7 @@
 
 
 
-    Рефакторим Users переносим логику запросов из него в API. //! не сделал в API преобразование responce в data.
+    Рефакторим Users переносим логику запросов из него в API. //! не сделал в API преобразование response в data.
 
     Создаем санку в users-reducer, переименуем follow/unfollow AC в followSuccess/unfollowSuccess чтобы санки навать 
     follow/unfollow 
@@ -6673,8 +6673,8 @@
         В ProfileContainer:
 
              usersAPI.getProfile(userId)
-                .then(responce => {
-                    this.props.setUserProfile(responce.data);
+                .then(response => {
+                    this.props.setUserProfile(response.data);
                 });
     
 
@@ -6691,9 +6691,9 @@
         В HeaderContainer
 
              componentDidMount() {
-                authAPI.me().then(responce => {
-                    if(!responce.data.resultCode === 0) {
-                        let { id, login, email} = responce.data.data;
+                authAPI.me().then(response => {
+                    if(!response.data.resultCode === 0) {
+                        let { id, login, email} = response.data.data;
                         this.props.setAuthUserData( id, login, email );
                     }
                 });
@@ -6705,8 +6705,8 @@
 
             export const getUserProfile = (userId) => (dispatch) => {
                 usersAPI.getProfile(userId) 
-                    .then(responce => {
-                        dispatch( setUserProfile(responce.data) );
+                    .then(response => {
+                        dispatch( setUserProfile(response.data) );
                     });
             }
 
@@ -6726,9 +6726,9 @@
     Создаем санку getAuthUserData для HeaderContainer в auth reducer. Импортируем authAPI.
 
             export const getAuthUserData = () => (dispatch) => {
-                authAPI.me().then(responce => {
-                    if(!responce.data.resultCode === 0) {
-                        let { id, login, email} = responce.data.data;
+                authAPI.me().then(response => {
+                    if(!response.data.resultCode === 0) {
+                        let { id, login, email} = response.data.data;
                         dispatch( setAuthUserData( id, login, email ) );
                     }
                 });
@@ -7402,8 +7402,8 @@
 
             export const updateUserStatus = (status) => (dispatch) => {
                 profileAPI.updateStatus(status) 
-                    .then(responce => {
-                        if(responce.data.resultCode === 0 )
+                    .then(response => {
+                        if(response.data.resultCode === 0 )
                         dispatch( setStatus(status) );
                     });
             }
@@ -7930,8 +7930,8 @@
 
             export const updateUserStatus = (status) => (dispatch) => {
                 profileAPI.updateStatus(status)
-                    .then(responce => {
-                        if (responce.data.resultCode === 0) {
+                    .then(response => {
+                        if (response.data.resultCode === 0) {
                             dispatch(setStatus(status));
                         }
                     });
@@ -8277,7 +8277,7 @@
         src\Components\Profile\MyPosts\MyPosts.jsx
         Line 11:3:   'props' is not defined     no-undef
         Line 22:17:  'onSubmit' is not defined  no-undef
-    //! Перезапустил, всё вроде стабилизировалось. Но Профиль пустой, а на Диалогс не пускает без логина. Предположительно
+    //! Перезапустил, всё вроде стабилизировалось. Но Профиль пустой, а на Диалогс не пускает без логина. 
 
     //! В стилях убрал .formControl и они применились
         .error input,
@@ -8290,7 +8290,7 @@
             font-weight: bold;
         }
         
-    //! Должно работать
+    //! В логине работает форма, должна работать и в других страницах.
 
 
 */}
@@ -8298,10 +8298,184 @@
 
 {/*    ====    78.  login и logout API    ====
 
-
-
-
-
+    Будем делать логинизацию на сайт(сервер) соц сети прямо из приложения. 
     
+    //! Если зайти на сайт в браузере и залогиниться, создается куки которая сидит в памяти, у нас в api.js при ajax запросе 
+        //! прописано виз креденшелс - тру, благодаря  этому при нашем запросе с локал хоста(приложение) на другой домен(сервер) 
+        //! куки цепляется к запросу и сервер понимает что это мы и работает с приложением.
+
+
+    //! У нас есть authReducer задача которого процессить текущего пользователя.
+        Раньше мы бы сделали логинредюсер чтоб собирать данные из формы, но так как мы используем редакформ он этот редюсер
+        создал за нас и там он хранит все state для всех форм. 
+        
+    
+
+    В логин при нажатии на кнопку сабмит 
+
+            <LoginForm onSubmit={onSubmit} />
+
+
+        в нее собираются и приходят все данные formData
+
+            const Login = (props) => {
+                const onSubmit = (formData) => {
+                    console.log(formData);
+
+        отсюда мы должны эти данные отправить на сервер(задиспатчить), но из UI комопнента мы не должны делать такой запрос, 
+        поэтому мы сделаем это из бизнеса в authReducer из санки которая принимает метод диспатч, санккриэйтер - login возвращает 
+        санку и может что то(параметры) принимать и это что то доступно сенке через замыкание. 
+
+        Что бы заполнить параметры в санккриэйтере мы смотрим в документацию сервера. Там есть /auth/login видим что в нем есть
+        post и delete запросы. Эти запросы создают что то и удаляют, так при логине мы создаем залогиненую сессию пользователя, а 
+        при вылогинивании - удаляем. (в других серверах может быть обновление юзера как залогиненного через PUT запрос, кто как
+        делает).
+
+        Кликаем по POST и смотрим что мы должны отправить с запросом: email, password, rememberMe + capcha(ее делать не будем
+        если возникнет проблема - много неверных вводов логина/пароля то будет капча, тогда просто логинимся с браузера и счетчик
+        капчи собьется).
+
+
+        Заполним сначала API.js 
+        из которого будет браться запрос. post(put) запрос может посылать дополнительные данные в виде 
+        объекта(для get и delete доп параметры можно отправить только в виде query строки дописав непосредственно к адресу)
+
+            export const authAPI = {
+                me() {
+                    return instance.get(`auth/me`);
+                },
+                login(email, password, rememberMe = false) {
+                    return instance.post(`auth/login`, { email, password, rememberMe });
+                },
+                logout() {
+                    return instance.delete(`auth/login`);
+                }
+            }
+
+        создали логин и логаут запросы, для логина указали параметры которые придут в него и далее пошлются на сервер rememberMe
+        по умолчанию стоит false если вдруг не прийдет.
+
+
+        В authReducer создаем login в который прийдут  email, password, rememberMe. При успешном запросе вернется пост код 0,
+        и тогда мы заново задиспатчим санккриэйтер getAuthUserData - который раньше мы запрашивали при запуске приложения из 
+        HeaderContainer, чтобы заново прошел поток(флоу) получения информации обо мне. Тоже сделаем для логаута - когда 
+        отправляем логаут на сервер сервер удаляет созданное при логине куки, сервер будет считать нас анонимным юзером и нам
+        нужно сделать себя анонимным и в нашей соц сети, для этого зачистим state юзера - initialState.
+        //! заменили data на payload в  ...action.payload и SET_AUTH_USER_DATA, payload: { userId, login, email } })
+        //! добавили в setAuthUserData isAuth чтобы его передавать, и теперь при логине будем передавать true а при логауте
+        //! false
+
+            export const login = (email, password, rememberMe) => (dispatch) => {
+                authAPI.login(email, password, rememberMe)
+                    .then(response => {
+                        if (response.data.resultCode === 0) {
+                            dispatch(getAuthUserData());
+                        }
+                    });
+            }
+
+            export const logout = () => (dispatch) => {
+                authAPI.logout()
+                    .then(response => {
+                        if (response.data.resultCode === 0) {
+                            dispatch(setAuthUserData(null, null, null, false));
+                        }
+                    });
+
+            API готов, бизнесс готов(возможно с багами).
+
+
+
+    Теперь в Login задиспатчим санккриэйтор login в бизнесс когда происходит submit. Для этого нужно получить доступ к store и 
+        потому делаем контейнерный компонент который даст нам этот доступ, над Login прямо в этом же файле посредством ХОКа connect.
+        
+        Благодаря connect получаем доступ к login из auth-reducer  
+            import { login } from '../redux/auth-reducer';
+
+            export default connect(null, {login})(Login); - вместо mapStateToProps ставим null, а для mapDispatchToProps используем
+                                                            сокращенную запись передав в объекте название санккриейтера и импортировав
+                                                            его 
+
+
+        //! это санк криэйтер вернет login санку, connect под тем же самым именем засовывает в props коллбек который принимает параметры
+        //! (formData.email, formData.password, formData.rememberMe) и внутри себя диспатчит вызов санккриэйтера login и в него 
+        //! передаются теже параметры которые приходят в коллбек
+        
+
+            const Login = (props) => {
+                const onSubmit = (formData) => {
+                    console.log(formData);
+                    props.login(formData.email, formData.password, formData.rememberMe)
+                }
+
+        У автора получилось залогиниться через приложение при этом в хедере в правом верхнем углу вместо LogIn появился его ник.
+
+
+
+    Теперь сделаем Редирект чтобы после успешной логинизации мы попадали на свой профиль. В Login при успешной логинизации
+        сделаем Redirect который сейчас Navigate(проимпортируем его), а если не залогинены тогда выполниться код который ниже if 
+
+            const Login = (props) => {
+                const onSubmit = (formData) => {
+                    console.log(formData);
+                    props.login(formData.email, formData.password, formData.rememberMe)
+                }
+
+                if (props.iaAuth) {
+                    return <Navigate to={"/profile"} />
+                }
+
+                return <div>
+                    <h1>Login</h1>
+                    <LoginForm onSubmit={onSubmit} />
+                </div>
+            }
+
+
+        Теперь нужно получить iaAuth из контейнерного компонента, для этого положим в него iaAuth который находиться в reducerу
+            auth(смотрим название в redux-store где мы combine reducers) и называется iaAuth(название в auth-reducer)
+
+                const mapStateToProps = (state) => ({
+                    isAuth: state.auth.iaAuth
+                })
+
+                export default connect(mapStateToProps, {login})(Login);
+
+
+
+    В Header создадим кнопку для логаута и добавим onClick который придет в props из контейнерного компонента.
+
+            { props.isAuth 
+                ? <div>{props.login} - <button onClick={props.logout}>Log Out</button> </div>
+                : <NavLink to={ '/login'}>Login</NavLink>}
+
+
+        Теперь в контейнерном компоненте добавим этот санкКриэйтер logout
+            
+            import {logout} from "../redux/auth-reducer";
+
+            export default  connect(mapStateToProps, { getAuthUserData, logout } )(HeaderContainer);
+
+
+        //! При вылогинивании кнопка log out не исчезла, видимо потому что isAuth остался true. Так получилось потому что в 
+        //! auth-reducer мы isAuth вынесли в payload, а из authReducer не удалили его отдельно и поэтому он перезатирал тот
+        //! который приходил из санок. Удалим его.
+
+            ...state,
+            ...action.payload,
+            isAuth: true
+
+        
+        Теперь кнопка исчезает но мы остаемся на страничке профиля, но мы не можем там быть без id или статуса залогиненого.
+        Нужно сделать как для месседжей, и также сделать что бы показывалась ошибка при вводе неправильного логина/пароля.
+
+
+        
+    //! Как оказалось в Api у меня были лишние строки ответа сервера, а их вроде там не должно быть, и самое главное в Authreducer
+    //! у меня было слово responce вместо response - понятно что никакого ответа от сервера не было, теперь может заработает всё
+    //! как нужно. Также в let { id, login, email } = response.data.data; - была 1 раз data - исправил как в видео.
+    //! В Login закоментировал onSubmit потому что должен работать тот который внутри комопнента Login.
+    //! Проверить!!!
+
 
 */}
