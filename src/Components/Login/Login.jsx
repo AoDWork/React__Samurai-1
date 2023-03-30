@@ -9,7 +9,7 @@ import {Navigate} from 'react-router-dom';
 // import { createForm } from 'final-form';
 
 
-const maxLength16 = maxLengthCreator(16);
+const maxLength50 = maxLengthCreator(50);
 
 const composeValidators = (...validators) => value =>
                 validators.reduce((error, validator) => error || validator(value), undefined);
@@ -22,11 +22,11 @@ const LoginForm = (props) => {
                 <form onSubmit={handleSubmit}>
                     <div>
                         <Field placeholder={'Enter email'} name={"email"} component={Input} 
-                                validate={composeValidators(required, maxLength16)} />
+                                validate={composeValidators(required, maxLength50)} />
                     </div>
                     <div>
                         <Field placeholder={'Password'} name={"password"} component={Input} type={"password"}
-                                validate={composeValidators(required, maxLength16)}/>
+                                validate={composeValidators(required, maxLength50)}/>
                     </div>
                     <div>
                         <Field type={"checkbox"} name={"rememberMe"} component={Input} /> remember me
@@ -40,9 +40,12 @@ const LoginForm = (props) => {
     )
 }
 
-// const onSubmit = (formData) => {  - 78 видео, удалил потому что должен работать тот что в самом Login //!Проверить
-//     console.log(formData);
-// }
+
+const onSubmit = (formData) => {  //!  78 видео, удалил потому что должен работать тот что в самом Login - Проверить
+    console.log(formData);
+    login(formData.email, formData.password, formData.rememberMe)
+
+}
 
 //const LoginReduxForm = reduxForm ({form: 'login'}) (LoginForm) - удалили так как нету хока теперь
 
@@ -64,7 +67,7 @@ const Login = (props) => {
 }
 
 const mapStateToProps = (state) => ({
-    isAuth: state.auth.iaAuth
+    isAuth: state.auth.isAuth
 })
 
 
