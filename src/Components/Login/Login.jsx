@@ -1,11 +1,12 @@
 import React from "react";
 //import { Field, reduxForm } from "redux-from";
-import { Form, Field } from 'react-final-form'
+import { Form, Field } from 'react-final-form';
 import { Input } from "../common/FormControls/FormControls";
 import { required, maxLengthCreator } from "../../utils/validators/validators";
 import { connect } from 'react-redux';
 import { login } from '../redux/auth-reducer';
 import {Navigate} from 'react-router-dom';
+import styles from "../common/FormControls/FormControls.module.css"
 // import { createForm } from 'final-form';
 
 
@@ -31,6 +32,9 @@ const LoginForm = (props) => {
                     <div>
                         <Field type={"checkbox"} name={"rememberMe"} component={Input} /> remember me
                     </div>
+                    { props.error && <div className={styles.summaryError}>
+                        {props.error}
+                    </div>}
                     <div>
                         <button>Log In</button>
                     </div>
@@ -41,9 +45,8 @@ const LoginForm = (props) => {
 }
 
 
-const onSubmit = (formData) => {  //!  78 видео, удалил потому что должен работать тот что в самом Login - Проверить
-    console.log(formData);
-    login(formData.email, formData.password, formData.rememberMe)
+const onSubmit = (formData) => {    //!  без этого ошибка что onSubmit - не объявлен, а props в него не проходят поэтому props.login 
+    console.log(formData);          //! не запустить
 
 }
 

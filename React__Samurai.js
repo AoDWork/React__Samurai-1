@@ -8296,7 +8296,7 @@
 */}
 
 
-{/*    ====    78.  login и logout API    ====
+{/*    ====    78. login и logout API    ====
 
     Будем делать логинизацию на сайт(сервер) соц сети прямо из приложения. 
     
@@ -8487,8 +8487,107 @@
 */}
 
 
-{/*    ====    78.  login и logout API    ====
+{/*    ====    79. stopSubmit (redux-form)    ====
 
+    Сейчас если вводить неправильный логин/пароль то нету никакого сообщения об ошибке. Так как валидаторы формы у нас находятся
+        по сути в UI, в самом компоненте, а не в state - то они не пускают при обычной ошибке валидирования дальше, а ошибка
+        получаемая с сервера уже не в UI и для того чтобы ее обработать в redux-form есть actionCreator в который передадим
+        название формы которую будем стопать при ошибке с сервера и проблемное поле с тектом ошибки, а результат вызова будем 
+        диспатчить.
+
+        Обработку этой ошибки(при этом ответ от сервера будет 1 а не 0) мы допишем в auth-reducer
+        //! не известно так ли он в final-form называется и работает
+
+            import {stopSubmit} from 'react-final-form';
+
+            export const login = (email, password, rememberMe) => (dispatch) => {
+                authAPI.login(email, password, rememberMe)
+                    .then(response => {
+                        if (response.data.resultCode === 0) {
+                            dispatch(getAuthUserData());
+                        } else {
+                            let action = stopSubmit("login", {email: "Email s wrong"}); 
+                            //! - посмотреть название формы правильно ли
+                            dispatch(action);
+                        }
+                    });
+            }
+
+        Подсветилось поле email красным и под ним появилось сообщение об ошибке в span, тоесть по сути отработало как валидатор.
+
+
+        Но есть проблема, сервер нам не скажет в каком из полей у нас ошибка, это может быть и password. С другой стороны мы и 
+        не должны точно указывать поле потому что вдруг это взломщик и мы таким образом сообщим что имейл допустим правильный
+        а не правильный только пароль. Поэтому нужно писать что неправильный логин/пароль, но и тогда нужно подсветить ошибкой 
+        второе поле. Для общей подсветки всей формы используется _error, но так как такого поля нету то ничего и не сработает, 
+        поэтому нужно добавить такое поле в форму и приписать на него стили. 
+
+        Стиль для общей ошибки в FormControl.module.css
+        
+            .summaryError {
+                border: 2px solid red;
+                padding: 5px;
+                color: rgb(255, 217, 0);
+            }
+
+
+        В Login.js импортируем стили. В форму приходят props и когда мы получаем action с error он диспатчится и попадает в эти
+        props, и тогда отобразиться сообщение об ошибке в диве которое придет в props, а до этого не будет чему отображаться.
+
+            import styles from "../common/FormControls/FormControls.module.css"
+
+            <Field type={"checkbox"} name={"rememberMe"} component={Input} /> remember me
+                </div>
+                { props.error && <div className={styles.summaryError}>
+                    {props.error}
+                </div>}
+
+
+        В auth-reducer дописываем _error и рефакторим код
+
+            } else {
+                dispatch( stopSubmit("login", {_error: "Common Error"}) );
+            }
+        
+
+            Сделаем чтобы показывался текст именно ошибки с сервера, он приходит в ответе response.data.messages, проверяем есть
+            ли он вообще сравнивая количество символов с 0, если да показываем его, если нет показываем стандартный текст.
+
+            let message = response.data.messages.length > 0 ? response.data.messages : "Some error";
+            dispatch( stopSubmit("login", { _error: message }) );
+
+
+
+    Рефакторим ProfileContainer, уберем захардкоженое значение userId и если в url нету userId будем подставлять наше которое
+        возьмем как и isAuth из state.
+        //! Разобраться с - withRouter
+
+            componentDidMount() {
+                let userId = this.props.match.params.userId;
+                if (!userId) {
+                    userId = this.props.authorizedUserId;
+                }
+
+            let mapStateToProps = (state) => ({
+                profile: state.profilePage.userProfile,
+                status: state.profilePage.status,
+                authorizedUserId: state.auth.userId,
+                isAuth: state.auth.isAuth
+            });
+
+        но может так получиться что не будет айди ни в url ни в state(если не залогинен) тогда нужно сделать редирект на Login.
+        //! вылез косяк когда нету айди даже когда юзер залогинен, он обновляет страницу при этом посылается запрос me()
+        //! из header, но он не успевает послаться и установить данные в state поэтому нету никакого id и юзера редиректнет
+        //! на Login потом пройдет запрос и юзера кинет на Profile так как он уже залогинен. Будет моргание.
+
+        Для того чтобы такого не было, нужно сделать инициализацию приложения(показать крутилку пока идет сбор данных с сервера
+        чтобы потом показать уже со всеми данными приложение).
+
+
+*/}
+
+
+{/*    ====    80. Инициализация приложения    ====
 
 
 
