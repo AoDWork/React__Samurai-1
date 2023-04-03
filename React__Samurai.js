@@ -8584,10 +8584,220 @@
         чтобы потом показать уже со всеми данными приложение).
 
 
+        //! stopSubmit в новой final-form нету, не запускается приложение совсем, нужно что то менять.
+
+
 */}
 
 
 {/*    ====    80. Инициализация приложения    ====
+
+    Сейчас такая схема - при обновлении в браузере и залогиненом юзере - пытается загрузить Диалог(месседжы) и в это время идет 
+        запрос на сервер me() для выяснения авторизован ли юзер, пока получаем ответ с сервера, Диалог видит что юзер не 
+        авторизован(потому что ответ еще не пришел) и редиректит на Логин и только он пытается загрузиться приходит ответ с 
+        сервера что мы залогинены и редиректит на Профайл и получаются моргания экрана. Аналогичная ситуация будет и с 
+        темной/светлой темой и с языком сайта если юзер выбрал не то что стоит по умолчанию.
+
+
+    Решение - не показываем приложение пока не выясним кто зашел(все параметры юзера) для этого запросы которые делаем в Header
+        эту логику мы перенесем в App. Но App у нас ф-й, а не классовый и у нее нету контейнерного компонента, он уже не чистый
+        потому что он рендерит контейнерные компоненты, поэтому не целесообразно делать над ним контейнерный классовый компонент
+        а сделаем классовый из App . А в идеале чистый компонент - это ф-й компонент тот у которого всё что внутри тоже чистое, 
+        поэтому не паримся и делаем Апп - классовым компонентом.
+
+        Теперь можно подвязаться к методам жизненного цикла и делать запросы при компонентДидМаунт при этом законектить App 
+        компонент чтобы он получил доступ к getAuthUserData
+
+            import { connect } from 'react-redux';
+            import {getAuthUserData} from '../src/Components/redux/auth-reducer'
+
+            class App extends React.Component {
+                componentDidMount() {
+                    this.props.getAuthUserData();
+                }
+
+                render() {
+                    return (
+                        <BrowserRouter>
+                            <div className='app-wrapper'>
+                                <HeaderContainer />
+                                <Navbar />
+                                <div className='app-wrapper-content'>
+                                    <Routes>
+                                        <Route path="/dialogs" element={<DialogsContainer />} />
+                                        <Route path="/profile/:userId?" element={<ProfileContainer />} />
+                                        <Route path="/users" element={<UsersContainer />} />
+                                        <Route path="/login" element={<LoginPage />} />
+                                    </Routes>
+                                </div>
+                            </div>
+                        </BrowserRouter>
+                    );
+                }
+            }
+
+            export default connect(null, { getAuthUserData } )(App);
+        
+
+
+    //! Не работает роутинг потому что если к компоненту которые выполняет роутинг сделать connect то роутинг работает не 
+        так как должен, нужно то что мы законектили обернуть withRoute - очередным HOC чтобы роут нормально работал. Обернем через
+        compose чтобы не передавать одно в другое(избежать wrapper hell).
+
+        //! withRouter не работает уже, нужно заменять на хуки и длать ф-й компонент.
+
+            // import { withRouter } from 'react-router-dom';
+            import { compose } from 'redux';
+
+            export default compose(
+                withRouter,
+                connect(null, { getAuthUserData } )) (App);
+
+        У автора всё заработало.
+
+
+
+    Теперь мы сделаем что приложение не будет показывать страницы до того как не проинициализируется(получим все необходимые 
+        данные) для этого сделаем app-reducer который будет отвечать за всё приложение. Создаем в state свойство initialized и 
+        action - INITIALIZED_SUCCESS и если такой экшн сработает то мы заменим initialized на true.
+
+        Из App мы перенесем получение данных о пользователе dispatch( getAuthUserData() ); в app-reducer и будем диспатчить 
+        в compose не его а initializeApp. Когда getAuthUserData - получит данные в initializeApp в редюсере мы задиспатчим
+        initializedSuccess - что всё хорошо можно показывать страницы приложения. Но оба эти запроса асинхронны и нужно делать
+        диспатч initializedSuccess только после получения данных от сервера. Чтобы получить ответ из getAuthUserData диспатча
+        в aut-reducer пропишем return, так как диспатч возвращает промис, и мы на него (зенимся).then а любой then тоже возвращает
+        promise то этот промис пойдет выше и мы его вернем из диспатча и раз это промис мы можем дождаться когда он зарезолвится
+        (выполниться, не выжно как положительно или отрицательно) и сделать диспатч initializedSuccess.
+
+            import { getAuthUserData } from './auth-reducer'
+
+            const INITIALIZED_SUCCESS = 'INITIALIZED_SUCCESS';
+
+            let initialState = {
+                initialized: false
+            }
+
+            const appReducer = (state = initialState, action) => {
+                switch (action.type) {
+                    case INITIALIZED_SUCCESS:
+                        return {
+                            ...state,
+                            initialized: true
+                        }
+
+                    default:
+                        return state;
+                }
+            }
+
+            export const initializedSuccess = () => ({ type: INITIALIZED_SUCCESS });
+
+            export const initializeApp = () => (dispatch) => {
+                let promise = dispatch(getAuthUserData()).
+                    promise.then(() => {
+                        dispatch(initializedSuccess());
+                    })
+
+            }
+
+            export default appReducer;
+
+        //! Если бы диспатчей было несколько и нам нужно было бы дождаться чтобы они все выполнились нужно было бы сделать так
+            Затасовать их в массиа и прицепить к Promise.all - он запуститься когда все промисы выполняться.
+            
+            Promise.all([promise1, promise2, promose3])
+                .then(() => {
+                    dispatch(initializedSuccess());
+                });
+
+
+        Теперь initialized станет true и App компонент получит это в props - создадим mapStateToProps для их прокидывания - это 
+        ф-я которая принимает state и возвращает объект в котором будет initialized - initialized: state.app.initialized
+        только чтобы в state реально был initialized нам нужно наш новый редюсер закомбайнить к остальным в redux-store.
+        
+
+        Теперь в рендере будем возвращать всю разметку только когда мы проинициализировались иначе будем показывать Preloader
+        
+             render() {
+                    if (!this.props.initialized) {
+                        return <Preloader />
+                    }
+
+                    return (<BrowserRouter>
+                        <div className='app-wrapper'>
+                            <HeaderContainer />
+                            <Navbar />
+                            <div className='app-wrapper-content'>
+                                <Routes>
+                                    <Route path="/dialogs" element={<DialogsContainer />} />
+                                    <Route path="/profile/:userId?" element={<ProfileContainer />} />
+                                    <Route path="/users" element={<UsersContainer />} />
+                                    <Route path="/login" element={<LoginPage />} />
+                                </Routes>
+                            </div>
+                        </div>
+                    </BrowserRouter>
+                    );
+                }
+            }
+
+            const mapSateToProps = (state) => ({
+                initialized: state.app.initialized
+            })
+
+            export default compose(
+                withRouter,
+                connect(mapSateToProps, { initializeApp }))(App);
+
+        Получилось, теперь работает крутилка, а потом только отображается информация и нету редиректов туда-сюда.
+
+
+
+    Осталось сделать чтобы при logout юзера перемещало со страницы профиля, так как уже юзер анонимным становится. Сделаем не
+        через редирект, а программным методом(реактовским) у нас в props есть history и у него метод push, этим методом можно
+        запушить новое location(нахождение). Сделаем пуш на /login если userId после проверки всетаки не окажеться в 
+        ProfileContainer
+
+            class ProfileContainer extends React.Component {
+                componentDidMount() {
+                    let userId = this.props.match.params.userId;
+                    if (!userId) {
+                        userId = this.props.authorizedUserId;
+                        if(!userId) {
+                            this.props.history.push("/login")
+                        }
+                    }
+                    this.props.getUserProfile(userId);
+                    this.props.getUserStatus(userId);
+                }
+
+            //! но этот метод не очень хорош потому что мы как бы влазим в жизненный цикл компонента и делаем ререндер из UI 
+            //! компонента, без согласования со state, а при редиректе ререндер будет происходить после обновления state.
+
+            
+
+    В UsersContainer удалили withAuthredirect чтобы не перекидывало на логин пейдж и можно было полистать юзеров
+
+                export default compose (
+                connect(mapStateToProps, { follow, unfollow, setCurrentPage, toggleFollowingInProgress, getUsers })
+                )(UsersContainer);
+
+            //! Причем withAuthredirect у меня был не в том месте где должен был быть, у автора он был на первом месте в compose
+            //! как и в сегодняшнем уроке.
+
+
+
+
+    //! withRouter/stopSubmit - проблемные места для новых версий
+
+
+*/}
+
+
+{/*    ====    81. Селекторы ( reselect p.I )    ====
+
+
+
 
 
 

@@ -8,11 +8,25 @@ import UsersContainer from "./Components/Users/UsersContainer";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import ProfileContainerDyn from "./Components/Profile/ProfileContainerFunctional";
 import LoginPage from "./Components/Login/Login";
+import { connect } from 'react-redux';
+import { initializeApp } from '../src/Components/redux/app-reducer'
+// import { withRouter } from 'react-router-dom';
+import { compose } from 'redux';
 
 
-function App(props) {
-    return (
-        <BrowserRouter>
+class App extends React.Component {
+
+    componentDidMount() {
+        this.props.initializeApp();
+    }
+
+    render() {
+
+        if (!this.props.initialized) {
+            return <Preloader />
+        }
+
+        return (<BrowserRouter>
             <div className='app-wrapper'>
                 <HeaderContainer />
                 <Navbar />
@@ -27,7 +41,14 @@ function App(props) {
                 </div>
             </div>
         </BrowserRouter>
-    );
+        );
+    }
 }
 
-export default App;
+const mapSateToProps = (state) => ({
+    initialized: state.app.initialized
+})
+
+export default compose(
+    withRouter,
+    connect(mapSateToProps, { initializeApp }))(App);

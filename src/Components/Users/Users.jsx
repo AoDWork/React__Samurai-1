@@ -17,24 +17,24 @@ let Users = (props) => {
         <div>
             {pages.map(page => {
                 return <span className={props.currentPage === page && styles.selectedPage}
-                    onClick={(e) => { props.onPageChanged(page); }}> {page} </span>
-            })
+                    onClick={(e) => { props.onPageChanged(page); }}> {page} </span>})
             }
         </div>
         {
             props.users.map(user => <div key={user.id}>
                 <span>
                     <div>
-                        <NavLink to={ '/profile/' + user.id }>
+                        <NavLink to={'/profile/' + user.id}>
                             <img src={user.photos.small !== null ? user.photos.small : userPhoto} className={styles.userPhoto} />
                         </NavLink>
                     </div>
                     <div>
                         {user.followed
-                            ? <button disabled={props.followingInProgress.some(id => id === user.id )}
-                                onClick={ () => { props.unfollow( user.id ) }}>Unfollow</button>
-                            : <button disabled={props.followingInProgress.some(id => id === user.id )} onClick={() => { 
-                                props.follow(user.id) } }>Follow</button>}
+                            ? <button disabled={props.followingInProgress.some(id => id === user.id)}
+                                onClick={() => { props.unfollow(user.id) }}>Unfollow</button>
+                            : <button disabled={props.followingInProgress.some(id => id === user.id)} onClick={() => {
+                                props.follow(user.id)
+                            }}>Follow</button>}
                     </div>
                 </span>
                 <span>
