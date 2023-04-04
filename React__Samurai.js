@@ -8796,6 +8796,179 @@
 
 {/*    ====    81. Селекторы ( reselect p.I )    ====
 
+    Для UI компонента нужны данные в компактном виде, тоесть для UsersPage не нужен весь state, а из него мы выбираем нужные 
+        данные и через mapStateToProps представляем их как users
+        
+                            mapStateToProps=(state)=>({
+            Component1 <--   ...                           <------------- 
+                            users: state.users.items })                  \
+                                                                            state
+                
+                            mapStateToProps=(state)=>({                  /  
+            Component2 <--   ...                           <------------- 
+                            users: state.users.items, 
+                            userId: state.auth.userId })
+
+
+        
+        //! Для бизнеса хранить информацию нужно как удобно бизнесу, соблюдая целостность, удобство, обновление, ...
+        тоесть если было раньше свойство users в котором объект items с массивом данных
+            
+            state = {
+                ...
+                users: {
+                    items [{}, {}, {}]
+                }
+                ...
+
+        а потом нам понадобилось вместо всех users их разбить на категории разрешенных и забаненых
+
+            state = {
+                ...
+                users: {
+                    allowedUsers [{}, {}, {}],
+                    bannedUsers [{}, {}, {}]
+                }
+                ...
+
+        Таким образом посредник mapStateToProps между UI и state ломается, путь к искомым данным уже не будет соответствовать, 
+        а таких mapStateToProps может быть очень много, тоесть нужно будет выполнить кучу изменений в разных местах приложения
+        потому что эти users нужны для разных страниц, и получается дублирование кода. Для этого нужно вынести этот код выбора
+        данных из state в ф-ю которая называется селектор, будем передавать в неё весь state потому что он приходит в props
+        полностью и с помощью селектора выбирать только нужную информацию, поэтому при следующей смене state нам нужно будет 
+        поменять код только в одном месте - в селекторе.
+
+                            mapStateToProps=(state)=>({
+            Component1 <--   ...                           <------------- 
+                            users: getUsers(state) })                     \
+                                                                            getUsers =(state)=>{      
+                                                                                return state.users.allowedUsers  <---------    state
+                                                                            }
+                                                                                
+                            mapStateToProps=(state)=>({                  /  
+            Component2 <--   ...                           <------------- 
+                            users: getUsers(state), 
+                            userId: state.auth.userId })
+
+
+
+    Начнем рефакторить с UsersContainer, закоментируем старый mapStateToProps потому что мы плавно перейдем к библиотеке reselect
+        и чтобы мы поняли почему она так важна - потому что селекторы с одной стороны нам помогают, а с другой вносят воздействие
+        из-за которого компоненты чаще перерисовываются.
+
+        Так как селекторы вроде как ближе к state потому что работают сразу с ним, потом с mapStateToProps, а потом с UI
+        сделаем файл с селекторами для users в папке redux рядом с редюсерами - users-selectors.js.  Видим что всю информацию в этом
+        mapStateToProps получаем из usersPage, делаем на каждое получение данных селектор.
+
+        В селекторах 
+
+            export const getUsersData = (state) => {
+                return state.usersPage.usersData;
+            }
+
+            export const getPageSize = (state) => {
+                return state.usersPage.pageSize;
+            }
+
+            export const getTotalUsersCount = (state) => {
+                return state.usersPage.totalUsersCount;
+            }
+
+            export const getCurrentPage = (state) => {
+                return state.usersPage.currentPage;
+            }
+
+            export const getIsFetching = (state) => {
+                return state.usersPage.isFetching;
+            }
+
+            export const getFollowingInProgress = (state) => {
+                return state.usersPage.followingInProgress;
+            }
+
+
+        В UsersContainer
+
+            import { getCurrentPage, getFollowingInProgress, getIsFetching, getPageSize, 
+                getTotalUsersCount, getUsersData } from '../redux/users-selectors';
+
+
+            let mapStateToProps = (state) => {
+                return {
+                    users: getUsersData(state) ,
+                    pageSize: getPageSize(state),
+                    totalUsersCount: getTotalUsersCount(state) ,
+                    currentPage: getCurrentPage(state),
+                    isFetching: getIsFetching(state),
+                    followingInProgress: getFollowingInProgress(state)
+                }
+            };
+
+
+    Выявили что при клике на пейджинг юзеров(номер страницы с юзерами) она переключается на нужную, но не отображается номер
+        текущей страницы - он постоянно 1, фиксим.
+
+            export const getUsers = (currentPage, pageSize) => {
+                return (dispatch) => {
+                    dispatch(toggleIsFetching(true));
+                    dispatch(setCurrentPage(currentPage));  - добавили диспатч текущей страницы
+
+                    usersAPI.getUsers(currentPage, pageSize).then(data => {
+                        dispatch(toggleIsFetching(false));
+                        dispatch(setUsers(data.items));
+                        dispatch(setTotalUsersCount(data.totalCount));
+                    });
+                }
+            }
+
+
+*/}
+
+
+{/*    ====    82. mapStateToProps ( reselect p.II )    ====
+
+    //! Сначала у нас был Реакт(мы делали свой стор), потом мы подключили Redux и пользовались его store, потом подключили
+    //! библиотеку React-redux для более удобного использования. Она нам предоставляет HOC connect который делает контейнерный
+    //! компонент над тем компонентом в который нам нужно передать данные из state и для слежения за state connect на него
+    //! подписывается.
+
+    //! State большой и при любом изменении connect вызывает mapStateToProps - он формирует объект который нужен компоненту из
+    //! state и сравнит с предыдущим, и если они одинаковы то перерисовки компонента не будет, а если разные то будет перерисовка.
+    //! Сравнение идет по ссылке как объекты, если ссылка другая значит будет перерисовка.
+
+    //! Для примера взяли Profileontainer в render засунул консольлог - рендер профайл, а в mapStateToProps - консоль лог с тестом
+    //! mapStateToProps Profile. Потом зашел на страницу Profile и пошли консольлоги, не каждый раз был рендер.
+    //! для полноценной проверки создал index.js в котором каждую секунду в store шел диспатч action c типом fake
+
+        setInterval(()=>{
+            store.dispatch( {type: "FAKE"} )
+        }, 1000 );
+
+    //! Диспатч это ф-я store( store - ООП объект у которого есть метод диспатч), но react-redux от нас это скрыл для удобства.
+    //! а в users-reducer дописал в state свойство fake: 10 и case в котором при получении action FAKE будет создаваться копия
+    //! state и затираться это свойство, но главное тут что будет создаваться копия state, а значит это будет новая версия state
+
+        case "FAKE": return ( ...state, fake: state.fake + 1 ) 
+
+    //! Теперь видим что постоянно срабатывает mapStateToProps для Profile хотя изменения state идут в Users. Но рендера нету
+    //! потому что в profilePage ничего не изменилось. Но mapStateToProps по производительности не очень нагружает систему
+    //! потому что там просто сравнение идет, а вот перерисовка нагружает систему.
+
+    //! В UsersContainer у нас используются простые селекторы которые только достают нужную информацию из state, но селекторы
+    //! были придуманы чтобы инкапсулировать логику, поэтому в основном они сложные и могут содержать ресурсоемкие процессы
+    //! циклы, мат. операции, работу с большими массивами. И при таком способе с селекторами в mapStateToProps они будут
+    //! срабатывать на каждое обновление state и при этом если они будут сложные то будут нагружать систему. Также если нам
+    //! нужно задебажить логику в селекторе постоянное срабатывание mapStateToProps сделает это очень затруднительным.
+    //! А если в селекторе будет какой то метод типа filter который каждый раз возвращает новый массив даже если нету
+    //! изменений то каждый раз будет происходить перерисовка потому что mapStateToProps будет считать его новым.
+
+
+    19-00
+
+
+
+
+
 
 
 
