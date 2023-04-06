@@ -9087,20 +9087,148 @@
     //! помнит что он перерисовывал компонент потому что там было изменение useState и он проигнорирует начальное значение
     //! 1 и вернет уже текущее(запомненое) - 2.
 
+    
 
-    Теперь будем менять значение editMode по клику.
+    Такая запись была для понимания
 
-            21-00
+            let stateWithSetState = useState(false);
+            let editMode = stateWithSetState[0];
+            let setEditMode = stateWithSetState[1];
+
+
+        в основном пишут как деструктурированное присваивание, например
+
+            var a, b, rest;
+            [a, b] = [10, 20];
+
+            console.log(a); // 10
+            console.log(b); // 20
+
+
+            [a, b, ...rest] = [10, 20, 30, 40, 50]
+
+            console.log(rest); // [30, 40, 50]
+
+
+        для нашего примера будет так
+
+            let arr = [1, ()=>{}]; - массив со значением и ф-й коллбеком для изменения этого значения
+            let [a, setA] = arr;
+
+
+        Перепишем по нормальному, вместо получения массива в stateWithSetState и потом вытягивания его елементов по разным
+        переменным, сделаем это сразу при объявлении переменных в одной строке
+
+            let [editMode, setEditMode] = useState(false);
+
+            
+
+    Теперь будем менять значение editMode по клику, вызывая ф-ю для активации EditMode
+
+            const activateEditMode = () => {
+                setEditMode(true);
+            }
+
+            const deactivateEditMode = () => {
+                setEditMode(false);
+                //props.updateStatus(this.state.status); -//! это для того чтобы сообщить серверу что у нас поменялся status в 
+            }                                             //! локальном state и происходила перерисовка с данными из глоб. state
+
+            return (
+                <div>
+                    { !editMode &&
+                        <div>
+                            <span onDoubleClick={activateEditMode} >{props.status || "----------"}</span>
+                        </div>
+                    }
+                    {editMode &&
+                        <div>
+                            <input autoFocus={true}  onBlur={deactivateEditMode} />
+                        </div>
+                    }
+                </div>
+            );
+            
+
+        
+    Но у нас в state был еще status. Есть 2 варианта: 
+        
+      1) положить в useState объект с такой же структурой как у нас была 
+            
+            useState( {editMode: false, status: props.status} );
+        
+        
+      2) раздробить state - сделать несколько useState 
+
+            let [editMode, setEditMode] = useState(false);
+            let [status, setStatus] = useState(props.status);
+
+
+        Но раньше при изменении state мы могли обратиться только к status: this.props.status при этом editMode оставался 
+        неизменным, тоесть они не зависели друг от друга, и логично и проще будет сделать вторым методом.
+            
+            this.setState({
+                status: this.props.status
+            });
+
+
+        //! Если делать первым методом тогда надо  при использовании ф-и колбека setState создавать новый объект/массив и в него
+        //! деструктуризровать старый + добавлять новые данные или изменять старые, а не просто изменить свойство в изначальном, 
+        //! объекте, чтобы реакт заметил что объект новый и перерисовал компонент, иначе свойство поменяется но ререндера не будет.
+         
+            const [cards, setCards] = useState([
+                { disabled: false, id: "1", named: "Blue", img: Img },
+                { disabled: false, id: "2", named: "8GB", img: Img },
+                { disabled: false, id: "3", named: "16GB", img: Img },
+                { disabled: false, id: "4", named: "20", img: Img }
+            ]);
+
+            const addCard = () => {         //! добавление нового объекта в начало массива поэтому объект перед 
+                setCards(cards => ([        //! деструктурированным массивом 
+                { disabled: false, id: (cards.length + 1), named: "____", img: Img }, 
+                ...cards
+                ]));
+                console.log(cards);
+            }
+
+
+        Сделаем вторым методом и создадим ф-ю для изменения статуса, в нее передается просто значение и его же будем использовать
+        в качестве value для отображения, будем брать из переменной status. Также чтобы произошло отображение нужно это значение
+        отправить на сервер, раскоментируем код выше и подправим его - props.updateStatus(status);
+
+            const deactivateEditMode = () => {
+                setEditMode(false);
+                props.updateStatus(status);
+            }
+
+            const onStatusChange = (e) => {
+                setStatus(e.currentTarget.value);
+            }
+
+                {editMode &&
+                    <div>
+                        <input autoFocus={true}  onBlur={deactivateEditMode} 
+                        onChange={onStatusChange} value={status} />
+                    </div>
 
 
 
-
-
+    В следующем уроке сделаем этот кусок кода через useState(//! прочитать статью потому что useEffect не совсем аналогия методам
+        //! жизненного цикла)
+    
+            componentDidUpdate(prevProps, prevState) {
+                if (prevProps.status !== this.props.status){
+                    this.setState({
+                        status: this.props.status
+                    });
+                }
+            }
 
 
 
 
     //todo почитать механизм хуков и про правила
+    //! Почитать статью Абрамова про useEffect - в поиске - полное руководство по useEffect
 
 
 */}
@@ -9108,7 +9236,72 @@
 
 {/*    ====    85. Hooks:  useEffect    ====
 
+    В ProfileStatus  status показывается из локального state, локальный нужен нам чтобы на каждое изменение значения input при
+        вводе нового статус мы не дергали глобальный state(вдруг user вообще передумает его писать и сотрет всё). А в глобальный
+        state значение отправляется уже когда user уберет мышку с инпута. 
 
+    Для синхронизации локального и глобального state мы подвязывались к методу жизненого цикла componentDidUpdate(он срабатывает
+        каждый раз при изменении props которые приходят в компонент или при изменении локального state ) и в нем делали проверку 
+        на равенство props которые пришли и значением status в локальном state, если они не равны то закинуть status из props
+        в локальный state.
+
+
+
+    Для ф-го компонента используем useEffect для такой синхронизации. 
+    //! Это хук который срабатывает при отрисовке компонента(первоначальной отрисовке - монтировании компонента, при изменении 
+    //! props или state) при этом он запускает ф-ю внутри себя.
+
+        Такой код будет выполняться при любой перерисовке, даже при вводе в input символа происходит изменение локального state
+        и будет запущен useEffect при этом он снова засетает status из props и то что мы напечатали сотреться.
+
+            useEffect( () => {
+                setStatus(props.status);
+            } );
+            
+
+        Если передать пустой массив, то useEffect выполниться только при первоначальной отрисовке, как при componentDidMount
+
+            useEffect( () => {
+                setStatus(props.status);
+            }, [] );
+
+        //! но так не советуют делать. При этом мы не достигнем цели синхронизации.
+
+
+        У нас синхронизация зависит от новых props, поэтому можно в массиве указать когда срабатывать useEffect - при получении
+        новых props, они будут сравниваться автоматически
+        
+            useEffect( () => {
+                setStatus(props.status);
+            }, [props.status] );
+
+
+
+    //! ПРАВИЛА ХУКОВ
+            
+        1) Хуки запрещено писать в условиях (если что то тру то используем хук)
+        2) Не использовать в циклах
+        3) 
+
+
+
+        
+    //todo почитать механизм хуков и про правила
+    //! Почитать статью Абрамова про useEffect - в поиске - полное руководство по useEffect
+
+
+*/}
+
+
+{/*    ====    86. Virtual DOM    ====
+
+    
+
+
+
+
+
+    
 
 
 */}
