@@ -9336,6 +9336,88 @@
 
 {/*    ====    87. shouldComponentUpdate, PureComponent, memo    ====
 
+    Бывают ситуации когда для компонента ничего не изменилось а ему все равно приходиться делать ререндер и возвращать 
+        одинаковый JSX. Например в Profile -  
+
+            <ProfileInfo profile={props.profile} status={props.status} updateStatus={props.updateStatus}/>
+            <MyPostsContainer />
+
+        MyPostsContainer отрисовывает MyPosts каждый раз когда обновляется Profile, а он обновляется 3 раза когда 
+        происходит изменение какого то из props profile, status,authorizedUserId
+
+            let mapStateToProps = (state) => ({
+                profile: state.profilePage.userProfile,
+                status: state.profilePage.status,
+                authorizedUserId: state.auth.userId,
+                isAuth: state.auth.isAuth
+            });
+
+        При этом для MyPosts ничего не меняется и он возвращает один и тот же JSX. Для того чтобы оптимизировать приложение
+        и избавиться от таких лишних рендеров можно ф-й компонент превратить в классовый и использовать методы жизненного 
+        цикла shouldComponentUpdate. Прежде чем вызвать рендер реакт спросит - нужно ли тебя обновить компонент? 
+
+        Произойдет первичный рендер компонента, и в shouldComponentUpdate мы можем ответить что если следующие props не равны
+        предыдущим то вернем true и произовйдет ререндер, а если будет false то его не произойдет. Также в это условие включаем и
+        проверку state на равенство.
+
+            import { Component } from "react";
+
+            shouldComponentUpdate( nextProps, nextState) {
+                return nextProps != this.props || nextState != this.state;
+            }
+
+
+
+    PureComponent - это компонент который делает такую проверку за нас, для этого нужно сделать extend от PureComponent.
+
+            import { PureComponent } from "react";
+
+            class MyPosts extends PureComponent {
+
+        Таким образом shouldComponentUpdate можно не писать, он уже написан в PureComponent реакта.
+
+
+
+    Но мы же стремимся перейти на ф-е компоненты, и в -фх компонентах такого поведения можно достичь если обернуть компонент
+        HOCом - memo. Таким образом ф-я выполняется 1 раз и при следующемзапросе если ничего не изменилось то ее не запускают
+        заново, а возвращается старое значение(jsx).
+        
+            const MyPosts = React.memo( props => {   
+                                  
+                let postsElements = 
+                    props.postsData.map((el, ind) => <Post  msg={el.post} likesCount={el.likesCount} key={ind} />);
+
+                return (
+                <div className={style.form__newPost}>
+                    <div className={style.newPost__title}>New Post
+                    <AddNewPostForm onSubmit={onAddPost}/>
+                    </div>
+                    {postsElements}
+                </div>
+                );
+            });
+
+        //! React.memo это HOC для мемоизации ф-ного компонента - предотвращает ререндер если не изменяются props( state ?). 
+        //! useMemo это хук для мемоизации ф-и(без компонента) - используем для получения значения которое было высчитано
+        //! разово, без перевычисления, если только не изменилась одна из его зависимостей, тогда значение будет перевычеслено.
+
+
+*/}
+
+
+{/*    ====    88. pure function (чистая функция)    ====
+
+
+
+
+
+
+
+*/}
+
+
+{/*    ====    89. Тесты, jest, tdd, тестируем reducer    ====
+
 
 
 
