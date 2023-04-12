@@ -1,7 +1,7 @@
 import { authAPI } from "../../api/api";
 import {stopSubmit} from 'react-final-form';
 
-const SET_AUTH_USER_DATA = 'SET_AUTH_USER_DATA';
+const SET_AUTH_USER_DATA = 'auth/SET_AUTH_USER_DATA';
 
 
 let initialState = {
