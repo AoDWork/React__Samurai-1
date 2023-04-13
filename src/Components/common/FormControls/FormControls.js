@@ -2,14 +2,14 @@
 import styles from "./FormControls.module.css"
 
 
-const FormControl = ({ input, meta, ...props }) => {
-    const hasError = meta.touched && meta.error;
+const FormControl = ({ input, meta: {touched, error}, children }) => {
+    const hasError = touched && error;
     return (
         <div className={styles.formControl + " " + (hasError ? styles.error : "")}>
             <div>
-                {props.children}
+                {children}
             </div>
-            { hasError && <span>{meta.error}</span> }
+            {hasError && <span>{error}</span>}
         </div>
     )
 }
@@ -24,3 +24,15 @@ export const Input = (props) => {
     const { input, meta, ...restProps } = props;
     return <FormControl {...props}> <input {...input} {...restProps} /> </FormControl>
 }
+
+export const createField = (placeholder, name, component, validators, props={}, text="" ) => (
+    <div>
+        <Field placeholder={placeholder}
+            name={name}
+            component={component}
+            validate={validators}
+            {...props}
+        /> {text}
+    </div>
+)
+

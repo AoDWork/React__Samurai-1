@@ -1,62 +1,39 @@
 import React from "react";
-//import { Field, reduxForm } from "redux-from";
+//import { Field, reduxForm } from "redux-form";
 import { Form, Field } from 'react-final-form';
-import { Input } from "../common/FormControls/FormControls";
+import { createField, Input } from "../common/FormControls/FormControls";
 import { required, maxLengthCreator } from "../../utils/validators/validators";
 import { connect } from 'react-redux';
 import { login } from '../redux/auth-reducer';
-import {Navigate} from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import styles from "../common/FormControls/FormControls.module.css"
-// import { createForm } from 'final-form';
 
 
-const maxLength50 = maxLengthCreator(50);
-
-const composeValidators = (...validators) => value =>
-                validators.reduce((error, validator) => error || validator(value), undefined);
-
-const LoginForm = (props) => {
+const LoginForm = ({ handleSubmit, error }) => {
     return (
-        <Form
-            onSubmit={onSubmit}
-            render={({ handleSubmit, form, submitting, pristine, values }) => (
-                <form onSubmit={handleSubmit}>
-                    <div>
-                        <Field placeholder={'Enter email'} name={"email"} component={Input} 
-                                validate={composeValidators(required, maxLength50)} />
-                    </div>
-                    <div>
-                        <Field placeholder={'Password'} name={"password"} component={Input} type={"password"}
-                                validate={composeValidators(required, maxLength50)}/>
-                    </div>
-                    <div>
-                        <Field type={"checkbox"} name={"rememberMe"} component={Input} /> remember me
-                    </div>
-                    { props.error && <div className={styles.summaryError}>
-                        {props.error}
-                    </div>}
-                    <div>
-                        <button>Log In</button>
-                    </div>
-                </form>
-            )}
-        />
+        <form onSubmit={handleSubmit}>
+            {createField('Enter email', "email", Input, [required])}
+            {createField('Password', "password", Input, [required], {type:"password"} )}
+            {createField(null, "rememberMe", Input, [], {type:"checkbox"}, "remember me" )}
+
+            {error && <div className={styles.summaryError}>
+                {error}
+            </div>}
+            <div>
+                <button>Log In</button>
+            </div>
+        </form>
     )
 }
 
 
-const onSubmit = (formData) => {    //!  без этого ошибка что onSubmit - не объявлен, а props в него не проходят поэтому props.login 
-    console.log(formData);          //! не запустить
 
-}
-
-//const LoginReduxForm = reduxForm ({form: 'login'}) (LoginForm) - удалили так как нету хока теперь
+const LoginReduxForm = reduxForm({ form: 'login' })(LoginForm)
 
 
 const Login = (props) => {
     const onSubmit = (formData) => {
-        console.log(formData);
-        props.login(formData.email, formData.password, formData.rememberMe)
+        props.login(formData.email, formData.password, formData.rememberMe);
     }
 
     if (props.iaAuth) {
@@ -65,7 +42,7 @@ const Login = (props) => {
 
     return <div>
         <h1>Login</h1>
-        <LoginForm onSubmit={onSubmit} />
+        <LoginReduxForm onSubmit={onSubmit} />
     </div>
 }
 
@@ -74,46 +51,6 @@ const mapStateToProps = (state) => ({
 })
 
 
-export default connect(mapStateToProps, {login})(Login);
+export default connect(mapStateToProps, { login })(Login);
 
 
-
-// const form = createForm({
-//     initialValues,
-//     onSubmit, // required
-//     validate
-//   });
-
-
-// // Subscribe to form state updates
-// const unsubscribe = form.subscribe(
-//     formState => {
-//       // Update UI
-//     },
-//     { // FormSubscription: the list of values you want to be updated about
-//       dirty: true,
-//       valid: true,
-//       values: true
-//     }
-// );
-
-// // Subscribe to field state updates
-// const unregisterField = form.registerField(
-//     'username',
-//     fieldState => {
-//       // Update field UI
-//       const { blur, change, focus, ...rest } = fieldState
-//       // In addition to the values you subscribe to, field state also
-//       // includes functions that your inputs need to update their state.
-//     },
-//     { // FieldSubscription: the list of values you want to be updated about
-//       active: true,
-//       dirty: true,
-//       touched: true,
-//       valid: true,
-//       value: true
-//     }
-//   )
-
-// // Submit
-// form.submit() // only submits if all validation passes

@@ -9617,20 +9617,399 @@
 
 
 
-        4-00
+    Зарефакторим санк риейтер getAuthUserData. Вместо создания обертки коллбека после then можно использовать async await, так
+        код будет более читаемый как будто линейный, также меньше строк кода получается.
+
+            export const getAuthUserData = () => (dispatch) => {
+                return authAPI.me()
+                    .then(response => {
+                        if (response.data.resultCode === 0) {
+                            let { id, login, email } = response.data.data;
+                            dispatch(setAuthUserData(id, login, email, true));
+                        }
+                    });
+            }
+
+        async - указывает что ф-я асинхронная потому что только в ней будет работать await. await дожидается ответа от
+        authAPI.me() - который возвращает промис, мы его response(ответ) помещаем в перменную response и дальше используем.
+        return не нужен потому что асинхронная ф-я автоматически возвращает промис который зарезолвиться когда выполниться весь
+        код в ф-и. Диспатчим этот санк криейтор мы в app-reducer в initializeApp он возвращает санку и по итогу мы диспатчим санку
+        и когда она возвращает ответ - наш промис из асинхронной ф-и, то этот ответ становиться ответом(returnom) диспатча.
+
+            export const getAuthUserData = () => async (dispatch) => {
+                let response = await authAPI.me();
+
+                if (response.data.resultCode === 0) {
+                    let { id, login, email } = response.data.data;
+                    dispatch(setAuthUserData(id, login, email, true));
+                }
+            }
+
+
+        тоже сделаем и с login, logout
+
+
+
+    В profile-reducer тоже зарефакторим then.
+
+
+
+    Тоже делаем в users-reducer.
+
+            export const getUsers = (currentPage, pageSize) => {
+                return (dispatch) => {
+                    dispatch(toggleIsFetching(true));
+                    dispatch(setCurrentPage(currentPage));
+
+                    usersAPI.getUsers(currentPage, pageSize).then(data => {
+                        dispatch(toggleIsFetching(false));
+                        dispatch(setUsers(data.items));
+                        dispatch(setTotalUsersCount(data.totalCount));
+                    });
+                }
+            }
+
+        теперь так 
+
+            export const getUsers = (currentPage, pageSize) => {
+                return async (dispatch) => {
+                    dispatch(toggleIsFetching(true));
+                    dispatch(setCurrentPage(currentPage));
+
+                    let data = await usersAPI.getUsers(currentPage, pageSize);
+
+                    dispatch(toggleIsFetching(false));
+                    dispatch(setUsers(data.items));
+                    dispatch(setTotalUsersCount(data.totalCount));
+                }
+            }
+
+
+
+    Есть дублирование кода в follow и unfollow, вынесем общий код в ф-ю. Для того чтобы заменить код в follow и 
+        unfollow смотрим построчно: 
+        1я строка - одинаковая, 
+
+            dispatch(toggleFollowingInProgress(true, userId));
+        
+
+        2я строка различается 
+
+            let response = await usersAPI.follow(userId);  и  let response = await usersAPI.unfollow(userId);
+
+        вынесем отличающийся кусок в верх текущих ф-й и присвоим в переменную, сделаем bind для метода usersAPI, так как это
+        метод объекта, мы не знаем будет ли он использовать какие то свойства this, а вызывать будем в отрыве от объекта, то
+        контекст может потеряться если не сделать bind.
+
+            let apiMethod = usersAPI.follow.bind(usersAPI);     - для follow
+            let apiMethod = usersAPI.unfollow.bind(usersAPI);   - для unfollow
+
+            let response = await apiMethod(userId); - меняем различия на переменную которую создали и теперь эти строки тоже
+                                                      одинаковы
+
+
+
+        приводим различия в следующих строках таким же методом в порядок
+
+            dispatch(followSuccess(userId));    и   dispatch(unfollowSuccess(userId));
+
+        это у нас action creators, так и назовем переменную
+            
+            let actionCeator = followSuccess;
+            let actionCeator = unfollowSuccess;
+
+            dispatch(actionCeator(userId));     - измененния общая строка
+
+
+        теперь весь остальной код кроме этих переменных вверху у нас одинаковый
+
+            dispatch(toggleFollowingInProgress(true, userId));
+            let response = await apiMethod(userId);
+            if (response.data.resultCode == 0) {
+                dispatch(actionCeator(userId));
+            }
+            dispatch(toggleFollowingInProgress(false, userId));
+
+
+        Вынесем его в новую ф-ю  followUnfollowFlow, и в follow и unfollow вызываем ее вместо вынесенного кода, но чтобы она 
+        работала нужно передать ей все необходимые аргументы 
+
+            followUnfollowFlow(dispatch, userId, apiMethod, actionCeator);
+
+
+        и для нее указать что она будет принимать эти значения в свои параметры:
+
+            const followUnfollowFlow =  async (dispatch, userId, apiMethod, actionCeator) => {
+                dispatch(toggleFollowingInProgress(true, userId));
+                let response = await apiMethod(userId);
+                if (response.data.resultCode == 0) {
+                    dispatch(actionCeator(userId));
+                }
+                dispatch(toggleFollowingInProgress(false, userId));
+            }
+
+
+        а ф-и follow и unfollow теперь выглядят так
+
+            export const follow = (userId) => {
+                return async (dispatch) => {
+                    let apiMethod = usersAPI.follow.bind(usersAPI);
+                    let actionCeator = followSuccess;
+
+                    followUnfollowFlow(dispatch, userId, apiMethod, actionCeator);
+                }
+            }
+
+            export const unfollow = (userId) => {
+                return async (dispatch) => {
+                    let apiMethod = usersAPI.unfollow.bind(usersAPI);
+                    let actionCeator = unfollowSuccess;
+
+                    followUnfollowFlow(dispatch, userId, apiMethod, actionCeator);
+                }
+            }
+
+        
+        можно еще и убрать переменные передавая их значения сразу в аргументы 
+
+            export const follow = (userId) => {
+                return async (dispatch) => {
+                    followUnfollowFlow(dispatch, userId, usersAPI.follow.bind(usersAPI), followSuccess);
+                }
+            }
+
+            export const unfollow = (userId) => {
+                return async (dispatch) => {
+                    followUnfollowFlow(dispatch, userId, usersAPI.unfollow.bind(usersAPI), unfollowSuccess);
+                }
+            }
+
+
+
+    Убираем дублирование кода выше в users-reducer таким же методом. В case FOLLOW и UNFOLLOW идет дублирование кода для изменения
+        followed с true на false. Сделаем общую ф-ю для этого кода, и еще ее можно сделать универсальной, она будет использоваться
+        во всех редюсерах. Она будет проходить по массиву - искать совпадения и менять то что нужно. Так как она будет универсальная
+        вынесем ее в отдельный файл в папку utils 
+
+            state.usersData.map(u => {
+                if (u.id === action.userId) {
+                    return { ...u, followed: true }
+                }
+                return u;
+            })
+
+            
+        пока назовем файл object-helpers.js. В него переносим этот кусок кода и заменяем изменяемые части кода на названия 
+        параметров которые будут приходить:
+
+            export const updateObjectInArray = (items, itemId, objPropName, newObjProps) => {
+                return items.map(u => {
+                    if (u[objPropName] === itemId) {
+                        return { ...u, ...newObjProps }
+                    }
+                    return u;
+                })
+            }
+
+
+        теперь можно заменить этот код в case редюсера 
+
+            import { updateObjectInArray } from "../../utils/object-helpers";
+
+                case FOLLOW:
+                    return {
+                        ...state,
+                        usersData: updateObjectInArray(state.usersData, action.userId, "id", {followed: true})
+                    }
+
+                case UNFOLLOW:
+                    return {
+                        ...state,
+                        usersData: updateObjectInArray(state.usersData, action.userId, "id", {followed: false})
+                    }
+
+
+
+    Пойдем рефакторить компоненты.
+
+    APP + INDEX
+    //! нужно BrowserRouter оборачивать в компоненте index.js код, потому что если сделать это в App то будет конфликт с withRouter
+    //! и он не будет работать. Сделал как в видео, у него в app не импортируется import { withRouter } from 'react-router-dom';
+
+
+    Login
+    //! Скопировал свой и в обычном сделаю всё как у Димыча + попробую установить  redux-form              
+    
+        сделаем деструктуризацию props чтобы избавиться от него
+
+            const LoginForm = (props) => {
+                return (
+                    <form onSubmit={props.handleSubmit}>
+
+
+        стало
+
+            const LoginForm = ({handleSubmit, error }) => {
+                return (
+                    <form onSubmit={handleSubmit}>
+
+
+
+        Для уменьшения кода сделае ф-ю которая будет возвращать универсальный компонент для поля Field, поместим ее в common -
+        FormControls.js 
+
+            export const createField = (placeholder, name, component, validators, props={}, text="" ) => (
+                <div>
+                    <Field placeholder={placeholder}
+                        name={name}
+                        component={component}
+                        validate={validators}
+                        {...props}
+                    /> {text}
+                </div>
+            )
+
+
+        в Login тогда так 
+
+            import { createField, Input } from "../common/FormControls/FormControls";
+
+            const LoginForm = ({ handleSubmit, error }) => {
+                return (
+                    <form onSubmit={handleSubmit}>
+                        {createField('Enter email', "email", Input, [required])}
+                        {createField('Password', "password", Input, [required], {type:"password"} )}
+                        {createField(null, "rememberMe", Input, [], {type:"checkbox"}, "remember me" )}
+
+
+
+    FormControls деструктурируем meta и вытащим children
+
+            const FormControl = ({ input, meta: {touched, error}, children }) => {
+                const hasError = touched && error;
+                return (
+                    <div className={styles.formControl + " " + (hasError ? styles.error : "")}>
+                        <div>
+                            {children}
+                        ...
+
+            
+
+    Users. Вынесем компонент постраничного показа в отдельный компонент Paginator в common, он может использоваться на любой 
+        странице поэтому нужно ему прокинуть вручную только задействованные параметры из props, поэтому мы их вытягиваем в users 
+
+            import React from 'react';
+            import styles from './Paginator.module.css';
+
+            let Paginator = ({totalUsersCount, pageSize, onPageChanged, currentPage}) => {
+
+                let pegesCount = Math.ceil(totalUsersCount / pageSize);
+                let pages = [];
+
+                for (let i = 1; i <= pegesCount; i++) {
+                    pages.push(i);
+                }
+
+                return <div>
+                    <div>
+                        {pages.map( page => {
+                            return <span className={currentPage === page && styles.selectedPage}
+                                onClick={(e) => { onPageChanged(page); }}> {page} </span> } )
+                        }
+                    </div>
+                </div>
+            }
+
+            export default Paginator;
+
+
+        Также вынесем в отдельный компонент User - одного юзера.
+
+            import React from 'react';
+            import styles from './Users.module.css';
+            import userPhoto from '../../assets/images/user.jpg'
+            import { NavLink } from "react-router-dom";
+
+            let User = ({user, followingInProgress, unfollow, follow}) => {
+                return(<div>
+                            <span>
+                                <div>
+                                    <NavLink to={'/profile/' + user.id}>
+                                        <img src={user.photos.small !== null ? user.photos.small : userPhoto} className={styles.userPhoto} />
+                                    </NavLink>
+                                </div>
+                                <div>
+                                    {user.followed
+                                        ? <button disabled={followingInProgress.some(id => id === user.id)}
+                                            onClick={() => { unfollow(user.id) }}>Unfollow</button>
+                                        : <button disabled={followingInProgress.some(id => id === user.id)} onClick={() => {
+                                            follow(user.id)
+                                        }}>Follow</button>}
+                                </div>
+                            </span>
+                            <span>
+                                <span>
+                                    <div>{user.name}</div>
+                                    <div>{user.status}</div>
+                                </span>
+                                <span>
+                                    <div>{'user.location.country'}</div>
+                                    <div>{'user.location.city'}</div>
+                                </span>
+                            </span>
+                        </div>)
+            }
+
+            export default User;
+
+
+        a в Users теперь заменим этим компонентом и передадим необходимые props
+
+            import React from 'react';
+            import Paginator from '../common/Paginator/Paginator';
+            import User from './User';
+
+            let Users = ({ currentPage, onPageChanged, totalUsersCount, pageSize, users, ...props }) => {
+
+                return <div>
+                    <Paginator currentPage={currentPage} onPageChanged={onPageChanged}
+                        totalUsersCount={totalUsersCount} pageSize={pageSize} />
+
+                    <div>
+                        {users.map(user => <User user={user} followingInProgress={props.followingInProgress}
+                            unfollow={props.unfollow} follow={props.follow} key={user.id} />)
+                        }
+                    </div>
+                </div>
+            }
+
+            export default Users;
+
+
+
+    В UsersContainer заранее забрали из props саойства особенно в классовом компоненте, а то могут случиться баги 
+    //! статья дена Абрамова -  how are function components different from classes
+
+            componentDidMount() {
+                const {currentPage, pageSize} = this.props;
+                this.props.getUsers(currentPage, pageSize);
+            }
+
+            onPageChanged = (pageNumber) => {
+                const {pageNumber, pageSize} = this.props;
+                this.props.getUsers(pageNumber, pageSize);
+            }
+
+
+
+            57-00
 
 
 
 
 
-
-
-
-
-
-
-
-
+    //! статья дена Абрамова -  how are function components different from classes
+    //! Попробовать установить redux-form
 
 
 */}
