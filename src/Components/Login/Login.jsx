@@ -1,11 +1,11 @@
 import React from "react";
-//import { Field, reduxForm } from "redux-form";
-import { Form, Field } from 'react-final-form';
+import { Field, reduxForm } from "redux-form";
+//import { Form, Field } from 'react-final-form';
 import { createField, Input } from "../common/FormControls/FormControls";
 import { required, maxLengthCreator } from "../../utils/validators/validators";
 import { connect } from 'react-redux';
 import { login } from '../redux/auth-reducer';
-import { Navigate } from 'react-router-dom';
+import { Redirect } from 'react-router-dom';
 import styles from "../common/FormControls/FormControls.module.css"
 
 
@@ -37,7 +37,7 @@ const Login = (props) => {
     }
 
     if (props.iaAuth) {
-        return <Navigate to={"/profile"} />
+        return <Redirect to={"/profile"} />
     }
 
     return <div>
