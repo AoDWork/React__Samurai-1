@@ -9990,28 +9990,53 @@
     В UsersContainer заранее забрали из props саойства особенно в классовом компоненте, а то могут случиться баги 
     //! статья дена Абрамова -  how are function components different from classes
 
+        //! заменил getUsers на getUsers: requestUsers, requestUsers - импортируем из users-reducer но его там нету
+        //! был getUsers но переименовал чтобы не было дублирования в UsersContainer
+
+            export default compose (
+                connect(mapStateToProps, { follow, unfollow, setCurrentPage, toggleFollowingInProgress, getUsers: requestUsers })
+
+
+        рефакторим
+
             componentDidMount() {
                 const {currentPage, pageSize} = this.props;
                 this.props.getUsers(currentPage, pageSize);
             }
 
             onPageChanged = (pageNumber) => {
-                const {pageNumber, pageSize} = this.props;
+                const {pageSize} = this.props;
                 this.props.getUsers(pageNumber, pageSize);
             }
 
 
 
-            57-00
+    В ProfileInfo сделали рефакторинг
 
-
-
+            const ProfileInfo = ({profile, status, updateStatus}) => {
+                if (!profile) {
+                    return <Preloader />
+                }
+                return (
+                    <div>
+                    <div className={style.formUser}>
+                        <img className={style.userAvatar} src={profile.photos.large} />
+                        <ProfileStatusWithHooks status={status} updateStatus={updateStatus} />
+                        <div className={style.userDescription}>Description</div>
+                    </div>
+                    </div>
+                );
+            }
+                    
 
 
     //! статья дена Абрамова -  how are function components different from classes
-    //! redux-form установился, поставил версию "react-router-dom": "^5.3.4", в той что у автора была изначально 
+    //! redux-form установился, поставил версию "react-router-dom": "^5.3.4", в той что у автора была у автора 
     //! отсутствовал useParams который используется в ProfileContainerFunctional - хотя вроде этот компонент
     //! все равно не используется. Теперь приведу код в соответствие с кодом автора и должно работать
+
+    //! работает логинизация(не редиректит после логина) + работают юзеры(но после какого то номера пагинатора)
+    //! юзеров как будто нету 
 
 
 */}
@@ -10027,6 +10052,23 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+*/}
+
+
+{/*    ====    92. тестируем компоненты, тесты, react-test-renderer    ====
 
 
 

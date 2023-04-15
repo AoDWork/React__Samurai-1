@@ -1,11 +1,11 @@
 import React from "react";
 import { Field, reduxForm } from "redux-form";
 //import { Form, Field } from 'react-final-form';
-import { createField, Input } from "../common/FormControls/FormControls";
 import { required, maxLengthCreator } from "../../utils/validators/validators";
 import { connect } from 'react-redux';
 import { login } from '../redux/auth-reducer';
 import { Redirect } from 'react-router-dom';
+import { createField, Input } from "../common/FormControls/FormControls";
 import styles from "../common/FormControls/FormControls.module.css"
 
 

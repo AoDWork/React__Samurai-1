@@ -15,11 +15,3 @@ root.render(
     </Provider>
   </BrowserRouter>
 );
-
-// root.render(     //! 90 рефакторинг. Димыч сказал что нужно тут оборачивать BrowserRouter потому что будет конфликт с withRouter
-//   <React.StrictMode>   //! попробую сделать как у него
-//     <Provider store={store}>
-//       <App />
-//     </Provider>
-//   </React.StrictMode>
-// );

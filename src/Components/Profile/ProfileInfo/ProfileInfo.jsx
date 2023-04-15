@@ -4,21 +4,17 @@ import Preloader from '../../common/preloader/Preloader';
 import ProfileStatus from './ProfileStatus';
 import ProfileStatusWithHooks from './ProfileStatusWithHooks';
 
-const ProfileInfo = (props) => {
+const ProfileInfo = ({profile, status, updateStatus}) => {
 
-  if (!props.profile) {
+  if (!profile) {
     return <Preloader />
   }
 
   return (
     <div>
-      <div>
-        {/* <img className={style.contentHeader} src="https://img-prod-cms-rt-microsoft-com.akamaized.net/cms/api/am/imageFileData/RE4wwuO?ver=1fc3" /> */}
-      </div>
       <div className={style.formUser}>
-        <img className={style.userAvatar} src={props.profile.photos.large} />
-        {/* <ProfileStatus status={props.status} updateStatus={props.updateStatus} /> */}
-        <ProfileStatusWithHooks status={props.status} updateStatus={props.updateStatus} />
+        <img className={style.userAvatar} src={profile.photos.large} />
+        <ProfileStatusWithHooks status={status} updateStatus={updateStatus} />
         <div className={style.userDescription}>Description</div>
       </div>
     </div>

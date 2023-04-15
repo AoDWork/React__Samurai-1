@@ -5,19 +5,19 @@ import usersReducer from './users-reducer';
 import authReducer from './auth-reducer';
 import thunkMiddleware from 'redux-thunk';
 import appReducer from './app-reducer';
-//import { reducer as formReducer } from 'redux-form';
+import { reducer as formReducer } from 'redux-form';
 
 let reducers = combineReducers({
     profilePage: profileReducer,
     dialogsPage: dialogsReducer,
     usersPage: usersReducer,
     auth: authReducer,
-    app: appReducer 
-    //form: formReducer
+    app: appReducer, 
+    form: formReducer
 })
 
 let store = createStore(reducers, applyMiddleware(thunkMiddleware));
 
-window.store = store; // так в консоли можно в любой момент посмотреть что находится в store, написав store.getState()
+window.store = store; //! так в консоли можно в любой момент посмотреть что находится в store, написав store.getState()
 
 export default store;

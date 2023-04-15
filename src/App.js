@@ -22,7 +22,6 @@ class App extends React.Component {
     }
 
     render() {
-
         if (!this.props.initialized) {
             return <Preloader />
         }
@@ -32,13 +31,10 @@ class App extends React.Component {
                 <HeaderContainer />
                 <Navbar />
                 <div className='app-wrapper-content'>
-                    {/* <Routes> */}
-                        <Route path="/dialogs" element={<DialogsContainer />} />
-                        <Route path="/profile/:userId?" element={<ProfileContainer />} />
-                        {/* <Route path="/profile/:userId" element={<ProfileContainerFunctional />} /> */}
-                        <Route path="/users" element={<UsersContainer />} />
-                        <Route path="/login" element={<LoginPage />} />
-                    {/* </Routes> */}
+                        <Route path="/dialogs" render={() => <DialogsContainer />} />
+                        <Route path="/profile/:userId?" render={() => <ProfileContainer />} />
+                        <Route path="/users" render={() => <UsersContainer />} />
+                        <Route path="/login" render={() => <LoginPage />} />
                 </div>
             </div>
         );
@@ -52,22 +48,3 @@ const mapSateToProps = (state) => ({
 export default compose(
     withRouter,
     connect(mapSateToProps, { initializeApp }))(App);
-
-
-
-    // return (<BrowserRouter>      //! 90 перенос BrowserRouter в index чтобы не было конфликта с withRouter
-    //     <div className='app-wrapper'>
-    //         <HeaderContainer />
-    //         <Navbar />
-    //         <div className='app-wrapper-content'>
-    //             <Routes>
-    //                 <Route path="/dialogs" element={<DialogsContainer />} />
-    //                 <Route path="/profile/:userId?" element={<ProfileContainer />} />
-    //                 {/* <Route path="/profile/:userId" element={<ProfileContainerFunctional />} /> */}
-    //                 <Route path="/users" element={<UsersContainer />} />
-    //                 <Route path="/login" element={<LoginPage />} />
-    //             </Routes>
-    //         </div>
-    //     </div>
-    // </BrowserRouter>
-    // );

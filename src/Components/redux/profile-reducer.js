@@ -1,7 +1,6 @@
 import { usersAPI, profileAPI } from "../../api/api";
 
-const ADD_POST = 'ADD-POST';
-// const UPDATE_NEW_POST_TEXT = 'UPDATE-NEW-POST-TEXT';
+const ADD_POST = 'ADD_POST';
 const SET_USER_PROFILE = 'SET_USER_PROFILE';
 const SET_STATUS = 'SET_STATUS';
 const DELETE_POST = "DELETE_POST";
@@ -11,7 +10,6 @@ let InitialState = {
         { id: 1, post: "yo", likesCount: 12 },
         { id: 2, post: "It's my fist post.", likesCount: 11 },
         { id: 3, post: "0", likesCount: 50 }],
-    // newPostText: 'Type Post',
     userProfile: null,
     status: ''
 }
@@ -19,7 +17,7 @@ let InitialState = {
 const profileReducer = (state = InitialState, action) => {
 
     switch (action.type) {
-        case ADD_POST:
+        case ADD_POST: {
             let newPost = {
                 id: 5,
                 post: action.newPostText,
@@ -31,20 +29,21 @@ const profileReducer = (state = InitialState, action) => {
                 postsData: [...state.postsData, newPost],
                 newPostText: ''
             };
+        }
 
-        // case UPDATE_NEW_POST_TEXT:
-        //     return { ...state, newPostText: action.newText };
-
-        case DELETE_POST:
+        case DELETE_POST: {
             return {
-                ...state, postsData: state.postsData.filter((el) => { el != action.postId })
+                ...state, postsData: state.postsData.filter( el => el.id != action.postId )
             }
+        }
 
-        case SET_STATUS:
+        case SET_STATUS: {
             return { ...state, status: action.status };
+        }
 
-        case SET_USER_PROFILE:
+        case SET_USER_PROFILE: {
             return { ...state, userProfile: action.profile };
+        }
 
         default:
             return state;
@@ -53,16 +52,9 @@ const profileReducer = (state = InitialState, action) => {
 
 
 export const addPostActionCreator = (newPostText) => ({ type: ADD_POST, newPostText })
-// export const updateNewPostTextActionCreator = (text) => {
-//     return { type: UPDATE_NEW_POST_TEXT, newText: text }
-// }
+export const setUserProfile = (profile) => ({ type: SET_USER_PROFILE, profile })
+export const setStatus = (status) => ( { type: SET_STATUS, status })
 export const deletePost = (postId) => ({ type: DELETE_POST, postId })
-export const setUserProfile = (profile) => {
-    return { type: SET_USER_PROFILE, profile }
-}
-export const setStatus = (status) => {
-    return { type: SET_STATUS, status }
-}
 
 export const getUserProfile = (userId) => async (dispatch) => {
     let response = await usersAPI.getProfile(userId);

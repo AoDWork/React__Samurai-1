@@ -17,7 +17,7 @@ let InitialState = {
     currentPage: 1,
     isFetching: false,
     followingInProgress: []
-}
+};
 
 const usersReducer = (state = InitialState, action) => {
 
@@ -25,13 +25,13 @@ const usersReducer = (state = InitialState, action) => {
         case FOLLOW:
             return {
                 ...state,
-                usersData: updateObjectInArray(state.usersData, action.userId, "id", {followed: true})
+                usersData: updateObjectInArray(state.usersData, action.userId, "id", { followed: true })
             }
 
         case UNFOLLOW:
             return {
                 ...state,
-                usersData: updateObjectInArray(state.usersData, action.userId, "id", {followed: false})
+                usersData: updateObjectInArray(state.usersData, action.userId, "id", { followed: false })
             }
 
         case SET_USERS:
@@ -49,8 +49,8 @@ const usersReducer = (state = InitialState, action) => {
         case TOGGLE_FOLLOWING_IN_PROGRESS:
             return {
                 ...state,
-                followingInProgress: action.isFetching ?
-                    [...state.followingInProgress, action.userId]
+                followingInProgress: action.isFetching
+                    ? [...state.followingInProgress, action.userId]
                     : state.followingInProgress.filter(id => id != action.userId)
             }
 
@@ -69,7 +69,7 @@ export const toggleIsFetching = (isFetching) => ({ type: TOGGLE_IS_FETCHING, isF
 export const toggleFollowingInProgress = (isFetching, userId) => ({ type: TOGGLE_FOLLOWING_IN_PROGRESS, isFetching, userId })
 
 
-export const getUsers = (currentPage, pageSize) => {
+export const requestUsers = (currentPage, pageSize) => {
     return async (dispatch) => {
         dispatch(toggleIsFetching(true));
         dispatch(setCurrentPage(currentPage));
@@ -83,7 +83,7 @@ export const getUsers = (currentPage, pageSize) => {
 }
 
 
-const followUnfollowFlow =  async (dispatch, userId, apiMethod, actionCeator) => {
+const followUnfollowFlow = async (dispatch, userId, apiMethod, actionCeator) => {
     dispatch(toggleFollowingInProgress(true, userId));
     let response = await apiMethod(userId);
 
