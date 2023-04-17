@@ -1,4 +1,4 @@
-import {applyMiddleware, createStore, combineReducers} from 'redux';
+import {applyMiddleware, createStore, compose, combineReducers} from 'redux';
 import  profileReducer from './profile-reducer';
 import dialogsReducer from './dialogs-reducer';
 import usersReducer from './users-reducer';
@@ -16,8 +16,12 @@ let reducers = combineReducers({
     form: formReducer
 })
 
-let store = createStore(reducers, applyMiddleware(thunkMiddleware));
+const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+const store = createStore(reducers, composeEnhancers(applyMiddleware(thunkMiddleware)));
 
-window.store = store; //! так в консоли можно в любой момент посмотреть что находится в store, написав store.getState()
+// let store = createStore(reducers, applyMiddleware(thunkMiddleware)); 91- подключили redux dev tools
+
+window.store = __store__; //! так в консоли можно в любой момент посмотреть что находится в store, написав store.getState()
+                          // 91 переименовали чтобы не было конфликтов с redux dev tools
 
 export default store;
