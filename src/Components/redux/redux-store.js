@@ -21,7 +21,7 @@ const store = createStore(reducers, composeEnhancers(applyMiddleware(thunkMiddle
 
 // let store = createStore(reducers, applyMiddleware(thunkMiddleware)); 91- подключили redux dev tools
 
-window.store = __store__; //! так в консоли можно в любой момент посмотреть что находится в store, написав store.getState()
+//window.store = __store__; //! так в консоли можно в любой момент посмотреть что находится в store, написав store.getState()
                           // 91 переименовали чтобы не было конфликтов с redux dev tools
 
 export default store;

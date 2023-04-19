@@ -12,6 +12,7 @@ import { withRouter, BrowserRouter } from 'react-router-dom';
 import { compose } from 'redux';
 import Preloader from "./Components/common/preloader/Preloader";
 import { withSuspense } from "./hoc/withSuspense";
+import store from './Components/redux/redux-store'
 
 const DialogsContainer = React.lazy(() => import("./Components/Dialogs/DialogsContainer"));
 const ProfileContainer = React.lazy(() => import("./Components/Profile/ProfileContainer"));

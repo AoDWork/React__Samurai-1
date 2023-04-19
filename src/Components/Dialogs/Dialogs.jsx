@@ -8,10 +8,7 @@ import { required, maxLengthCreator } from "../../utils/validators/validators";
 import { Navigate } from 'react-router-dom';
 
 
-const addNewMsg = (values) => {
-  //alert(values.newMsgBody);
-  props.sendMsg(values.newMsgBody);
-}
+
 
 const maxLength100 = maxLengthCreator(100);
 
@@ -44,6 +41,10 @@ const Dialogs = (props) => {
   let dialogsElements = state.dialogsData.map((el, ind) => (<DialogItem name={el.name} id={el.id} key={ind} />));
   let messagesElements = state.messagesData.map((el, ind) => (<Message msg={el.msg} key={ind} />));
   let newMsgBody = state.newMsgBody;
+
+  const addNewMsg = (values) => {
+    props.sendMsg(values.newMsgBody);
+  }
 
   // let onSendMsgClick = () => {
   //   props.sendMsg();

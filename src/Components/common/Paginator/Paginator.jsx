@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styles from './Paginator.module.css';
 
 
@@ -17,7 +17,7 @@ let Paginator = ({ totalItemsCount, pageSize, currentPage, onPageChanged, portio
     let rightPortionPageNumber = portionNumber * portionSize;
 
 
-    return <div className={style.paginator}>
+    return <div className={styles.paginator}>
         {portionNumber > 1 &&
             <button onClick={() => { setPortionNumber(portionNumber - 1) }}>{"<- PREVIOS"}</button>}
 
@@ -25,7 +25,7 @@ let Paginator = ({ totalItemsCount, pageSize, currentPage, onPageChanged, portio
             .filter(page => page >= leftPortionPageNumber && page <= rightPortionPageNumber)
             .map(page => {
              // return <span className={currentPage === page && styles.selectedPage}
-                return <span className={ cn({
+                return <span className={ ({
                     [styles.selectedPage]: currentPage === page
                 }, styles.pageNumber) }
                     onClick={(e) => { onPageChanged(page); }}  key={page} >{page}</span>

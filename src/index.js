@@ -1,4 +1,4 @@
-import store from './Components/redux/redux-store'
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
