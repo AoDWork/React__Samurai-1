@@ -1,11 +1,11 @@
-    //============================================  React Samurai 1.0   ===========================================================
-    
-    /* После прохождения курса автор общает знания реакта для позиции солидного джуна, следующий курс 2.0 сделает нас солидным
-                мидлом, но это уже после того как произойдет трудоустройство. Курс находится на ютубе по ссылке
-                        https://courses.prometheus.org.ua/courses/course-v1:LITS+114+2022_T2/about                       */
+//============================================  React Samurai 1.0   ===========================================================
+
+/* После прохождения курса автор общает знания реакта для позиции солидного джуна, следующий курс 2.0 сделает нас солидным
+            мидлом, но это уже после того как произойдет трудоустройство. Курс находится на ютубе по ссылке
+                    https://courses.prometheus.org.ua/courses/course-v1:LITS+114+2022_T2/about                       */
 
 
-    
+
 {/*    ====    01. Как проходить курс     ====
 
     Изучаем react + Redux потому что это самая популярная связка для трудоустройства(на 2020 год).
@@ -5230,7 +5230,7 @@
             };
 
 
-        В users можно сделать переменную в которой будем на основании этих данных из props посчитать сколько нужно 
+        В users можно сделать переменную в которой будем на основании этих данных из props считать сколько нужно 
         отобразить страниц. Получаем число, теперь чтобы отобразить такое же количество элементов (их мы отображали пробегаясь
         map по массиву с элментами) сделаем на основе числа через цикл for массив с колличеством эл. равным числу, и так как 
         на сайте будет отсчет от 1 а не от 0, то i = 1. 
@@ -10080,8 +10080,8 @@
 {/*    ====    92. тестируем компоненты, тесты, react-test-renderer    ====
 
     Есть компании в которых есть только компоненты, их тоже нужно уметь тестить в отрыве от бизнеса. У нас уже есть 1 тест
-        Апп компонента. Создается div в памяти через document.createElement (он никуда не аппендиться и соответственно его не
-        видно), потом в него в памяти рендерим App компонент, и дальше удаляем из памяти div(очищаем мусор). Таким образом 
+        Апп компонента. //! Создается div в памяти через document.createElement (он никуда не аппендиться и соответственно его не
+        //! видно), потом в него в памяти рендерим App компонент, и дальше удаляем из памяти div(очищаем мусор). Таким образом 
         проводиться проверка на рендер компонента App.
 
             import React from "react";
@@ -10145,25 +10145,107 @@
     
 
 
-
     ProfileStatus протестируем потому что в компоненте есть и локал state и рендеринг в зависимости от условия, колбеки, props,
         тоесть всё что может быть в компоненте. Создадим ProfileStatus.test.
 
+
         //! Есть ряд тестов которые логично объединяются в одну группу, такую группировку позволяет выполнить describe.
+        Создаем тест, в нем виртуально создается комонент(импортируем) через ключевое слово create из библиотеки, в него
+        передаем prop - status, будем тестировать что status из props установился в state. для этого берем instance - это
+        экземпляр созданного виртуального компонента, и в его state у status ожидаем увидеть ту строчку которую передали.
+
+            import React from 'react';
+            import { create } from "react-test-renderer";
+            import { ProfileStatus } from "./ProfileStatus";
+
+            decribe('ProfileStatus component', () => {
+                test("status from props should be in the state", () => {
+                    const component = create(<ProfileStatus status="it-kamasutra"/>);
+                    const instance = component.getInstance();
+                    expect(instance.state.status).toBe("it-kamasutra");
+                });
+            });
+
+            import React from 'react';
+            import { create } from "react-test-renderer";
+            import { ProfileStatus } from "./ProfileStatus";
+
+            decribe('ProfileStatus component', () => {
+                test("status from props should be in the state", () => {
+                    const component = create(<ProfileStatus status="it-kamasutra"/>);
+                    const instance = component.getInstance();
+                    expect(instance.state.status).toBe("it-kamasutra");
+                });
+            });
+
+        тест прошел. 
 
 
-            18-00
+
+        Добавим еще тесты для определения элемента по умолчанию(когда editMode - false) должен показываться span,
+        для определения отсутствия input - find by type возвращал undefined и тест не проходил, поэтому нужно было сделать ф-ю
+        для отлова ошибки - сказать что мы готовы что там будет ошибка, для определения текста span на соответствие status из 
+        state. Все конструкции и примеры  смотрим в документации по библиотеке  react-test-renderer
+
+            test("after creation <span> should be displayed", () => {
+                const component = create(<ProfileStatus status="it-kamasutra" />);
+                const root = component.root;
+                let span = root.findByType("span");
+                expect(span).not.toBeNull();
+            });
+
+            test("after creation <input> shouldn't be displayed", () => {
+                const component = create(<ProfileStatus status="it-kamasutra" />);
+                const root = component.root;
+                expect(() => {
+                    let input = root.findByType("input");
+                }).toThrow();
+            });
+
+            test("after creation <span> text should be like in state", () => {
+                const component = create(<ProfileStatus status="it-kamasutra" />);
+                const root = component.root;
+                let span = root.findByType("span");
+                expect(span.children[0]).toBe("it-kamasutra");
+            });
 
 
 
+        Понажимаем на кнопочки. Находим span, у него в props передается ф-я onDoubleClick, принудительно запускаем ее, теперь
+        вместо span должен появиться input в котором будет value - текст статуса, найдем input и проверим value которое передается
+        ему в props 
+
+            test("input should be displayed in editMode instead of span", () => {
+                const component = create(<ProfileStatus status="it-kamasutra" />);
+                const root = component.root;
+                let span = root.findByType("span");
+                span.props.onDoubleClick();
+                let input = root.findByType("input");
+                expect(input.props.value).toBe("it-kamasutra");
+            });
+
+
+        Имитируем вызов коллбека. При деактивации deactivateEditMode у него идет закидывание нового status в state
+        this.props.updateStatus(this.state.status) вызовом колбека updateStatus. Для проверки вызывается ли данный коллбек
+        создадим спец.(шпионскую) ф-ю mockCallback с помощью jest.fn();, потому что обычный коллбек не отследить. Закидываем
+        его вместо обычного коллбека updateStatus, берем instance у компонента, имитируем срабатывание deactivateEditMode
+        и ожидаем что mockCallback сработает. length - возвращает число - сколько раз был вызван коллбек. Если написать так
+        mockCallback.mock.calls - так то возвращает массив со значениями которые передает коллбек - тот status который мы
+        закидывали в props - [["it-kamasutra"]].
+
+            test("callback should be called", () => {
+                const mockCallback = jest.fn();
+                const component = create(<ProfileStatus status="it-kamasutra" updateStatus={mockCallback}/>);
+                const instance = component.getInstance();
+                instance.deactivateEditMode();
+                expect(mockCallback.mock.calls.length).toBe(1);
+            });
 
 
 
-
-
-
-
-
+    //! Установить npm i react-test-renderer@16.8.6 --save-dev 
+    //! Проверить версии остальных библиотек как у Димыча  14-20, попробовать установить такой же реакт - если получится то в 
+    //! index переписать рендер, может не запуститься
 
 
 */}
@@ -10171,58 +10253,191 @@
 
 {/*    ====    93. paginator, постраничный вывод    ====
 
+    //! Димыч показал как в webStorme можно быстро и просто переключаться по коммитам в репозитории. Вкладка - version control
+    //! (в vsCode аналог наверное Source control - чтобы работал нужно установить Git) вкладка Log  - видно все сделанные коммиты
+    //! выбираем нужный коммит - второй кнопкой - checkout revision - желтый маячек переходит на этот коммит и весь код 
+    //! получается как из этого коммита.
+
+
+    Сейчас на странице с юзерами информация о юзерах разбита по несколько юзеров, из этого формируется количество страниц юзеров.
+        Они показываются некрасиво в верхней части (прилипают один к одному, их много поэтому или выезжают за экран или занимают 
+        много пространства вниз). Сделаем так чтобы они показывались не все  сразу а например порциями по 10 штук и была кпопка 
+        для показа следующей порции - 10 страниц, а для следующих добавлялась кнопка назад - чтобы можно было листать на предыдущие.
+
+    
+    Реализовано было так - получали {totalUsersCount, pageSize, currentPage, onPageChanged}, получали количество страниц 
+        let pagesCount = Math.ceil(totalUsersCount / pageSize); - потом создавали пустой массив pages и в него пушили 
+        столько страниц сколько получили в pagesCount. Потом рисовали эти страницы, каждую в свой span.
+
+    
+    Изменим Paginator так чтобы его можно было использовать для любой страницы, переименуем totalUsersCount в totalItemsCount и
+        добавим чтобы размер порции приходил из props для настройки под каждый компонент - portionSize. 
+
+        Теперь будем получать общее количество порций portionCount из общего количества страниц pagesCount поделенного на 
+        portionSize - размер порции. Для показа отдельной порции найдем левую и правую границу порции. Текущий номер порции
+        будем хранить в локальном state потому что глобальному эта инфа не нужна, сделаем через useState инициализационное 
+        значение будет 1. 
+
+        Правая  граница находиться из текущего номера порции умноженного на размер порции
+        portionNumber  * portionSize тоесть для 1й порции - 1 * 10  = 10, 2й - 2 * 10 = 20.
+
+        Левая находиться по формуле (portionNumber - 1) * portionSize + 1 тоесть 
+        1я - (1 - 1) * 10 + 1 = 1  - один минус один равно ноль, всё что множиться на 0 равно 0 плюс 1 равно 1
+        2я - (2 - 1) * 10 + 1 = 11    3я - (3 - 1) * 10 + 1 = 21 
+
+
+            let portionCount = Math.ceil(pagesCount/portionSize);
+            let [portionNumber, setPortionNumber] = useState(1);
+            let leftPortionPageNumber = (portionNumber - 1) * portionSize + 1;
+            let rightPortionPageNumber = portionNumber  * portionSize;
+
+
+        будем показывать только  те страницы которые больше левой и меньше правой границы порции, фильтруем массив pages возвращая
+        новый массив в котором есть только те элементы которые больше-равно левой границы и меньше-равно правой.
+
+            {pages
+                .filter(page => page >= leftPortionPageNumber && page <= rightPortionPageNumber)
+                .map(page
+
+        
+        листание между порциями реализовано кнопками  если текущий номер порции больше 1 показываем кнопку PREVIOS, если
+        общее количество порций больше текущего то показывается NEXT, а когда они сравняются то NEXT не покажеться.
+
+            {portionNumber > 1 &&
+            <button onClick={() => { setPortionNumber(portionNumber - 1) }}>{"<- PREVIOS"}</button>}
+                ...
+            {portionCount > portionNumber &&
+            <button onClick={() => { setPortionNumber(portionNumber + 1) }}>{"NEXT ->"}</button>}
 
 
 
+        Еще он написал тесты для этого компонента. Пока не буду их включать сюда.
 
 
 
+    В Users тоже изменим usersCount na totalItemsCount
 
 
 
+    В users-reducer - изменим размер страницы на 10
 
+
+
+    //! тут не видно что у димыча было >{"NEXT ->"}< - думаю у него просто бsk текст NEXT без дужек, проверить работает ли так
 
 
 */}
 
 
-{/*    ====    94. ______    ====
+{/*    ====    94. React.lazy и React.Suspense, зачем？    ====
+    
+    //! Читаем  доку по React чтобы знать все его фишки. 5 проваленых собеседований не приговор, нужно сходить хотябы на 10
+    //! и между ними должен быть перерыв в неделю чтобы подтянуть то что не знал на проваленом собесе.
+
+
+    Когда запускаем проект, в браузере(вкладка network - responce) видим что приходит немного файлов: bundl, chunk, main.chunk,
+        main.ef362..., backend. И приложение работает хотя у нас много компонент и различных файлов в приложении. Так происходит
+        потому что браузер не понимает JSX и для него выполняется переформатирование webpackom + babel всех файликов в премлемый
+        формат + небольшое количество файлов(bundl) по http загружается быстрее чем большое количество маленьких. Webpack собирая
+        приложение начинает с App и пробегается по всем импортам собирает в кучу всё что нужно для работы приложения.
+
+
+
+    При первом запуске загружается сразу всё приложение, если оно большое то пользователь бдет долго ждать прежде чем увидит
+        стартовую страницу. Но есть статистика для юзера что он  бывают на такой и такой странице, а остальные могут и не 
+        понадобиться. Для ускорения загрузки и запуска приложения есть lazy(ленивая) загрузка. При такой загрузке для первого
+        запуска беруться только необходимые файлы чтобы можно было отобразить стартовую страницу(или ту которую юзер вбил в
+        строку браузера), а остальное приложение будет подгружаться по мере необходимости(тоесть другую страницу на которую
+        хочет зайти юзер будет подгружать когда он кликнет по ссылке на нее). Использовать или нет lazy загрузку определяет
+        заказчик, он решает что ему нужно или быстрый запуск а потом можно подождать подгрузки страниц или дольше запускаться
+        но потом чтоб всё открывалось без промедления.
+
+
+
+    Реализуем lazy загрузку. Если мы сделаем такую загрузку для какого то импорта, то webpack не выкинет ошибку но и не будет
+        загружать необходимый импорт, итого размер бандла будет меньше. А когда этот компонент понадобиться тогда его загрузит.
+        Добавим такую загрузку для DialogsContainer в App. Для того чтобы компонент заработал после lazy загрузки нужно его
+        обернуть в suspense - в этом компоненте будет показан div Loading пока будет подгружаться нужный chunk. Теперь в 
+        приложении получилось 3 chunk. Вместо div можно влупить Preloader.
+
+            const DialogsContainer = React.lazy(()=> import("./Components/Dialogs/DialogsContainer"));
+            const ProfileContainer = React.lazy(()=> import("./Components/Profile/ProfileContainer"));
+
+            <Route path="/dialogs" render={() => {
+                return <React.Suspense fallback={<div>Loading...</div>}>
+                    <DialogsContainer />
+                </React.Suspense>
+            }} />
+            <Route path="/profile/:userId?" render={() => {
+                return <React.Suspense fallback={<div>Loading...</div>}>
+                    <ProfileContainer />
+                </React.Suspense>
+            }} />
+
+
+        
+    Делаем HOC withSuspense для того чтобы не писать столько кода при оборачивании suspense, помещаем в папку HOC.
+
+            import React from 'react';
+
+            export const withSuspense = (Component) => {
+                return (props) => {
+                    return <React.Suspense fallback={<div>Loading...</div>}>
+                        <Component {...props} />
+                    </React.Suspense>
+                };
+            }
+
+
+        Поместим его в render.
+
+            import { withSuspense } from "./hoc/withSuspense";
+
+            <Route path="/dialogs" render={ withSuspense(<DialogsContainer />) } />
+            <Route path="/profile/:userId?" render={ withSuspense(<ProfileContainer />) } />
+
+
+
+    //! Установить npm i react-test-renderer@16.8.6 --save-dev 
+    //! Проверить версии остальных библиотек как у Димыча  14-20, попробовать установить такой же реакт - если получится то в 
+    //! index переписать рендер, может не запуститься
+    //! тут не видно что у димыча было >{"NEXT ->"}< - думаю у него просто бsk текст NEXT без дужек, проверить работает ли так
 
 
 */}
 
 
-{/*    ====    95. ______    ====
+{/*    ====    95. github pages, разворачиваем наш проект deploy    ====
 
 
 */}
 
 
-{/*    ====    96. ______    ====
+{/*    ====    96.  загрузка изображения, shouldComponentUpdate fix    ====
 
 
 */}
 
 
-{/*    ====    97. ______    ====
+{/*    ====    97.  обновление профиля    ====
 
 
 */}
 
 
-{/*    ====    98. ______    ====
+{/*    ====    98. captcha    ====
 
 
 */}
 
 
-{/*    ====    99. ______    ====
+{/*    ====    99.  try-catch, router switch, classnames    ====
 
 
 */}
 
 
-{/*    ====    100. ______    ====
+{/*    ====    100. Теория ReactJS + Redux за 90 минут    ====
 
 
 */}
