@@ -17,7 +17,7 @@ let User = ({ user, followingInProgress, unfollow, follow }) => {
                     ? <button disabled={followingInProgress.some(id => id === user.id)}
                         onClick={() => { unfollow(user.id) }}>Unfollow</button>
                     : <button disabled={followingInProgress.some(id => id === user.id)}
-                        onClick={() => { follow(user.id)  }}>Follow</button>}
+                        onClick={() => { follow(user.id) }}>Follow</button>}
             </div>
         </span>
         <span>

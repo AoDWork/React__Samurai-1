@@ -10404,13 +10404,239 @@
 
 {/*    ====    95. github pages, разворачиваем наш проект deploy    ====
 
-    //! Выбило кучу ошибок. Пофиксил
+    //! Выбило кучу ошибок. Пофиксил - работает только логинизация
+    //! npm i react-test-renderer@16.8.6 --save-dev  - не устанавливается. Даже со всеми библиотеками как у Димыча не 
+    //! запускается - делал в тестовом проекте(скопированом) индекс переписывал все равно вылезала куча ошибок.
+
+    Сервер хранит для показа наш сайт как статические страницы, для того чтобы получить такие страницы нужно проект
+        сбилдить, прописав в консоли    npm build , package.json есть для этого скрипт который и запустится, он создаст
+        нужные файлы и положит их в папку build в проекте. Эти файлы уже можно заливать на хостинг. На обычном хостинге
+        так бы работало, но мы будем заливать на GinHub а он не совсем полноценный хостинг и там будут проблемы с url, потому
+        что сейчас приложение работает относительно localhost и считается что это корневая папка, а на гитхабе корневой будет
+        например
+
+            it-kamasutra.github.io/react-way-of-samurai/  - это корневая папка в которой храниться наш проект(index.js)
+                |                          |
+            аккаунт                   репозиторий
+
+
+        по этому адрессу https://it-kamasutra.github.io/react-way-of-samurai - уже отображается приложение, потому что в 
+        настройках репозитория включены github pages и выбрана ветка не master, a gh-pages branch
+
+
+
+
+    Для того чтобы развернуть проект(задеплоить - deploy) на github pages нужно:
+
+        -- В package.json в корень проекта(после private) вставить 
+            
+                "homepage": "https://it-kamasutra.github.io/react-way-of-samurai" 
+            
+            домашнюю страницу, тот репозиторий на котором проект есть сейчас - чтобы не морочиться с remote
+            //! на сервере димыча в личном кабинете тоже нужно вставить адерсс сайта с которого можно принимать запросы
+            //! иначе сервер не будет отвечать, потому что настроен только на принятие запросов с локал хоста.
+            //! https://it-kamasutra.github.io  - такого вида адрес вставлять
+            //! проверить соответствие ключа в профиле и в Api.js
+
+        -- установить github pages помогатор 
+
+                npm i gh-pages --save-dev
+
+
+
+        -- Вставить скрипты в package.json
+
+                "predeploy": "npm run build",
+                "deploy": "gh-pages  -d build"
+
+            когда запустим в консоли deploy - оно сбилдит проект и должно закинуть на тот адресс который мы указали
+            обновление проекта по когда зайдем по ссылке может занять время, так что не сразу обновится.
+
+
+
+    Вроде всё заработало - но если допустим зайти на профиль, она загрузился, а потом обновить страницу - падает ошибка, так
+        получается потому что при переходе на сылку Router заменяет часть url в браузере 
+
+                вместо https://it-kamasutra.github.io/react-way-of-samurai
+
+                получаем https://it-kamasutra.github.io/profile
+
+            Чтобы не затирал допишем в роутер basename={process.env.PUBLIC_URL}
+            
+                теперь будет https://it-kamasutra.github.io/react-way-of-samurai/profile
+
+
+        и при переходе оно срабатывает, но когда пробуем обновить F5 страницу, то остается этот же адресс, а гитхаб снова ищет
+        index.html(который лежит в репозитории - папке react-way-of-samurai) для запуска и не находит его потому что url
+        изменился и гитхаб ищет в измененном - подразумевая что index должен быть в profile, но его там нету, потому получается
+        что заново запустить проект не может.
+
+        А сервер считает корневым адрес https://it-kamasutra.github.io/react-way-of-samurai/profile 
+        
+        Будем вместо BrowserRouter использовать HashRouter.
+
+
+        HashRouter - это устаревший роутер который использовался когда ХТМЛ не мог изменять url в браузере, на самом деле
+        изменения url не было, но js анализировал адресс после хеша и перестраивал контент страницы, так получалась имитация
+        перехода на другую страницу, он после адреса страницы ставит хеш  # (якорь) - и дальше уже пишет наш путь. 
+        Сейчас его не используют потому что в ХТМЛ5 появился history api и нужда в хеш роутере пропала, но для текущего случая 
+        он подойдет, потому что текст после хеша(включительно) браузер не воспринимает как путь для сервера
+ 
+                https://it-kamasutra.github.io/react-way-of-samurai/#/profile
+
+                https://it-kamasutra.github.io/react-way-of-samurai - это сервер понимает как адрес
+
+                #/profile - а это сервер понимает как доп инфу и не включает в адрес
+
+            таким образом приложение анализирует пусть с хешем и подстраивает свой контент под него, а сервер запускает index
+            из нужной папки по нужному адресу. Теперь нужно удалить basename потому что онподставлял react-way-of-samurai и 
+            после хеша.
+
 
 */}
 
 
 {/*    ====    96.  загрузка изображения, shouldComponentUpdate fix    ====
 
+    //! В Paginator Димыч подключил новую библиотеку cn import cn from "classnames" поэтому у меня не работало.
+    //! в ProileContainet закоментирован withRouter в 79 видео он есть.
+
+
+    Сделаем чтобы отображалась заглушка в профиле если у юзера нету фото в ProfileInfo
+
+            <img className={style.userAvatar} src={ profile.photos.large || userPhoto} />
+
+
+
+    При показе другого юзера и нажатию на ссылку Profile не обновляется этот юзер на залогиненого, нету componentDidUpdate
+
+            refreshProfile() {
+                let userId = this.props.match.params.userId;
+                if (!userId) {
+                    userId = this.props.authorizedUserId;
+                    if (!userId) {
+                        this.props.history.push("/login")
+                    }
+                }
+                this.props.getUserProfile(userId);
+                this.props.getUserStatus(userId);
+            }
+
+            componentDidMount() {
+                this.refreshProfile();
+            }
+
+            componentDidUpdate(prevProps) {
+                if(this.props.match.params.userId != prevProps.match.params.userId) {
+                    this.refreshProfile();
+                }
+            }
+
+
+
+    Сделаем возможность смены аватарки по клику кнопки(обычный file input) будем показывать кнопку только если мы находимся на
+        своей странице(profile с id == undefined).
+
+        Прокинем в ProfileContainer айди юзера дальше в компонент предварительно сделав из него булево значение - !, 
+        так узнаем владелец или нет.
+
+            render() {
+                return (
+                    <Profile {...this.props} 
+                        isOwner={!this.props.match.params.userId}
+
+            
+        Прокинем дальше в Profile
+
+            <ProfileInfo isOwner={props.isOwner} profile={props.profile} status={props.status} updateStatus={props.updateStatus} />
+
+
+        В ProfileInfo добавим показ кнопки если владелец(нет id у юзера), добавим для нее обработчик события onChange - сработает
+        когда выберем файл. Вызовет ф-ю onMainPhotoSelected в которой делаем проверку на длинну массива(если кликнули по кнопке
+        но не выбрали файл чтобы не было случайного срабатывания) и если в массиве что-то есть тогда запустим коллбек savePhoto
+        (его будем теперь принимать в обратной последовательности сверху) который передаст файл на сервер.
+
+            const ProfileInfo = ({profile, status, updateStatus, isOwner, savePhoto}) => {
+            
+            const onMainPhotoSelected = (e) => {
+                if(e.target.files.length) {
+                savePhoto(e.target.files[0]);
+                }
+            }
+
+            if (!profile) {
+                return <Preloader />
+            }
+
+            return (
+                <div>
+                <div className={style.formUser}>
+                    <img className={style.userAvatar} src={ profile.photos.large || userPhoto} />
+                    {isOwner && <input type='file' onChange ={onMainPhotoSelected} />}
+                    <ProfileStatusWithHooks status={status} updateStatus={updateStatus} />
+
+
+        //! UI компонент с помощью mapDispatchToProps получает колбек savePhoto, произошел выбор файла и вызвался этот колбек,
+        //! колбек попадает в бизнес - thunk(тут происходит асинхронный запрос), санка отправляет запрос на сервер API(пушит новую 
+        //! картинку)
+
+
+        В ProfileContaine savePhoto должно прийти из thunk creator  в connecte 
+
+            export default compose(
+                connect(mapStateToProps, { getUserProfile, getUserStatus, updateUserStatus, savePhoto }),
+                withRouter
+            )(ProfileContainer);
+
+
+        В profile-reducer. Смотрим state - там есть profile изначально null но в него приходят данные с сервера, и в них есть photos.
+        //! Нам нужно послать файл на сервак - await profileAPI.savePhoto(file), он перезапишет адрес картинки и вернет новые данные,
+        //! если проходит успешно запрос - if (response.data.resultCode === 0) то мы обновим компонент с новой фотографией, для
+        //! этого запуститься reducer savePhotoSuccess, в нем обрабатываем тип action - SAVE_PHOTO_SUCCESS он скопирует ...state,   
+        //! достанет и скопирует старый ...state.userProfile и в нем обновит photos - photos: action.photos - на те которые пришли с .
+        //! сервера
+        
+        добавляем thunk creator
+
+            const SAVE_PHOTO_SUCCESS = "SAVE_PHOTO_SUCCESS";
+
+                case SAVE_PHOTO_SUCCESS: {
+                    return{ ...state, userProfile: { ...state.userProfile, photos: action.photos } }
+                }
+
+
+            export const savePhotoSuccess = (photos) => ({ type: SAVE_PHOTO_SUCCESS, photos })
+
+            export const savePhoto = (file) => async (dispatch) => {
+                let response = await profileAPI.savePhoto(file)
+
+                if (response.data.resultCode === 0) {
+                    dispatch(savePhotoSuccess(response.data.data.photos)); //! -1я data - запроса, 2я data - объекта
+                }
+            }
+
+
+        Чтобы работало осталось написать API - который будет посылать запрос в методе savePhoto. 
+        //! Чтобы узнать какой запрос нужно отправлять на сервер, смотри на сервере в документации и там написано запрос  
+        //! profile/photo - PUT. Когда мы отправляем запрос на изменение status мы отправляем application/json(это можно
+        //! увидеть в network - кликнуть на status - headers), для отправки файла нам нужно указать друго типа.
+        //! загуглили - upload file with axios , нашли на stackOverflow ответ - в зпросе вторым аргументом положить formData,
+        //! который предварительно создать, потом к нему заапендить ("image", photoFile); - это смотрим на сервере. то он ожидает
+        //! там было написано (image: reauired(file)) - вот мы тоже пишем image и рядом ложим тот объект фото кототрый пришел.
+        //! Эту formData отправляем вторым параметром, а третьим - настраиваем специфические заголовки именно для этого запроса.
+        //! Спомощью headers - говорил что отправляем не json , a formData.
+
+            savePhoto(photoFile) {
+                const formData = new FormData();
+                formData.append("image", photoFile);
+                return instance.put(`profile/photo`, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+            }
+
+            
 
 */}
 
