@@ -4900,7 +4900,7 @@
         компонента React.Component и мы его расширяем(extends) добавляя свои свойства и методы. Когда создается экземпляр
         m1 класса Man - для его создания срабатывает constructor, а так как сам класс Man создается из реактовского класса
         то и для его создания нужно запустить конструктор - super(props). При этом объект m1 будет иметь свойства и методы
-        прописанные не только в Mam a и те которые прописаны в React.Component. 
+        прописанные не только в Man a и те которые прописаны в React.Component. 
 
             class Man extends React.Component {                let m1 = new Man( {name:'Dima', age: 31} );                       
                 constructor(props) {                           let jsx = m1.render();
@@ -10635,13 +10635,215 @@
                     }
                 });
             }
-
             
 
 */}
 
 
 {/*    ====    97.  обновление профиля    ====
+
+    Допишем ProfileInfo чтобы отображать дополнительные данные о юзере которые приходят с сервера(что приходит можно посмотреть
+        в доке сервера  profile/{userId} - нажимаем на GET и владка - response). Завернем эти данные в отдельный компонент.
+        Для показа контактов юзера  так как у нас приходит объект, для комфортной работы делаем из него массив со строковыми
+        данными с помощью Object.keys(profile.contacts). Тоесть приходит объект {facebook: null, twitter: 'Yo'} а получаем массив
+        ['facebook', 'twitter'], теперь эти названия можно использовать как ключи. Ключ будет выводиться как название контакта
+        - его титул, и будет использоваться для поиска данных в объекте путем подставления ключа как названия свойства
+        contactValue={profile.contacts[key]}
+
+            return (
+                <div>
+                <div className={style.formUser}>
+                    <img className={style.userAvatar} src={profile.photos.large || userPhoto} />
+                    {isOwner && <input type='file' onChange={onMainPhotoSelected} />}
+
+                    <ProfileData profile={profile} />
+
+                    <ProfileStatusWithHooks status={status} updateStatus={updateStatus} />
+                    <div className={style.userDescription}>Description</div>
+                </div>
+                </div>
+            );
+            }
+
+            const ProfileData = ({ profile }) => {
+            return <div>
+                <div>
+                <b>Full name</b>: {profile.fullName}
+                </div>
+                <div>
+                <b>Loking for a job</b>: {profile.lookingForAJob ? 'yes' : 'no'}
+                </div>
+                {profile.lookingForAJob &&
+                <div>
+                    <b> My skills </b>: {profile.lookingForAJobDescription}
+                </div>
+                }
+                <div>
+                <b>About me</b>: {profile.aboutMe} // этого еще не было в доке на момент записи видео, но оно приходило
+                </div>
+                <div>
+                <b>Contacts</b>: {Object.keys(profile.contacts).map(key => {
+                    return <Contact key={key} contactTitle={key} contactValue={profile.contacts[key]} />
+                })}
+                </div>
+            </div>
+            }
+
+            const Contact = ({ contactTitle, contactValue }) => {
+                return <div className={style.contact}><b>{contactTitle}</b>: {contactValue}</div>
+            }
+
+
+        //! мой пример 
+            let obj = { facebook: null, twitter: "Yo"}
+            let keys = Object.keys(obj)                                         // ['facebook', 'twitter']
+            let resValues = keys.map(key => { return obj[key] } )               // [null, 'Yo']
+            let resAll = keys.map(key => { return `${key} : ${obj[key]}` } )    // ['facebook : null ', 'twitter : Yo ']
+
+
+
+    Сделаем кнопку для возможности редактирования если editMode, тогда будет показываться ProfileDataForm. editMode сделаем
+        хуком. 
+
+            {editMode
+                ? <ProfileDataForm initialValues={profile} onSubmit={onSubmit} profile={profile}/>
+                : <ProfileData profile={profile} isOwner={isOwner} goToEditMode={() => { setEditMode(true) }} />}
+
+
+        ProfileDataForm вынесем в отдельный компонент.
+
+            import React from "react";
+            import {createField, Input, Textarea} from "../../common/FormControls/FormControls"
+
+            const ProfileDataForm = ({ handleSubmit, profile }) => {
+                return <form onSubmit={handleSubmit}>
+                <div><button>Save</button></div>
+
+                <div>
+                <b>Full name</b>: { createField("Full Name", "fullName", [], Input ) }
+                </div>
+
+                <div>
+                <b>Loking for a job</b>: { createField("", "lookingForAJob", [], Input, {type: "checkbox" } ) }
+                </div>
+
+                <div>
+                    <b> My skills </b>: { createField("My skills", "lookingForAJobDescription", [], Textarea ) }
+                </div>
+
+                <div>
+                <b>About me</b>: 
+                { createField("About me", "aboutMe", [], Textarea ) }
+                </div>
+
+                <div>
+
+                </div>
+                </form>
+            }
+  
+            const ProfileDataReduxForm = reduxForm({ form: 'editProfile' })(ProfileDataForm)
+            
+            export default ProfileDataReduxForm;
+
+
+        //! onSubmit должен быть в том компоненте где отрисовывается компонент с формой (для LoginForm - это Login), для 
+        //! ProfileDataReduxForm - ProfileInfo. В этом компоненте определим что будет происходить при сабмите. И этот 
+        //! onSubmit передадим в  <ProfileDataForm onSubmit={onSubmit} />
+        //! при таком коде в консоль получим то что вбили в форме, тоесть по сути данные получаться в ProfileInfo
+            
+            const onSubmit = (formData) => {
+                console.log(formData)
+            }
+
+
+        Теперь данные нужно отправить на сервак в бизнес, не хотим коннектить к store этот компонент поэтому получим метод
+        отправки данных из компонентов выше, для этого прокинем метод saveProfile который позже создадим, его мы и вызовем для
+        отправки данных formData. Также сделаем чтобы выключался эдит мод setEditMode(false);
+
+            const ProfileInfo = ({ profile, status, updateStatus, isOwner, savePhoto, saveProfile }) => {
+                const [editMode, setEditMode] = useState(false);
+
+                const onSubmit = (formData) => {
+                    saveProfile(formData);
+                    setEditMode(false);
+                }
+
+            
+        ProfileInfo рисуется в Profile, тут тожн нету коннекта, значит будем брать еще выше, а тут прокинем пропс.
+
+
+
+        Profile рисуется в ProfileContainer, тут уже есть коннект с бизнесом. Прокинем в коннект
+
+            connect(mapStateToProps, { getUserProfile, getUserStatus, updateUserStatus, savePhoto, saveProfile }),
+
+
+        Сделаем санккриейтер saveProfile в reducere profila. //! Так как с сервера приходит ответ без данных профиля, мы его
+        //! запросим заново задиспатчив getUserProfile с id нашего юзера. id мы возьмем из state через ф-ю getState - которая
+        //! приходит в санку вместе с dispatch. Так как нам не запрещено из одного редюсера обращаться к другому то мы возьмем
+        //! юзер айди из auth-reducer который комбайниться под названием auth 
+
+            export const saveProfile = (profile) => async (dispatch) => {
+                const userId = getState().auth.userId;
+                const response = await profileAPI.saveProfile(profile)
+
+                if (response.data.resultCode === 0) {
+                    dispatch(getUserProfile(userId)); 
+                }
+            }
+
+
+
+        В Api пишем запрос. Смотрим на сервере какой тип запроса(PUT) и на какую точку( "/profile" ) и отправляем ОБЪЕКТ - profile,
+        //! не profile: profile, а именно оъект с нужной серверу структурой(тоже смотрим на сервере).
+
+            saveProfile(profile) {
+                return instance.put(`/profile`, profile );
+            }
+
+
+        Сейчас когда в форме переходим в режим редактирования то инпуты пустые, даже если у профиля были данные для этих полей
+        //! так получается потому что данные с сервера приходят и сохраняются в бизнес стейте, а когда мы запускаем редактирование
+        //! то редакс форм берет данные из своего state, а он пустой для этих полей. Нам нужно данные из бизнес state прокинуть
+        //! в редакс-форм state и задать как инициализационные(стартовые) данные. Для этого нужно в props для компонента с формой
+        //! передать initialValues={profile} - так как название полей идентичны должно сработать. Сработало.
+
+
+
+    Создадим инпуты для контактов. key подставляем чтобы задать плейсхолдер, //! а для имени поля передадим "contacts." + key - 
+        //! чтобы сохранилась структура объекта который отправляем, а то сервер не примет.
+
+            <div>
+            <b>Contacts</b>: {Object.keys(profile.contacts).map(key => {
+                return <div className={style.contact}> 
+                <b>{key}:</b> { createField(key, "contacts." + key, [], Input ) }
+                </div> 
+            })}
+            </div>
+
+            //! так будет profile - contacts - facebook(тоесть в объекте профиля у нас объект с контактами в ктором свойства со 
+            //! значениями), а если бы мы не добавили contacts к key то наши свойства упаковывало бы прямо в profile.
+
+
+        //! Если в поле ввести невалидный url адрес например не https://facebook.com , а  https://facebook - сервер тоже не примет
+        такой запрос и не обновит данные, но юзер не сможет понять что произошло, для него нужно вывести показ ошибки.
+
+
+        
+            56 - 00
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 */}
