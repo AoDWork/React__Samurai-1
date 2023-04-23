@@ -5866,9 +5866,9 @@
 
             withRouter(ProfileContainer);
 
-        withRouter - работает также как connect( возвращает новый компонент который по факту отрисует ProfileContainer но закинет
-        в него данные из store). withRouter вернет новый компонент в который отрисует ProfileContainer но в него закинутся еще
-        данные из URL. Для наглядности можно записать так:
+        withRouter - работает также как connect( который возвращает новый компонент который по факту отрисует ProfileContainer но 
+        закинет в него данные из store). withRouter вернет новый компонент в который отрисует ProfileContainer но в него закинутся 
+        еще данные из URL. Для наглядности можно записать так:
 
             let WithUrlDataContainerComponent = withRouter(ProfileContainer);
 
@@ -5952,6 +5952,104 @@
         //! Сейчас нету withRouter, вместо него используется хук useParams и он не работает с классовым компонентом и нужно 
         //! использовать с ф-м применяя useState и также в App сделать отдельный роут для профилей с параметрами который
         //! будет вести на другую страницу или переделать наш классовый компонент в ф-й с хуком useState 
+
+
+
+        //! В коментариях решили этот вопрос таким образом
+            
+            ProfileCantainer.js
+
+            import React, {useEffect} from 'react';
+            import {connect} from "react-redux";
+            import Profile from "./Profile";
+            import axios from "axios";
+            import {useParams} from "react-router-dom";
+            import {setUserProfile} from "../redux/profile-reducer";
+
+
+            function ProfileContainer(props) {
+                let { userId } = useParams();
+                if (!userId) {
+                    userId = 2;
+                }
+
+                useEffect(() => {
+                    axios
+                        .get(`https://social-network.samuraijs.com/api/1.0/profile/` + userId)
+                        .then((response) => {
+                            props.setUserProfile(response.data);
+                        });
+                }, [userId]);
+
+                return (
+                    <div>
+                        <Profile profile={props.profile} />
+                    </div>
+                );
+            }
+
+            let mapStateToProps = (state)=> ({
+                profile: state.profilePage.profile
+            })
+
+            export default connect (mapStateToProps, {setUserProfile})(ProfileContainer)
+
+            App.js
+            _________________________________________________________________
+            ...
+            <Route path = '/profile/:userId?' element ={<ProfileContainer />} />
+            ...
+
+
+
+
+            Всем привет! Сейчас уже Class компоненты с withRoute не работают. Но сейчас есть более простое решение. Вместо того, чтобы использовать withRoute и потом оттуда
+            извлекать userId, как Димыч делал, сейчас можно просто писать const { userId } = useParams(); и у нас будет параметр от URL. Потом, так как нам нужно, чтобы компонента
+            сделала запрос один раз, мы раньше в Class компоненте использовали ComponentDidMount, в функциональной компоненте мы можем просто использовать useEffect. useEffect и 
+            ComponentDidMount работают одинаково, просто у них тип компоненты другие.
+
+            TLDR;
+            useParams(): у нас будет параметр от URL
+            useEffect: useEffect и ComponentDidMount работают одинаково, просто у них тип компоненты другие
+
+
+            ProfileContainer.jsx
+            import React, { useEffect } from "react";
+            import Profile from "./Profile";
+            import axios from "axios";
+            import { connect } from "react-redux";
+            import { setUserProfile } from "../../redux/profileReducer";
+            import { useParams } from "react-router-dom";
+
+            function ProfileContainer(props) {
+                const { userId } = useParams();
+                let currUserId = userId||2
+
+                useEffect(() => {
+                    axios
+                        .get(`https://social-network.samuraijs.com/api/1.0/profile/` + currUserId)
+                        .then((response) => {
+                            props.setUserProfile(response.data);
+                        });
+                }, [userId]);
+
+                return (
+                    <div>
+                        <Profile profile={props.profile} />
+                    </div>
+                );
+            }
+
+            let mapStateToProps = (state) => ({
+                profile: state.profilePage.profile,
+            });
+
+            export default connect(mapStateToProps, { setUserProfile })(ProfileContainer);
+
+            
+            App.js
+            <Route  path = {'profile/:userId*'} element ={<ProfileContainer />} />
+
 
 */}
 
