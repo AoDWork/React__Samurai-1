@@ -1,5 +1,4 @@
 const SEND_MSG = 'SEND_MSG';
-// const UPDATE_NEW_MSG_BODY = 'UPDATE-NEW-MSG-BODY';
 
 let InitialState = {
     dialogsData: [

@@ -1,37 +1,9 @@
 import React from "react";
 import style from './Dialogs.module.css'
 import DialogItem from "./DialogItem";
+import AddMsgForm from "./AddMsgForm";
 import Message from "./Message";
-import { Form, Field } from 'react-final-form'
-import { Textarea } from "../common/FormControls/FormControls";
-import { required, maxLengthCreator } from "../../utils/validators/validators";
-import { Navigate } from 'react-router-dom';
-
-
-
-
-const maxLength100 = maxLengthCreator(100);
-
-const composeValidators = (...validators) => value =>
-                validators.reduce((error, validator) => error || validator(value), undefined);
-
-const AddMsgForm = (props) => {
-  return (
-    <Form
-      onSubmit={onSubmit}
-      render={({ handleSubmit, form, submitting, pristine, values }) => (
-        <form onSubmit={handleSubmit}>
-          <div>
-            <Field placeholder='Type Msg' name="newMsgBody" component={Textarea} validate={composeValidators(required, maxLength100)} />
-          </div>
-          <div>
-          <div><button>Send</button></div>
-          </div>
-        </form>
-      )}
-    />
-  )
-}
+import {Redirect} from "react-router-dom";
 
 
 const Dialogs = (props) => {
@@ -42,18 +14,11 @@ const Dialogs = (props) => {
   let messagesElements = state.messagesData.map((el, ind) => (<Message msg={el.msg} key={ind} />));
   let newMsgBody = state.newMsgBody;
 
-  const addNewMsg = (values) => {
+  let addNewMsg = (values) => {
     props.sendMsg(values.newMsgBody);
   }
 
-  // let onSendMsgClick = () => {
-  //   props.sendMsg();
-  // };
-
-  // let onNewMsgChange = (e) => {
-  //   let msgBody = e.target.value;
-  //   props.updateNewMsgBody(msgBody);
-  // };
+  if(!props.isAuth) return <Redirect to={"/login"} /> ;
 
   return (
     <div>
@@ -65,13 +30,9 @@ const Dialogs = (props) => {
         <div className={style.messages}>
           {messagesElements}</div>
       </main>
-
         <AddMsgForm onSubmit={addNewMsg}/>
-        {/* <div><textarea value={newMsgBody} onChange={onNewMsgChange} ></textarea></div>
-        <div><button onClick={onSendMsgClick} >Send</button></div> */}
-
     </div>
-  );
+  )
 }
 
 export default Dialogs;

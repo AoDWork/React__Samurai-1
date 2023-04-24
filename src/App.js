@@ -1,18 +1,19 @@
 import React from "react";
-import './App.css';
-import HeaderContainer from "./Components/Header/HeaderContainer"
+
+import store from './Components/redux/redux-store'
 import Navbar from "./Components/Navbar/Navbar";
+import HeaderContainer from "./Components/Header/HeaderContainer"
 import UsersContainer from "./Components/Users/UsersContainer";
-import { Route, Routes } from "react-router-dom";
-//import ProfileContainerDyn from "./Components/Profile/ProfileContainerFunctional";
 import LoginPage from "./Components/Login/Login";
+
+import {HashRouter, Route, withRouter} from "react-router-dom";
 import { connect, Provider } from 'react-redux';
-import { initializeApp } from '../src/Components/redux/app-reducer'
-import { withRouter, BrowserRouter } from 'react-router-dom';
 import { compose } from 'redux';
+import { initializeApp } from '../src/Components/redux/app-reducer'
 import Preloader from "./Components/common/preloader/Preloader";
 import { withSuspense } from "./hoc/withSuspense";
-import store from './Components/redux/redux-store'
+import './App.css';
+
 
 const DialogsContainer = React.lazy(() => import("./Components/Dialogs/DialogsContainer"));
 const ProfileContainer = React.lazy(() => import("./Components/Profile/ProfileContainer"));
@@ -54,11 +55,11 @@ let AppContainer = compose(
     connect(mapSateToProps, { initializeApp }))(App);
 
 const SamuraiApp = (props) => {
-    return <BrowserRouter>
+    return <HashRouter>
         <Provider store={store}>
             <AppContainer />
         </Provider>
-    </BrowserRouter>
+    </HashRouter>
 }
 
 export default SamuraiApp;

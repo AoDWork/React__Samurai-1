@@ -2,11 +2,8 @@ import React from "react";
 import Profile from './Profile';
 import { connect } from 'react-redux';
 import { getUserProfile, getUserStatus, updateUserStatus, savePhoto, saveProfile } from '../redux/profile-reducer';
-import { useParams } from 'react-router-dom'; // import { withRouter } from 'react-router-dom';
-import { withAuthRedirect } from "../../hoc/withAuthRedirect";
 import { compose } from 'redux';
 import { withRouter } from 'react-router-dom';
-
 
 
 class ProfileContainer extends React.Component {
@@ -52,8 +49,6 @@ let mapStateToProps = (state) => ({
     isAuth: state.auth.isAuth
 });
 
-
-// //todo  let WithUrlDataContainerComponent = withRouter(AuthRedirectComponent); - заменить //! 79- этого вообще нету
 
 
 export default compose(

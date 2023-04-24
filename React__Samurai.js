@@ -10987,6 +10987,59 @@
 */}
 
 
+{/*    ====    Устраняю ошибки    ====
+
+    Components
+       + common:  FormControls +, 
+                 (Paginator и Preloader работали так что не смотрел)
+
+       + Dialogs: DialogsItem + , 
+                 Dialogs + , 
+                 DialogsContainer + , 
+                 Message + , 
+                 AddMsgForm +  
+
+       + Header:  Header + , 
+                  HeaderContainer +
+
+       + Login +
+
+       + Navbar +  разобраться с active для кнопок
+
+       + Profile:   MyPosts:     Post -> Post.jsx +
+                                MyPosts  + , //! - просмотреть как было если не заработает
+                                //! у Димыча есть еще AddPostForm - компонент, но он вроде нигде не импортируется
+                                myPostsConainer +  
+                   ProfileInfo: ProfileDataForm  +,
+                                ProfileInfo  + ,
+                                ProfileStatus + ,
+                                ProfileStatusWithHooks + 
+                   ProfileContainer + ,
+                   Profile  +
+
+        redux:   dialogs-reducer + , 
+                 redux-store + ,
+                 profile-reducer
+
+       + Users:   UserContainer + , 
+                 Users + , 
+                 User +  
+
+  + hoc:    withAuthRedirect + ,
+            withSuspense +
+
+  + utils:  validators +, 
+            object-helpers +
+
+
+
+
+
+
+
+*/}
+
+
 {/*    ====    98. captcha    ====
 
 

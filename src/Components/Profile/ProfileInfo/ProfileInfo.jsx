@@ -32,7 +32,7 @@ const ProfileInfo = ({ profile, status, updateStatus, isOwner, savePhoto, savePr
     <div>
       <div className={style.formUser}>
         <img className={style.userAvatar} src={profile.photos.large || userPhoto} />
-        {isOwner && <input type='file' onChange={onMainPhotoSelected} />}
+        {isOwner && <input type={'file'} onChange={onMainPhotoSelected} />}
 
         {editMode
           ? <ProfileDataForm initialValues={profile} onSubmit={onSubmit} profile={profile}/>
@@ -46,7 +46,7 @@ const ProfileInfo = ({ profile, status, updateStatus, isOwner, savePhoto, savePr
   );
 }
 
-const ProfileData = ({ profile, isOwner }) => {
+const ProfileData = ({ profile, isOwner, goToEditMode }) => {
   return <div>
     {isOwner && <div><button onClick={goToEditMode}>Edit</button></div>}
     <div>
