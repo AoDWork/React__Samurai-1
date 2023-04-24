@@ -40,18 +40,9 @@ const AddNewPostForm = (props) => {
 const MyPosts = React.memo(props => {   
                                   
     let postsElements = 
-        props.postsData.map((el, ind) => <Post  msg={el.post} likesCount={el.likesCount} key={ind} />);
+        props.postsData.map((el, ind) => <Post msg={el.post} likesCount={el.likesCount} key={el.id} />);
 
-    // let newPostElement = React.createRef();
 
-    // let onAddPost = () => {
-    //   props.addPost();
-    // };
-
-    // let onPostChange = () => {
-    //   let text = newPostElement.current.value;
-    //   props.updateNewPostText(text);
-    // };
 
     return (
       <div className={style.form__newPost}>

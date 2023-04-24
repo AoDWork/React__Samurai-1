@@ -6,7 +6,7 @@ import { connect } from 'react-redux';
 import { login } from '../redux/auth-reducer';
 import { Redirect } from 'react-router-dom';
 import { createField, Input } from "../common/FormControls/FormControls";
-import styles from "../common/FormControls/FormControls.module.css"
+import style from "../common/FormControls/FormControls.module.css"
 
 
 const LoginForm = ({ handleSubmit, error }) => {
@@ -16,7 +16,7 @@ const LoginForm = ({ handleSubmit, error }) => {
             {createField('Password', "password", Input, [required], {type:"password"} )}
             {createField(null, "rememberMe", Input, [], {type:"checkbox"}, "remember me" )}
 
-            {error && <div className={styles.summaryError}>
+            {error && <div className={style.summaryError}>
                 {error}
             </div>}
             <div>

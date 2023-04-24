@@ -96,6 +96,9 @@ export const saveProfile = (profile) => async (dispatch) => {
 
     if (response.data.resultCode === 0) {
         dispatch(getUserProfile(userId)); 
+    } else {
+        dispatch(stopSubmit("editProfile", { _error: response.data.messages[0] }));
+        return Promise.reject(response.data.messages[0]);
     }
 }
 
