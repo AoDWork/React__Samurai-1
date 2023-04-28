@@ -11032,15 +11032,174 @@
             object-helpers +
 
 
-
-
-
+    //! Стало еще хуже, теперь и логин не работает, только юзеры показываются
 
 
 */}
 
 
 {/*    ====    98. captcha    ====
+
+    //! Капча работает таким образом: Если сервер посчитал что с запросами из браузера что то не так(много неправильных запросов,
+    //! и т.д. ...) для проверки что в браузере работает человек, сервер  генерирует для конкретной сессии для конкретного юзера 
+    //! набор символов и держит их в памяти. Отправляет ответ с реквестом символов и ендпоинтом, по запросу на который вернется url картинки
+    //! с нужными для ввода символами, она покажеться юзеру. Юзер должен ввести эти символы и отправить с реквестом.
+
+
+    На сервере самураи в документации смотрим запрос GET по ендпоинту security/get-captcha-url - в ответе вернеться объект в котором
+        есть свойство url со строковым значением - нужный url картинки. С каждым запросом генерируется новый код.
+
+
+
+    Последовательность действий 
+
+        в DAL будем выполнять запрос и возвращать ответ, 
+
+        в ИДД нужна санка которая будет обрабатывать этот ответ, диспатчить actions в зависимости от асинхронного ответа
+
+        в UI это прийдет через mapStateToProps и отобразиться
+
+
+    
+    Допишем показ капчи при ошибке в Login.
+        
+        Начнем с API, создадим security api:
+
+            export const securityAPI = {
+                getCaptchaUrl() {
+                    return instance.get(`security/get-captcha-url`);
+                }
+            }
+
+        
+        Так как капча выскакивает при авторизации, то пойдем в auth-reducer и сделаем санку которая будет использовать запрос
+        получая данные из него. Получили строку с url капчи const captchaUrl = response.data.url; теперь чтобы ее передать в UI
+        нужно чтобы этот url стал statom. Делаем в state новое свойство с изначальным значением - captchaUrl: null.
+        
+            export const getCaptchaUrl = () => async (dispatch) => {
+                const response = await securityAPI.getCaptchaUrl();
+                const captchaUrl = response.data.url; 
+            }
+
+
+        Теперь нужно засетать полученный url в state, создадим action 
+
+            const GET_CAPTCHA_URL_SUCCESS = 'auth/GET_CAPTCHA_URL_SUCCESS';
+
+
+        Создадим action криэйтор 
+
+            export const setCaptchaUrlSuccess = (captchaUrl) => ({
+                type: GET_CAPTCHA_URL_SUCCESS,
+                payload: { captchaUrl }
+            });
+
+
+        Пропишем кейс для изменения state. Так как у на для обоих кейсов выполняются одинаковые(достаем всё из state, 
+        деструктуризируем payload (достаем из него все значения) в payload будет captchaUrl потому что мы ее туда засунули в
+        setCaptchaUrlSuccess, таким образом автоматически перезапишет все свойства в state из payload ???  ) действия то можно
+        написать так сократив код
+
+            const authReducer = (state = initialState, action) => {
+                switch (action.type) {
+                    case SET_AUTH_USER_DATA:
+                    case GET_CAPTCHA_URL_SUCCESS:
+                        return {
+                            ...state,
+                            ...action.payload
+                        }
+
+                    default:
+                        return state;
+                }
+            }
+
+
+        Теперь можно задиспатчить в санке этот action creator с полученными данными. (Когда диспатчим санку - она начинает 
+        выполняться и ее задача сделать асинхронную операцию и результат задиспатчить в state для его изменения)
+
+            export const getCaptchaUrl = () => async (dispatch) => {
+                const response = await securityAPI.getCaptchaUrl();
+                const captchaUrl = response.data.url; 
+
+                dispatch(setCaptchaUrlSuccess(captchaUrl));
+            }
+
+
+
+        Теперь для запуска этой санки getCaptchaUrl ее нужно задиспатчить. Можем ее диспатчить из UI а можем из любой 
+        другой санки (как в санке login мы диспатчим санку getAuthUserData). Смотрим в документцию по серверу(хотя у Димыча 
+        есть несоответствия) или в ответ который приходит с сервера и видим resultCode: 10 - значит в login нужно прописать
+        условие для обработки этого варианта. 
+
+            export const login = (email, password, rememberMe) => async (dispatch) => {
+                let response = await authAPI.login(email, password, rememberMe);
+
+                if (response.data.resultCode === 0) {
+                    dispatch(getAuthUserData());
+                } else {
+                    if (response.data.resultCode === 10) {
+                        dispatch(getCaptchaUrl());
+                    }
+                    let message = response.data.messages.length > 0 ? response.data.messages : "Some error";
+                    dispatch(stopSubmit("login", { _error: message }));
+                }
+            }
+
+            Если вариант сработает будет то капча запросится,  url запишеться в state, и в UI можем определить что если url 
+            присутствует то покажем юзеру картинку.
+
+
+        captchaUrl попадает в Login и чтобы он показался в форме нужно его прокинуть через mapStateToProps, теперь captchaUrl 
+        будет доступен в Login компоненте, чтобы он был доступен для LoginReduxForm прокинем его в props, также допишем 
+        чтобы из поля для ввода капчи отправлялись данные formData.captcha
+
+            const mapStateToProps = (state) => ({
+                captchaUrl: state.auth.captchaUrl,
+                isAuth: state.auth.isAuth
+            })
+        
+
+        Форма получает данные первоначально из Редакс state а дальше взаимодействует с формовским state и берет данные оттуда, но
+        так как он меняться не будет то в форм state мы его не будем устанавливать, но в форму нужно прокинуть
+
+            <LoginReduxForm onSubmit={onSubmit} captchaUrl={props.captchaUrl}/>
+
+            
+        теперь captchaUrl доступна для формы и нужно ее вытянуть из пропсов и использовать для показа картинки если капча пришла,
+        также нужно показать поле для ввода
+
+            const LoginForm = ({ handleSubmit, error, captchaUrl }) => {
+                return (
+                    <form onSubmit={handleSubmit}>
+                        {createField('Enter email', "email", Input, [required])}
+                        {createField('Password', "password", Input, [required], {type:"password"} )}
+                        {createField(null, "rememberMe", Input, [], {type:"checkbox"}, "remember me" )}
+
+                        {captchaUrl && <img src={captchaUrl}/>}
+                        {captchaUrl && createField("Symbols from image", "captcha", Input, {}, [required]) }
+
+
+        Выполняем Submit, получаем данные из формы const onSubmit = (formData) капчу, капчу отправляем в props.login, этот login
+        приходит с mapDispatchToProps тоесть это санк криейтер из auth-reducer, допишем его для приема данных капчи и отдачи в api
+
+            export const login = (email, password, rememberMe, captcha) => async (dispatch) => {
+            let response = await authAPI.login(email, password, rememberMe, captcha);
+
+        
+        Теперь в api принимаем captcha, делаем по умолчанию null, и отправляем на сервер с post запросом
+
+                export const authAPI = {
+                    me() {
+                        return instance.get(`auth/me`);
+                    },
+                    login(email, password, rememberMe = false, captcha = null) {
+                        return instance.post(`auth/login`, { email, password, rememberMe, captcha });
+
+
+
+    //! Изменил форму в Login теперь должен запуститься.
+    //todo прочитать про payload, замена добавления в state???
 
 
 */}

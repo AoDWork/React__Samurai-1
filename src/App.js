@@ -1,15 +1,15 @@
 import React from "react";
 
-import store from './Components/redux/redux-store'
+import store from './Components/redux/redux-store';
 import Navbar from "./Components/Navbar/Navbar";
-import HeaderContainer from "./Components/Header/HeaderContainer"
+import HeaderContainer from "./Components/Header/HeaderContainer";
 import UsersContainer from "./Components/Users/UsersContainer";
 import LoginPage from "./Components/Login/Login";
 
 import {HashRouter, Route, withRouter} from "react-router-dom";
 import { connect, Provider } from 'react-redux';
 import { compose } from 'redux';
-import { initializeApp } from '../src/Components/redux/app-reducer'
+import { initializeApp } from './Components/redux/app-reducer';
 import Preloader from "./Components/common/preloader/Preloader";
 import { withSuspense } from "./hoc/withSuspense";
 import './App.css';
