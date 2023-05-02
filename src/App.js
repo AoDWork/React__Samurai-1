@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Component } from "react";
 
 import store from './Components/redux/redux-store';
 import Navbar from "./Components/Navbar/Navbar";
@@ -6,7 +6,7 @@ import HeaderContainer from "./Components/Header/HeaderContainer";
 import UsersContainer from "./Components/Users/UsersContainer";
 import LoginPage from "./Components/Login/Login";
 
-import {HashRouter, Route, withRouter} from "react-router-dom";
+import { HashRouter, Route, withRouter, Switch, Redirect} from "react-router-dom";
 import { connect, Provider } from 'react-redux';
 import { compose } from 'redux';
 import { initializeApp } from './Components/redux/app-reducer';
@@ -35,11 +35,17 @@ class App extends React.Component {
                 <HeaderContainer />
                 <Navbar />
                 <div className='app-wrapper-content'>
-                    <Route path="/dialogs" render={ withSuspense(<DialogsContainer />) } />
-                    <Route path="/profile/:userId?" render={ withSuspense(<ProfileContainer />) } />
+                    <Switch>
+                        <Route path="/" render={ ()=> <Redirect to={"/profile"}/>} />
 
-                    <Route path="/users" render={() => <UsersContainer />} />
-                    <Route path="/login" render={() => <LoginPage />} />
+                        <Route path="/dialogs" render={withSuspense(<DialogsContainer />)} />
+                        <Route path="/profile/:userId?" render={withSuspense(<ProfileContainer />)} />
+
+                        <Route path="/users" render={() => <UsersContainer />} />
+                        <Route path="/login" render={() => <LoginPage />} />
+                        
+                        <Route path="*" render={() => <div>404 NOT FOUND</div>} />
+                    </Switch>
                 </div>
             </div>
         );
