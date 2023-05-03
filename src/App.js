@@ -36,10 +36,10 @@ class App extends React.Component {
                 <Navbar />
                 <div className='app-wrapper-content'>
                     <Switch>
-                        <Route path="/" render={ ()=> <Redirect to={"/profile"}/>} />
+                        <Route exact path="/" render={ ()=> <Redirect to={"/profile"}/>} />
 
-                        <Route path="/dialogs" render={withSuspense(<DialogsContainer />)} />
-                        <Route path="/profile/:userId?" render={withSuspense(<ProfileContainer />)} />
+                        <Route path="/dialogs" render={withSuspense(DialogsContainer)} />
+                        <Route path="/profile/:userId?" render={withSuspense(ProfileContainer)} />
 
                         <Route path="/users" render={() => <UsersContainer />} />
                         <Route path="/login" render={() => <LoginPage />} />

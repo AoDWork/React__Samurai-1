@@ -1,7 +1,7 @@
 import React from "react";
 import { Field, reduxForm } from "redux-form";
 import { createField, Input } from "../common/FormControls/FormControls";
-import { required, maxLengthCreator } from "../../utils/validators/validators";
+import { required } from "../../utils/validators/validators";
 import { connect } from 'react-redux';
 import { login } from '../redux/auth-reducer';
 import { Redirect } from 'react-router-dom';
@@ -11,9 +11,13 @@ import style from "../common/FormControls/FormControls.module.css"
 const LoginForm = ({ handleSubmit, error, captchaUrl }) => {
     return (
         <form onSubmit={handleSubmit}>
-            {createField('Enter email', "email", Input, [required])}
-            {createField('Password', "password", Input, [required], {type:"password"} )}
-            {createField(null, "rememberMe", Input, {type:"checkbox"}, [], "remember me" )}
+            {createField('Enter email', "email", [required], Input )}
+            {createField('Password', "password", [required], Input, {type:"password"} )}
+            {createField(null, "rememberMe",  [], Input, {type:"checkbox"}, "remember me" )}
+
+            {/* {createField("Email", "email", [required], Input)}
+            {createField("Password", "password", [required], Input, {type: "password"})}
+            {createField(null, "rememberMe", [], Input, {type: "checkbox"}, "remember me")} */}
 
             {captchaUrl && <img src={captchaUrl}/>}
             {captchaUrl && createField("Symbols from image", "captcha", Input, {}, [required]) }

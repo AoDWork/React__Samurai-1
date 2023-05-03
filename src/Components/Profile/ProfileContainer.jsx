@@ -7,7 +7,7 @@ import { withRouter } from 'react-router-dom';
 
 
 class ProfileContainer extends React.Component {
-
+debugger
     refreshProfile() {
         let userId = this.props.match.params.userId;
         if (!userId) {
@@ -42,12 +42,14 @@ class ProfileContainer extends React.Component {
     }
 }
 
-let mapStateToProps = (state) => ({
-    profile: state.profilePage.userProfile,
-    status: state.profilePage.status,
-    authorizedUserId: state.auth.userId,
-    isAuth: state.auth.isAuth
-});
+let mapStateToProps = (state) => {
+    return ({
+        profile: state.profilePage.userProfile,
+        status: state.profilePage.status,
+        authorizedUserId: state.auth.userId,
+        isAuth: state.auth.isAuth
+    })
+}
 
 
 
