@@ -31,24 +31,24 @@ const ProfileInfo = ({ profile, status, updateStatus, isOwner, savePhoto, savePr
   return (
     <div>
       <div className={style.formUser}>
+        <div className={style.userAvatarBlock}>
         <img className={style.userAvatar} src={profile.photos.large || userPhoto} />
         {isOwner && <input type={'file'} onChange={onMainPhotoSelected} />}
-
-        {editMode
-          ? <ProfileDataForm initialValues={profile} onSubmit={onSubmit} profile={profile}/>
-          : <ProfileData profile={profile} isOwner={isOwner} goToEditMode={() => { setEditMode(true) }} />}
-
-
-        <ProfileStatusWithHooks status={status} updateStatus={updateStatus} />
-        <div className={style.userDescription}>Description</div>
+        </div>
+        <div className={style.userDescriptionBlock}>
+          <div className={style.descriptionTitle}>Description</div>
+          {editMode
+            ? <ProfileDataForm initialValues={profile} onSubmit={onSubmit} profile={profile} />
+            : <ProfileData profile={profile} isOwner={isOwner} goToEditMode={() => { setEditMode(true) }} />}
+        </div>
+          <ProfileStatusWithHooks status={status} updateStatus={updateStatus} />
       </div>
     </div>
   );
 }
 
 const ProfileData = ({ profile, isOwner, goToEditMode }) => {
-  return <div>
-    {isOwner && <div><button onClick={goToEditMode}>Edit</button></div>}
+  return <div className={style.userDescription}>
     <div>
       <b>Full name</b>: {profile.fullName}
     </div>
@@ -61,13 +61,15 @@ const ProfileData = ({ profile, isOwner, goToEditMode }) => {
       </div>
     }
     <div>
-      <b>About me</b>: {profile.aboutMe} // этого еще не было в доке на момент записи видео, но оно приходило
+      <b>About me</b>: {profile.aboutMe}  
+      {/* // этого еще не было в доке на момент записи видео, но оно приходило */}
     </div>
     <div>
       <b>Contacts</b>: {Object.keys(profile.contacts).map(key => {
         return <Contact key={key} contactTitle={key} contactValue={profile.contacts[key]} />
       })}
     </div>
+      {isOwner && <div><button onClick={goToEditMode}>Edit</button></div>}
   </div>
 }
 

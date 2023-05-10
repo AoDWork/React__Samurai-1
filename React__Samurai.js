@@ -11362,11 +11362,9 @@
 
 {/*    ====    99,5. FIXING    ====
 
-    //todo криво стоит в профиле инфа - стили?
-    //todo при нажатии - edit всё падает
-    //todo в пагинаторе не работает выделение текущей страницы - библиотека класснеймс
-
-
+    //todo Посты не показываются
+    countered two children with the same key, `5`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+     
 */}
 
 

@@ -1,32 +1,57 @@
 .contentHeader {
-    width: 100%;
-    height: 250px;
+    width        : 100%;
+    height       : 250px;
     margin-bottom: 20px;
 }
 
-.formUser{
-    display: flex;
-    margin-bottom: 20px;
+.formUser {
+    display       : flex;
+    flex-direction: column;
+    gap           : 10px;
+    margin-left   : 10px;
+    margin-bottom : 20px;
 }
 
-.userAvatar{
-    display: inline-block;
-    width: 100px;
-    height: 100px;
-    padding: 0 10px 10px;
+.userAvatarBlock {
+    display       : flex;
+    flex-direction: column;
+    margin-bottom : 10px;
+}
+
+.userAvatar {
+    display      : inline-block;
+    width        : 150px;
+    height       : 150px;
+    padding      : 0 10px 10px;
     border-radius: 50%;
+    margin-top: 10px;
 }
 
-.userDescription{
-    align-self: center;
+.userDescriptionBlock {
+    display       : flex;
+    flex-direction: column;
+    gap           : 15px;
+    margin-bottom : 10px;
 }
 
-.contact {
-    padding-left: 10px;
+.descriptionTitle {
+    font-size: 30px;
+    color    : gold;
+}
+
+.userDescription {
+    display       : flex;
+    flex-direction: column;
+    gap           : 5px;
+}
+
+.status {
+    font-size: 20px;
+    color    : gold;
 }
 
 .summaryError {
-    border: 2px solid red;
+    border : 2px solid red;
     padding: 5px;
-    color: rgb(255, 217, 0);
+    color  : rgb(255, 217, 0);
 }
