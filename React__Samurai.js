@@ -11362,15 +11362,64 @@
 
 {/*    ====    99,5. FIXING    ====
 
-    //todo Посты не показываются
-    countered two children with the same key, `5`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    //! todo Посты не показываются
+    countered two children with the same key, `5`. Keys should be unique so that components maintain their identity across updates. 
+    Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future 
+    version.
+
+    //! Поменять в package - сайт для деплоя, сохранить его в профиле на сервере камасутры.
+    //! Вернуть хеш роутер если он заменен
+    //! проверить какой обработчик ошибок 
+
      
 */}
 
 
 {/*    ====    100. Теория ReactJS + Redux за 90 минут    ====
 
-    //! Начать с 99 видео с 55- минуты
+    У нас есть бизнес(папка redux в ней store и редюсеры) store состоит из state и редюсеров которые запускаются когда происходит
+        диспатч. Приходит action в dispatch и store первы делом прогоняет этот action по всем редюсерам и собирает новую версию 
+        state, а потом уведомляет подписчиков методами  subscribe - для уведомления об изменении state.
+
+
+        //! Кажеться что у нас нету subscribe потому что мы используем connect. Но внутри себя он работает точно также. Когда мы
+        коннектим компонент над ним создается контейнерный компонент внутри которого написан код для обращения к store: 
+        сабскрайбится на него, берет у него state - засовывает его в ф-ю mapStateToProps(чтобы понять что из этого state нужно 
+        нашему компоненту), сравнивает полученные данные с теми которые уже были, если данные изменились тогда компонент 
+        перерисовывается.
+
+        Еще контейнерный компонент запускает mapDispatchToPtops чтобы получить колбеки и тоже передать их внутрь компонента 
+        которого этот контейнерный компонент отрисовывает.
+
+        Тоесть субскрайбы есть, store.dispatch - есть, хотя мы видим просто dispatch, его забайндили и передали в 
+        mapDispatchToPtops, а нутри mapStateToProps нам уже достали state с помощью store.getState
+
+
+
+    Хуки как и хоки и классі с наследованием позволяют не дублировать код и єффективно его переиспользовать. Они начинаются на 
+        use - useState, useEffect. Можно написать свой хук но тоже назвать его с началос на use чтобы было понятно что это хук.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
