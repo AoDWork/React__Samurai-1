@@ -11362,15 +11362,13 @@
 
 {/*    ====    99,5. FIXING    ====
 
-    //! todo Посты не показываются
-    countered two children with the same key, `5`. Keys should be unique so that components maintain their identity across updates. 
-    Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future 
-    version.
-
     //! Поменять в package - сайт для деплоя, сохранить его в профиле на сервере камасутры.
     //! Вернуть хеш роутер если он заменен
     //! проверить какой обработчик ошибок 
+    
 
+    //todo Dialogs - не пишет юзера при добавлении поста, и на очищает поле
+    У димыча также само
      
 */}
 

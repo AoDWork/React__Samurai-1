@@ -15,10 +15,6 @@ const LoginForm = ({ handleSubmit, error, captchaUrl }) => {
             {createField('Password', "password", [required], Input, {type:"password"} )}
             {createField(null, "rememberMe",  [], Input, {type:"checkbox"}, "remember me" )}
 
-            {/* {createField("Email", "email", [required], Input)}
-            {createField("Password", "password", [required], Input, {type: "password"})}
-            {createField(null, "rememberMe", [], Input, {type: "checkbox"}, "remember me")} */}
-
             {captchaUrl && <img src={captchaUrl}/>}
             {captchaUrl && createField("Symbols from image", "captcha", Input, {}, [required]) }
 
@@ -34,7 +30,6 @@ const LoginForm = ({ handleSubmit, error, captchaUrl }) => {
 }
 
 
-
 const LoginReduxForm = reduxForm({ form: 'login' })(LoginForm)
 
 
@@ -43,7 +38,7 @@ const Login = (props) => {
         props.login(formData.email, formData.password, formData.rememberMe, formData.captcha );
     }
 
-    if (props.iaAuth) {
+    if (props.isAuth) {
         return <Redirect to={"/profile"} />
     }
 
