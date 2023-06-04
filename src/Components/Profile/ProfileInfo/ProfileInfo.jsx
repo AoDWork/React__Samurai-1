@@ -7,8 +7,12 @@ import ProfileDataForm from './ProfileDataForm';
 
 
 const ProfileInfo = ({ profile, status, updateStatus, isOwner, savePhoto, saveProfile }) => {
+  
+  let [editMode, setEditMode] = useState(false);
 
-  const [editMode, setEditMode] = useState(false);
+  if (!profile) {
+    return <Preloader />
+  }
 
   const onMainPhotoSelected = (e) => {
     if (e.target.files.length) {
@@ -24,16 +28,13 @@ const ProfileInfo = ({ profile, status, updateStatus, isOwner, savePhoto, savePr
     )
   }
 
-  if (!profile) {
-    return <Preloader />
-  }
 
   return (
     <div>
       <div className={style.formUser}>
         <div className={style.userAvatarBlock}>
-        <img className={style.userAvatar} src={profile.photos.large || userPhoto} />
-        {isOwner && <input type={'file'} onChange={onMainPhotoSelected} />}
+          <img className={style.userAvatar} src={profile.photos.large || userPhoto} />
+          {isOwner && <input type={"file"} onChange={onMainPhotoSelected}/>}
         </div>
         <div className={style.userDescriptionBlock}>
           <div className={style.descriptionTitle}>Description</div>
@@ -41,7 +42,7 @@ const ProfileInfo = ({ profile, status, updateStatus, isOwner, savePhoto, savePr
             ? <ProfileDataForm initialValues={profile} onSubmit={onSubmit} profile={profile} />
             : <ProfileData profile={profile} isOwner={isOwner} goToEditMode={() => { setEditMode(true) }} />}
         </div>
-          <ProfileStatusWithHooks status={status} updateStatus={updateStatus} />
+        <ProfileStatusWithHooks status={status} updateStatus={updateStatus} />
       </div>
     </div>
   );
@@ -61,7 +62,7 @@ const ProfileData = ({ profile, isOwner, goToEditMode }) => {
       </div>
     }
     <div>
-      <b>About me</b>: {profile.aboutMe}  
+      <b>About me</b>: {profile.aboutMe}
       {/* // этого еще не было в доке на момент записи видео, но оно приходило */}
     </div>
     <div>
@@ -69,7 +70,7 @@ const ProfileData = ({ profile, isOwner, goToEditMode }) => {
         return <Contact key={key} contactTitle={key} contactValue={profile.contacts[key]} />
       })}
     </div>
-      {isOwner && <div><button onClick={goToEditMode}>Edit</button></div>}
+    {isOwner && <div><button onClick={goToEditMode}>Edit</button></div>}
   </div>
 }
 

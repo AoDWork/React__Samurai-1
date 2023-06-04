@@ -37,7 +37,7 @@ debugger
                 profile={this.props.profile}
                 status={this.props.status}
                 updateUserStatus={this.props.updateUserStatus} 
-                savePhoto = {this.props.savePhoto}/>
+                savePhoto={this.props.savePhoto}/>
         )
     }
 }
