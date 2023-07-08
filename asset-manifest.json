@@ -1,12 +1,12 @@
 {
   "files": {
-    "main.css": "/React__Samurai-1/static/css/main.122b44c5.chunk.css",
-    "main.js": "/React__Samurai-1/static/js/main.fb708f9e.chunk.js",
-    "main.js.map": "/React__Samurai-1/static/js/main.fb708f9e.chunk.js.map",
+    "main.css": "/React__Samurai-1/static/css/main.1c850bbd.chunk.css",
+    "main.js": "/React__Samurai-1/static/js/main.abd81930.chunk.js",
+    "main.js.map": "/React__Samurai-1/static/js/main.abd81930.chunk.js.map",
     "runtime~main.js": "/React__Samurai-1/static/js/runtime~main.6978c5f3.js",
     "runtime~main.js.map": "/React__Samurai-1/static/js/runtime~main.6978c5f3.js.map",
-    "static/js/2.6fa82757.chunk.js": "/React__Samurai-1/static/js/2.6fa82757.chunk.js",
-    "static/js/2.6fa82757.chunk.js.map": "/React__Samurai-1/static/js/2.6fa82757.chunk.js.map",
+    "static/js/2.070e7ef7.chunk.js": "/React__Samurai-1/static/js/2.070e7ef7.chunk.js",
+    "static/js/2.070e7ef7.chunk.js.map": "/React__Samurai-1/static/js/2.070e7ef7.chunk.js.map",
     "static/css/3.48bb2f18.chunk.css": "/React__Samurai-1/static/css/3.48bb2f18.chunk.css",
     "static/js/3.6203e72f.chunk.js": "/React__Samurai-1/static/js/3.6203e72f.chunk.js",
     "static/js/3.6203e72f.chunk.js.map": "/React__Samurai-1/static/js/3.6203e72f.chunk.js.map",
@@ -14,11 +14,11 @@
     "static/js/4.140cacd8.chunk.js": "/React__Samurai-1/static/js/4.140cacd8.chunk.js",
     "static/js/4.140cacd8.chunk.js.map": "/React__Samurai-1/static/js/4.140cacd8.chunk.js.map",
     "index.html": "/React__Samurai-1/index.html",
-    "precache-manifest.682b844cf6cd8d344c05a1a8cd07798e.js": "/React__Samurai-1/precache-manifest.682b844cf6cd8d344c05a1a8cd07798e.js",
+    "precache-manifest.a7571b31942b46485182130c09ed6e8f.js": "/React__Samurai-1/precache-manifest.a7571b31942b46485182130c09ed6e8f.js",
     "service-worker.js": "/React__Samurai-1/service-worker.js",
     "static/css/3.48bb2f18.chunk.css.map": "/React__Samurai-1/static/css/3.48bb2f18.chunk.css.map",
     "static/css/4.96075cd8.chunk.css.map": "/React__Samurai-1/static/css/4.96075cd8.chunk.css.map",
-    "static/css/main.122b44c5.chunk.css.map": "/React__Samurai-1/static/css/main.122b44c5.chunk.css.map",
+    "static/css/main.1c850bbd.chunk.css.map": "/React__Samurai-1/static/css/main.1c850bbd.chunk.css.map",
     "static/media/preloader.svg": "/React__Samurai-1/static/media/preloader.b08921bf.svg",
     "static/media/user.jpg": "/React__Samurai-1/static/media/user.62387d2a.jpg"
   }

@@ -1,6 +1,6 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "e8e112000ff2f516d043a5e51fff5ced",
+    "revision": "8715842f053e9e22a70343aeefe039ab",
     "url": "/React__Samurai-1/index.html"
   },
   {
@@ -12,12 +12,12 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/React__Samurai-1/static/css/4.96075cd8.chunk.css"
   },
   {
-    "revision": "e81aaa127e10aeabb9f7",
-    "url": "/React__Samurai-1/static/css/main.122b44c5.chunk.css"
+    "revision": "da2813c18f9081309412",
+    "url": "/React__Samurai-1/static/css/main.1c850bbd.chunk.css"
   },
   {
-    "revision": "fd78a3c2a0de86affa1d",
-    "url": "/React__Samurai-1/static/js/2.6fa82757.chunk.js"
+    "revision": "4b481ceff01f72043034",
+    "url": "/React__Samurai-1/static/js/2.070e7ef7.chunk.js"
   },
   {
     "revision": "b81b788ef9bd4c7f0004",
@@ -28,8 +28,8 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/React__Samurai-1/static/js/4.140cacd8.chunk.js"
   },
   {
-    "revision": "e81aaa127e10aeabb9f7",
-    "url": "/React__Samurai-1/static/js/main.fb708f9e.chunk.js"
+    "revision": "da2813c18f9081309412",
+    "url": "/React__Samurai-1/static/js/main.abd81930.chunk.js"
   },
   {
     "revision": "2eeeab71917cbfffccfb",
